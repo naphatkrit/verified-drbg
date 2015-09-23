@@ -526,7 +526,8 @@ int mbedtls_ctr_drbg_self_test( int verbose )
 int main()
 {
     #if defined(MBEDTLS_SELF_TEST)
-    mbedtls_ctr_drbg_self_test(1);
-    #endif /* MBEDTLS_SELF_TEST */
+    return mbedtls_ctr_drbg_self_test(1);
+    #else
     return 0;
+    #endif /* MBEDTLS_SELF_TEST */
 }
