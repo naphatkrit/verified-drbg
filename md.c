@@ -29,6 +29,7 @@
 // #include MBEDTLS_CONFIG_FILE
 // #endif
 
+#define MBEDTLS_SHA1_C
 
 #include "md.h"
 #include "md_internal.h"

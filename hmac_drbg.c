@@ -31,6 +31,7 @@
 // #include MBEDTLS_CONFIG_FILE
 // #endif
 
+#define MBEDTLS_SELF_TEST
 
 #include "hmac_drbg.h"
 
@@ -385,6 +386,8 @@ static int hmac_drbg_self_test_entropy( void *data,
                         return( 1 );                        \
                     }
 
+#include <assert.h>
+
 /*
  * Checkup routine for HMAC_DRBG with SHA-1
  */
@@ -451,7 +454,8 @@ int mbedtls_hmac_drbg_self_test( int verbose )
 int main()
 {
     #if defined(MBEDTLS_SELF_TEST)
-    mbedtls_hmac_drbg_self_test(1);
-    #endif /* MBEDTLS_SELF_TEST */
+    return mbedtls_hmac_drbg_self_test(1);
+    #else
     return 0;
+    #endif /* MBEDTLS_SELF_TEST */
 }
