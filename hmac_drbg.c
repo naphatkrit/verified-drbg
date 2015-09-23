@@ -36,17 +36,9 @@
 
 #include <string.h>
 
-#if defined(MBEDTLS_FS_IO)
-#include <stdio.h>
-#endif
-
 #if defined(MBEDTLS_SELF_TEST)
-#if defined(MBEDTLS_PLATFORM_C)
-#include "mbedtls/platform.h"
-#else
 #include <stdio.h>
 #define mbedtls_printf printf
-#endif /* MBEDTLS_SELF_TEST */
 #endif /* MBEDTLS_PLATFORM_C */
 
 /* Implementation that should never be optimized out by the compiler */
@@ -340,76 +332,7 @@ void mbedtls_hmac_drbg_free( mbedtls_hmac_drbg_context *ctx )
     mbedtls_zeroize( ctx, sizeof( mbedtls_hmac_drbg_context ) );
 }
 
-#if defined(MBEDTLS_FS_IO)
-int mbedtls_hmac_drbg_write_seed_file( mbedtls_hmac_drbg_context *ctx, const char *path )
-{
-    int ret;
-    FILE *f;
-    unsigned char buf[ MBEDTLS_HMAC_DRBG_MAX_INPUT ];
-
-    if( ( f = fopen( path, "wb" ) ) == NULL )
-        return( MBEDTLS_ERR_HMAC_DRBG_FILE_IO_ERROR );
-
-    if( ( ret = mbedtls_hmac_drbg_random( ctx, buf, sizeof( buf ) ) ) != 0 )
-        goto exit;
-
-    if( fwrite( buf, 1, sizeof( buf ), f ) != sizeof( buf ) )
-    {
-        ret = MBEDTLS_ERR_HMAC_DRBG_FILE_IO_ERROR;
-        goto exit;
-    }
-
-    ret = 0;
-
-exit:
-    fclose( f );
-    return( ret );
-}
-
-int mbedtls_hmac_drbg_update_seed_file( mbedtls_hmac_drbg_context *ctx, const char *path )
-{
-    FILE *f;
-    size_t n;
-    unsigned char buf[ MBEDTLS_HMAC_DRBG_MAX_INPUT ];
-
-    if( ( f = fopen( path, "rb" ) ) == NULL )
-        return( MBEDTLS_ERR_HMAC_DRBG_FILE_IO_ERROR );
-
-    fseek( f, 0, SEEK_END );
-    n = (size_t) ftell( f );
-    fseek( f, 0, SEEK_SET );
-
-    if( n > MBEDTLS_HMAC_DRBG_MAX_INPUT )
-    {
-        fclose( f );
-        return( MBEDTLS_ERR_HMAC_DRBG_INPUT_TOO_BIG );
-    }
-
-    if( fread( buf, 1, n, f ) != n )
-    {
-        fclose( f );
-        return( MBEDTLS_ERR_HMAC_DRBG_FILE_IO_ERROR );
-    }
-
-    fclose( f );
-
-    mbedtls_hmac_drbg_update( ctx, buf, n );
-
-    return( mbedtls_hmac_drbg_write_seed_file( ctx, path ) );
-}
-#endif /* MBEDTLS_FS_IO */
-
-
 #if defined(MBEDTLS_SELF_TEST)
-
-#if !defined(MBEDTLS_SHA1_C)
-/* Dummy checkup routine */
-int mbedtls_hmac_drbg_self_test( int verbose )
-{
-    (void) verbose;
-    return( 0 );
-}
-#else
 
 #define OUTPUT_LEN  80
 
@@ -522,10 +445,13 @@ int mbedtls_hmac_drbg_self_test( int verbose )
 
     return( 0 );
 }
-#endif /* MBEDTLS_SHA1_C */
+
 #endif /* MBEDTLS_SELF_TEST */
 
 int main()
 {
+    #if defined(MBEDTLS_SELF_TEST)
+    mbedtls_hmac_drbg_self_test(1);
+    #endif /* MBEDTLS_SELF_TEST */
     return 0;
 }
