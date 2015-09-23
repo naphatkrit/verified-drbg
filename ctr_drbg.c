@@ -30,21 +30,15 @@
 // #include MBEDTLS_CONFIG_FILE
 // #endif
 
+#define MBEDTLS_SELF_TEST
+
 #include "ctr_drbg.h"
 
 #include <string.h>
 
-#if defined(MBEDTLS_FS_IO)
-#include <stdio.h>
-#endif
-
 #if defined(MBEDTLS_SELF_TEST)
-#if defined(MBEDTLS_PLATFORM_C)
-#include "mbedtls/platform.h"
-#else
 #include <stdio.h>
 #define mbedtls_printf printf
-#endif /* MBEDTLS_PLATFORM_C */
 #endif /* MBEDTLS_SELF_TEST */
 
 /* Implementation that should never be optimized out by the compiler */
@@ -413,65 +407,6 @@ int mbedtls_ctr_drbg_random( void *p_rng, unsigned char *output, size_t output_l
     return( ret );
 }
 
-#if defined(MBEDTLS_FS_IO)
-int mbedtls_ctr_drbg_write_seed_file( mbedtls_ctr_drbg_context *ctx, const char *path )
-{
-    int ret = MBEDTLS_ERR_CTR_DRBG_FILE_IO_ERROR;
-    FILE *f;
-    unsigned char buf[ MBEDTLS_CTR_DRBG_MAX_INPUT ];
-
-    if( ( f = fopen( path, "wb" ) ) == NULL )
-        return( MBEDTLS_ERR_CTR_DRBG_FILE_IO_ERROR );
-
-    if( ( ret = mbedtls_ctr_drbg_random( ctx, buf, MBEDTLS_CTR_DRBG_MAX_INPUT ) ) != 0 )
-        goto exit;
-
-    if( fwrite( buf, 1, MBEDTLS_CTR_DRBG_MAX_INPUT, f ) != MBEDTLS_CTR_DRBG_MAX_INPUT )
-    {
-        ret = MBEDTLS_ERR_CTR_DRBG_FILE_IO_ERROR;
-        goto exit;
-    }
-
-    ret = 0;
-
-exit:
-    fclose( f );
-    return( ret );
-}
-
-int mbedtls_ctr_drbg_update_seed_file( mbedtls_ctr_drbg_context *ctx, const char *path )
-{
-    FILE *f;
-    size_t n;
-    unsigned char buf[ MBEDTLS_CTR_DRBG_MAX_INPUT ];
-
-    if( ( f = fopen( path, "rb" ) ) == NULL )
-        return( MBEDTLS_ERR_CTR_DRBG_FILE_IO_ERROR );
-
-    fseek( f, 0, SEEK_END );
-    n = (size_t) ftell( f );
-    fseek( f, 0, SEEK_SET );
-
-    if( n > MBEDTLS_CTR_DRBG_MAX_INPUT )
-    {
-        fclose( f );
-        return( MBEDTLS_ERR_CTR_DRBG_INPUT_TOO_BIG );
-    }
-
-    if( fread( buf, 1, n, f ) != n )
-    {
-        fclose( f );
-        return( MBEDTLS_ERR_CTR_DRBG_FILE_IO_ERROR );
-    }
-
-    fclose( f );
-
-    mbedtls_ctr_drbg_update( ctx, buf, n );
-
-    return( mbedtls_ctr_drbg_write_seed_file( ctx, path ) );
-}
-#endif /* MBEDTLS_FS_IO */
-
 #if defined(MBEDTLS_SELF_TEST)
 
 static const unsigned char entropy_source_pr[96] =
@@ -587,3 +522,11 @@ int mbedtls_ctr_drbg_self_test( int verbose )
     return( 0 );
 }
 #endif /* MBEDTLS_SELF_TEST */
+
+int main()
+{
+    #if defined(MBEDTLS_SELF_TEST)
+    mbedtls_ctr_drbg_self_test(1);
+    #endif /* MBEDTLS_SELF_TEST */
+    return 0;
+}
