@@ -2,3 +2,5 @@
 *.o
 hmac
 ctr
+*.vo
+*.glob
