@@ -1,7 +1,5 @@
-Require Import Integers.
 Require Import Coqlib.
 Require Import List. Import ListNotations.
-Require Import general_lemmas.
 
 Definition HMAC_DRBG_update (HMAC: list Z -> list Z -> list Z) (provided_data K V: list Z): (list Z * list Z) :=
   let K := HMAC K (V ++ [0;0;0;0] ++ provided_data) in
