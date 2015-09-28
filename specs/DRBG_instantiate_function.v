@@ -2,13 +2,12 @@ Require Import Integers.
 Require Import Coqlib.
 Require Import List. Import ListNotations.
 Require Import DRBG_working_state.
-
-Definition state_handle: Type := (DRBG_working_state)%type.
+Require Import DRBG_state_handle.
 
 Inductive result :=
 | error: result
 | catastrophic_error: result
-| success: state_handle -> result.
+| success: DRBG_state_handle -> result.
 
 Inductive entropy_result :=
 | entropy_error: entropy_result
