@@ -13,7 +13,7 @@ Function HMAC_DRBG_generate_helper (HMAC: list Z -> list Z -> list Z) (key v: li
   else
     let v := HMAC key v in
     let temp := v in
-    let len := 8%nat in (* TODO get this from property of HMAC *)
+    let len := 32%nat in (* TODO get this from property of HMAC *)
     let (v, rest) := HMAC_DRBG_generate_helper HMAC key v (requested_number_of_bits - (Z.of_nat len)) in
     (v, temp ++ v).
 Proof.
