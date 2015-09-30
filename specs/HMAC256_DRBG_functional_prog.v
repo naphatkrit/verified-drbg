@@ -21,7 +21,7 @@ Definition DRBG_instantiate_check (key value: string) :=
   let key := hexstring_to_Zlist key in
   let value := hexstring_to_Zlist value in
   match test_HMAC256_DRBG_instantiate_function 256 false [] with
-    | instantiate_success (value', key', _) => listZ_eq value value' = true /\ listZ_eq key key' = true
+    | instantiate_success ((value', key', _), _) => listZ_eq value value' = true /\ listZ_eq key key' = true
     | _ => False
   end.
 

@@ -26,7 +26,7 @@ Definition DRBG_instantiate_function (instantiate_algorithm: list Z -> list Z ->
                | entropy_success entropy_input =>
                  let nonce := get_nonce tt in
                  let initial_working_state := instantiate_algorithm entropy_input nonce personalization_string security_strength in
-                 instantiate_success initial_working_state (* TODO store other info like prediction_resistance *)
+                 instantiate_success (initial_working_state, security_strength) (* TODO store other info like prediction_resistance *)
              end
        end.
              
