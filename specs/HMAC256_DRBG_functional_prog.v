@@ -5,6 +5,7 @@ Require Import Coq.Strings.Ascii.
 Require Import functional_prog.
 Require Import HMAC256_functional_prog.
 Require Import DRBG_state_handle.
+Require Import DRBG_entropy_result.
 Require Import DRBG_instantiate_function.
 Require Import HMAC_DRBG_instantiate_algorithm.
 Require Import DRBG_generate_function.

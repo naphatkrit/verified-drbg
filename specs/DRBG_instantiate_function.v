@@ -3,15 +3,12 @@ Require Import Coqlib.
 Require Import List. Import ListNotations.
 Require Import DRBG_working_state.
 Require Import DRBG_state_handle.
+Require Import DRBG_entropy_result.
 
 Inductive instantiate_result :=
 | instantiate_error: instantiate_result
 | instantiate_catastrophic_error: instantiate_result
 | instantiate_success: DRBG_state_handle -> instantiate_result.
-
-Inductive entropy_result :=
-| entropy_error: entropy_result
-| entropy_success: list Z -> entropy_result.
 
 Definition DRBG_instantiate_function (instantiate_algorithm: list Z -> list Z -> list Z -> Z -> DRBG_working_state) (get_entropy_input: Z -> Z -> Z -> bool -> entropy_result) (min_entropy_length max_entropy_length: Z) (get_nonce: unit -> list Z) (highest_supported_security_strength: Z) (max_personalization_string_length: Z) (prediction_resistance_supported: bool) (requested_instantiation_security_strength: Z) (prediction_resistance_flag: bool) (personalization_string: list Z): instantiate_result :=
   if Z.gtb requested_instantiation_security_strength highest_supported_security_strength then instantiate_error
