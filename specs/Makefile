@@ -1,5 +1,5 @@
 COQC=coqc -I ~/VST -R ~/compcert -as compcert
-VOFILES=DRBG_generate_function.vo DRBG_instantiate_function.vo DRBG_state_handle.vo HMAC256_DRBG_functional_prog.vo HMAC_DRBG_generate_algorithm.vo HMAC_DRBG_instantiate_algorithm.vo HMAC_DRBG_generate.vo HMAC_DRBG_update.vo DRBG_working_state.vo DRBG_generate_algorithm_result.vo
+VOFILES=DRBG_generate_function.vo DRBG_instantiate_function.vo DRBG_state_handle.vo HMAC256_DRBG_functional_prog.vo HMAC_DRBG_generate_algorithm.vo HMAC_DRBG_instantiate_algorithm.vo HMAC_DRBG_generate.vo HMAC_DRBG_update.vo DRBG_working_state.vo DRBG_generate_algorithm_result.vo HMAC_DRBG_reseed_algorithm.vo
 GLOBFILES=$(VOFILES:.vo=.glob)
 
 all: HMAC256_DRBG_functional_prog.vo
@@ -10,6 +10,9 @@ clean:
 
 %.vo : %.v
 	$(COQC) $<
+
+HMAC_DRBG_reseed_algorithm.vo: HMAC_DRBG_reseed_algorithm.v DRBG_working_state.vo HMAC_DRBG_update.vo
+	$(COQC) HMAC_DRBG_reseed_algorithm.v
 
 DRBG_generate_function.vo: DRBG_generate_function.v DRBG_generate_algorithm_result.vo DRBG_working_state.vo DRBG_state_handle.vo
 	$(COQC) DRBG_generate_function.v
