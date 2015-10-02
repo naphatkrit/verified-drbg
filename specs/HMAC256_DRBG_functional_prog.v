@@ -5,6 +5,8 @@ Require Import DRBG_instantiate_function.
 Require Import HMAC_DRBG_instantiate_algorithm.
 Require Import DRBG_generate_function.
 Require Import HMAC_DRBG_generate_algorithm.
+Require Import DRBG_reseed_function.
+Require Import HMAC_DRBG_reseed_algorithm.
 
 Definition HMAC256_DRBG_instantiate_algorithm := HMAC_DRBG_instantiate_algorithm HMAC256.
 
@@ -13,3 +15,7 @@ Definition HMAC256_DRBG_instantiate_function := DRBG_instantiate_function HMAC25
 Definition HMAC256_DRBG_generate_algorithm := HMAC_DRBG_generate_algorithm HMAC256 1024.
 
 Definition HMAC256_DRBG_generate_function := DRBG_generate_function HMAC256_DRBG_generate_algorithm.
+
+Definition HMAC256_DRBG_reseed_algorithm := HMAC_DRBG_reseed_algorithm HMAC256.
+
+Definition HMAC256_DRBG_reseed_function := DRBG_reseed_function HMAC256_DRBG_reseed_algorithm.

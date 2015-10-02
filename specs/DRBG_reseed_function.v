@@ -25,5 +25,3 @@ Definition DRBG_reseed_function (reseed_algorithm: DRBG_working_state -> list Z 
               reseed_success (new_working_state, security_strength, prediction_resistance_flag)
           end
     end.
-
-           
