@@ -19,7 +19,7 @@ DRBG_reseed_function.vo: DRBG_reseed_function.v DRBG_state_handle.vo DRBG_workin
 HMAC_DRBG_reseed_algorithm.vo: HMAC_DRBG_reseed_algorithm.v DRBG_working_state.vo HMAC_DRBG_update.vo
 	$(COQC) HMAC_DRBG_reseed_algorithm.v
 
-DRBG_generate_function.vo: DRBG_generate_function.v DRBG_generate_algorithm_result.vo DRBG_working_state.vo DRBG_state_handle.vo
+DRBG_generate_function.vo: DRBG_generate_function.v DRBG_generate_algorithm_result.vo DRBG_working_state.vo DRBG_state_handle.vo DRBG_reseed_function.vo
 	$(COQC) DRBG_generate_function.v
 
 DRBG_generate_algorithm_result.vo: DRBG_generate_algorithm_result.v DRBG_working_state.vo

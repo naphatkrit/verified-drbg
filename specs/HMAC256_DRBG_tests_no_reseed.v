@@ -8,13 +8,16 @@ Require Import DRBG_entropy_result.
 Require Import DRBG_state_handle.
 Require Import DRBG_generate_function.
 Require Import DRBG_instantiate_function.
+Require Import DRBG_reseed_function.
 
 Definition get_entropy_input_dummy (result: string) (x y z: Z) (b: bool): entropy_result := entropy_success (hexstring_to_Zlist result).
 
 Definition get_nonce_dummy (result: string) (_: unit) := hexstring_to_Zlist result.
 
+Definition noop_reseed_function (x: DRBG_state_handle) (_: bool) (_: list Z) := reseed_success x.
+
 Fixpoint DRBG_generate_check (state_handle: DRBG_state_handle) (internal_states: list (string * string * string)) (returned_bits: string) :=
-  let test_HMAC256_DRBG_generate_function := HMAC256_DRBG_generate_function 128 128 in
+  let test_HMAC256_DRBG_generate_function := HMAC256_DRBG_generate_function noop_reseed_function 128 128 in
   match internal_states with
     | [] => True
     | (key, v, additional_input)::[] =>
