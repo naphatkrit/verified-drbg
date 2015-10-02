@@ -2,7 +2,7 @@ COQC=coqc -I ~/VST -R ~/compcert -as compcert
 VOFILES=DRBG_generate_function.vo DRBG_instantiate_function.vo DRBG_state_handle.vo HMAC256_DRBG_functional_prog.vo HMAC_DRBG_generate_algorithm.vo HMAC_DRBG_instantiate_algorithm.vo HMAC_DRBG_generate.vo HMAC_DRBG_update.vo DRBG_working_state.vo DRBG_generate_algorithm_result.vo HMAC_DRBG_reseed_algorithm.vo DRBG_entropy_result.vo DRBG_reseed_function.vo
 GLOBFILES=$(VOFILES:.vo=.glob)
 
-all: HMAC256_DRBG_functional_prog.vo
+all: HMAC256_DRBG_tests_no_reseed.vo
 
 clean:
 	rm -f $(VOFILES)
@@ -29,8 +29,11 @@ DRBG_state_handle.vo: DRBG_working_state.vo DRBG_state_handle.v
 DRBG_instantiate_function.vo: DRBG_instantiate_function.v DRBG_state_handle.vo DRBG_working_state.vo DRBG_entropy_result.vo
 	$(COQC) DRBG_instantiate_function.v
 
-HMAC256_DRBG_functional_prog.vo: HMAC256_DRBG_functional_prog.v DRBG_instantiate_function.vo HMAC_DRBG_instantiate_algorithm.vo DRBG_generate_function.vo HMAC_DRBG_generate_algorithm.vo DRBG_entropy_result.vo
+HMAC256_DRBG_functional_prog.vo: HMAC256_DRBG_functional_prog.v DRBG_instantiate_function.vo HMAC_DRBG_instantiate_algorithm.vo DRBG_generate_function.vo HMAC_DRBG_generate_algorithm.vo
 	$(COQC) HMAC256_DRBG_functional_prog.v
+
+HMAC256_DRBG_tests_no_reseed.vo: HMAC256_DRBG_tests_no_reseed.v HMAC256_DRBG_functional_prog.vo DRBG_entropy_result.vo DRBG_state_handle.vo DRBG_generate_function.vo DRBG_instantiate_function.vo
+	$(COQC) HMAC256_DRBG_tests_no_reseed.v
 
 HMAC_DRBG_generate_algorithm.vo: HMAC_DRBG_generate_algorithm.v DRBG_working_state.vo DRBG_state_handle.vo DRBG_generate_algorithm_result.vo
 	$(COQC) HMAC_DRBG_generate_algorithm.v
