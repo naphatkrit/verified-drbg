@@ -11,12 +11,12 @@ Inductive generate_result :=
 | generate_success: list Z -> DRBG_state_handle -> generate_result.
 
 Fixpoint DRBG_generate_function_helper (generate_algorithm: DRBG_working_state -> Z -> list Z -> DRBG_generate_algorithm_result) (reseed_function: DRBG_state_handle -> bool -> list Z -> reseed_result) (state_handle: DRBG_state_handle) (requested_number_of_bytes: Z) (prediction_resistance_request: bool) (additional_input: list Z) (should_reseed: bool) (count: nat): (list Z * DRBG_working_state) :=
-  let state_handle := if should_reseed then
+  let (state_handle, additional_input) := if should_reseed then
                         match reseed_function state_handle prediction_resistance_request additional_input with
-                          | reseed_success x => x
-                          | _ => state_handle (* TODO bogus *)
+                          | reseed_success x => (x, [])
+                          | _ => (state_handle, []) (* TODO bogus *)
                         end
-                      else state_handle in
+                      else (state_handle, additional_input) in
   let '(working_state, security_strength, prediction_resistance_flag) := state_handle in
   match generate_algorithm working_state requested_number_of_bytes additional_input with
     | generate_algorithm_reseed_required =>

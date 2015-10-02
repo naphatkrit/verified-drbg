@@ -26,4 +26,3 @@ Definition DRBG_instantiate_function (instantiate_algorithm: list Z -> list Z ->
                  instantiate_success (initial_working_state, security_strength, prediction_resistance_flag)
              end
        end.
-             
