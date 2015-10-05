@@ -2,7 +2,7 @@ COQC=coqc -I ~/VST -R ~/compcert -as compcert
 VOFILES=DRBG_generate_function.vo DRBG_instantiate_function.vo DRBG_state_handle.vo HMAC256_DRBG_functional_prog.vo HMAC_DRBG_generate_algorithm.vo HMAC_DRBG_instantiate_algorithm.vo HMAC_DRBG_generate.vo HMAC_DRBG_update.vo DRBG_working_state.vo DRBG_generate_algorithm_result.vo HMAC_DRBG_reseed_algorithm.vo DRBG_entropy_result.vo DRBG_reseed_function.vo HMAC256_DRBG_tests_no_reseed.vo HMAC256_DRBG_tests_pr_false.vo HMAC256_DRBG_tests_pr_true.vo
 GLOBFILES=$(VOFILES:.vo=.glob)
 
-all: tests
+all: HMAC256_DRBG_functional_prog.vo
 
 clean:
 	rm -f $(VOFILES)
