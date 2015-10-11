@@ -2,5 +2,6 @@
 *.o
 hmac
 ctr
+vst_hmac
 *.vo
 *.glob
