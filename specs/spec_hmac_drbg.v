@@ -4,7 +4,7 @@ Local Open Scope logic.
 
 Require Import hmac_drbg.
 Require Import HMAC256_DRBG_functional_prog.
-Require Import specs_mocked_md.
+Require Import spec_mocked_md.
 
 Instance CompSpecs : compspecs.
 Proof. make_compspecs prog. Defined.
@@ -25,7 +25,7 @@ Definition hmac256drbg_relate (a: hmac256drbgabs) (r: hmac256drbgstate) :=
                             /\ Vint (Int.repr reseed_interval) = reseed_interval'
                             /\ Vint f_entropy = f_entropy'
                             /\ Vint p_entropy = p_entropy'
-                                                                  
+
                end
   end.
 
