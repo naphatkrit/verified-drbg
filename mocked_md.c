@@ -1,6 +1,6 @@
 #include <stdlib.h>
 #include "md.h"
-#include "hmac_NK.c"
+#include "hmac.h"
 
 struct mbedtls_md_info_t {};
 
