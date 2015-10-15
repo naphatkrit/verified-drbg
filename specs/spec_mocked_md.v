@@ -20,4 +20,4 @@ Definition md_relate (a: mdabs) (r: mdstate): Prop :=
                /\ Vint hmac_ctx_ptr = snd (snd r)
   end.
 
-Definition t_struct_md_ctx_st := Tstruct __243 noattr.
+Definition t_struct_md_ctx_st := Tstruct _mbedtls_md_context_t noattr.

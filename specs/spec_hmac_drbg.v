@@ -32,7 +32,7 @@ Definition hmac256drbg_relate (a: hmac256drbgabs) (r: hmac256drbgstate) :=
 Definition hmac256drbgabs_value (a: hmac256drbgabs): list Z :=
   match a with HMAC256DRBGabs _ V _ _ _ _ _ _ => V end.
 
-Definition t_struct_hmac256drbg_context_st := Tstruct __193 noattr.
+Definition t_struct_hmac256drbg_context_st := Tstruct _mbedtls_hmac_drbg_context noattr.
 
 Definition hmac_drbg_update_spec :=
   DECLARE _mbedtls_hmac_drbg_update
