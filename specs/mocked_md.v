@@ -68,7 +68,7 @@ Definition _o_ctx : ident := 19%positive.
 Definition ___i64_utof : ident := 39%positive.
 Definition _ilen : ident := 83%positive.
 Definition _malloc : ident := 61%positive.
-Definition __243 : ident := 11%positive.
+Definition _mbedtls_md_context_t : ident := 11%positive.
 Definition ___i64_utod : ident := 37%positive.
 Definition _mbedtls_md_hmac_reset : ident := 81%positive.
 Definition _mbedtls_md_setup : ident := 76%positive.
@@ -136,7 +136,7 @@ Definition f_mbedtls_md_get_size := {|
 Definition f_mbedtls_md_setup := {|
   fn_return := tint;
   fn_callconv := cc_default;
-  fn_params := ((_ctx, (tptr (Tstruct __243 noattr))) ::
+  fn_params := ((_ctx, (tptr (Tstruct _mbedtls_md_context_t noattr))) ::
                 (_md_info, (tptr (Tstruct _mbedtls_md_info_t noattr))) ::
                 (_hmac, tint) :: nil);
   fn_vars := nil;
@@ -160,8 +160,9 @@ Definition f_mbedtls_md_setup := {|
     (Ssequence
       (Sassign
         (Efield
-          (Ederef (Etempvar _ctx (tptr (Tstruct __243 noattr)))
-            (Tstruct __243 noattr)) _hmac_ctx (tptr tvoid))
+          (Ederef
+            (Etempvar _ctx (tptr (Tstruct _mbedtls_md_context_t noattr)))
+            (Tstruct _mbedtls_md_context_t noattr)) _hmac_ctx (tptr tvoid))
         (Etempvar _sha_ctx (tptr (Tstruct _hmac_ctx_st noattr))))
       (Sreturn (Some (Econst_int (Int.repr 0) tint))))))
 |}.
@@ -169,7 +170,7 @@ Definition f_mbedtls_md_setup := {|
 Definition f_mbedtls_md_hmac_starts := {|
   fn_return := tint;
   fn_callconv := cc_default;
-  fn_params := ((_ctx, (tptr (Tstruct __243 noattr))) ::
+  fn_params := ((_ctx, (tptr (Tstruct _mbedtls_md_context_t noattr))) ::
                 (_key, (tptr tuchar)) :: (_keylen, tuint) :: nil);
   fn_vars := nil;
   fn_temps := nil;
@@ -181,8 +182,8 @@ Definition f_mbedtls_md_hmac_starts := {|
                          (Tcons (tptr tuchar) (Tcons tint Tnil))) tvoid
                        cc_default))
     ((Efield
-       (Ederef (Etempvar _ctx (tptr (Tstruct __243 noattr)))
-         (Tstruct __243 noattr)) _hmac_ctx (tptr tvoid)) ::
+       (Ederef (Etempvar _ctx (tptr (Tstruct _mbedtls_md_context_t noattr)))
+         (Tstruct _mbedtls_md_context_t noattr)) _hmac_ctx (tptr tvoid)) ::
      (Ecast (Etempvar _key (tptr tuchar)) (tptr tuchar)) ::
      (Etempvar _keylen tuint) :: nil))
   (Sreturn (Some (Econst_int (Int.repr 0) tint))))
@@ -191,7 +192,7 @@ Definition f_mbedtls_md_hmac_starts := {|
 Definition f_mbedtls_md_hmac_reset := {|
   fn_return := tint;
   fn_callconv := cc_default;
-  fn_params := ((_ctx, (tptr (Tstruct __243 noattr))) :: nil);
+  fn_params := ((_ctx, (tptr (Tstruct _mbedtls_md_context_t noattr))) :: nil);
   fn_vars := ((_buf, (tarray tuchar 32)) :: nil);
   fn_temps := nil;
   fn_body :=
@@ -201,8 +202,8 @@ Definition f_mbedtls_md_hmac_reset := {|
                         (Tcons (tptr (Tstruct _hmac_ctx_st noattr))
                           (Tcons (tptr tuchar) Tnil)) tvoid cc_default))
     ((Efield
-       (Ederef (Etempvar _ctx (tptr (Tstruct __243 noattr)))
-         (Tstruct __243 noattr)) _hmac_ctx (tptr tvoid)) ::
+       (Ederef (Etempvar _ctx (tptr (Tstruct _mbedtls_md_context_t noattr)))
+         (Tstruct _mbedtls_md_context_t noattr)) _hmac_ctx (tptr tvoid)) ::
      (Evar _buf (tarray tuchar 32)) :: nil))
   (Sreturn (Some (Econst_int (Int.repr 0) tint))))
 |}.
@@ -210,7 +211,7 @@ Definition f_mbedtls_md_hmac_reset := {|
 Definition f_mbedtls_md_hmac_update := {|
   fn_return := tint;
   fn_callconv := cc_default;
-  fn_params := ((_ctx, (tptr (Tstruct __243 noattr))) ::
+  fn_params := ((_ctx, (tptr (Tstruct _mbedtls_md_context_t noattr))) ::
                 (_input, (tptr tuchar)) :: (_ilen, tuint) :: nil);
   fn_vars := nil;
   fn_temps := nil;
@@ -222,8 +223,8 @@ Definition f_mbedtls_md_hmac_update := {|
                            (Tcons (tptr tvoid) (Tcons tuint Tnil))) tvoid
                          cc_default))
     ((Efield
-       (Ederef (Etempvar _ctx (tptr (Tstruct __243 noattr)))
-         (Tstruct __243 noattr)) _hmac_ctx (tptr tvoid)) ::
+       (Ederef (Etempvar _ctx (tptr (Tstruct _mbedtls_md_context_t noattr)))
+         (Tstruct _mbedtls_md_context_t noattr)) _hmac_ctx (tptr tvoid)) ::
      (Etempvar _input (tptr tuchar)) :: (Etempvar _ilen tuint) :: nil))
   (Sreturn (Some (Econst_int (Int.repr 0) tint))))
 |}.
@@ -231,7 +232,7 @@ Definition f_mbedtls_md_hmac_update := {|
 Definition f_mbedtls_md_hmac_finish := {|
   fn_return := tint;
   fn_callconv := cc_default;
-  fn_params := ((_ctx, (tptr (Tstruct __243 noattr))) ::
+  fn_params := ((_ctx, (tptr (Tstruct _mbedtls_md_context_t noattr))) ::
                 (_output, (tptr tuchar)) :: nil);
   fn_vars := nil;
   fn_temps := nil;
@@ -242,8 +243,8 @@ Definition f_mbedtls_md_hmac_finish := {|
                         (Tcons (tptr (Tstruct _hmac_ctx_st noattr))
                           (Tcons (tptr tuchar) Tnil)) tvoid cc_default))
     ((Efield
-       (Ederef (Etempvar _ctx (tptr (Tstruct __243 noattr)))
-         (Tstruct __243 noattr)) _hmac_ctx (tptr tvoid)) ::
+       (Ederef (Etempvar _ctx (tptr (Tstruct _mbedtls_md_context_t noattr)))
+         (Tstruct _mbedtls_md_context_t noattr)) _hmac_ctx (tptr tvoid)) ::
      (Etempvar _output (tptr tuchar)) :: nil))
   (Sreturn (Some (Econst_int (Int.repr 0) tint))))
 |}.
@@ -251,7 +252,7 @@ Definition f_mbedtls_md_hmac_finish := {|
 Definition f_mbedtls_md_free := {|
   fn_return := tvoid;
   fn_callconv := cc_default;
-  fn_params := ((_ctx, (tptr (Tstruct __243 noattr))) :: nil);
+  fn_params := ((_ctx, (tptr (Tstruct _mbedtls_md_context_t noattr))) :: nil);
   fn_vars := nil;
   fn_temps := nil;
   fn_body :=
@@ -261,17 +262,19 @@ Definition f_mbedtls_md_free := {|
                           (Tcons (tptr (Tstruct _hmac_ctx_st noattr)) Tnil)
                           tvoid cc_default))
     ((Efield
-       (Ederef (Etempvar _ctx (tptr (Tstruct __243 noattr)))
-         (Tstruct __243 noattr)) _hmac_ctx (tptr tvoid)) :: nil))
+       (Ederef (Etempvar _ctx (tptr (Tstruct _mbedtls_md_context_t noattr)))
+         (Tstruct _mbedtls_md_context_t noattr)) _hmac_ctx (tptr tvoid)) ::
+     nil))
   (Scall None
     (Evar _free (Tfunction (Tcons (tptr tvoid) Tnil) tvoid cc_default))
     ((Efield
-       (Ederef (Etempvar _ctx (tptr (Tstruct __243 noattr)))
-         (Tstruct __243 noattr)) _hmac_ctx (tptr tvoid)) :: nil)))
+       (Ederef (Etempvar _ctx (tptr (Tstruct _mbedtls_md_context_t noattr)))
+         (Tstruct _mbedtls_md_context_t noattr)) _hmac_ctx (tptr tvoid)) ::
+     nil)))
 |}.
 
 Definition composites : list composite_definition :=
-(Composite __243 Struct
+(Composite _mbedtls_md_context_t Struct
    ((_md_info, (tptr (Tstruct _mbedtls_md_info_t noattr))) ::
     (_md_ctx, (tptr tvoid)) :: (_hmac_ctx, (tptr tvoid)) :: nil)
    noattr ::

@@ -94,12 +94,12 @@ Definition ___builtin_mull : ident := 6%positive.
 Definition ___stringlit_1 : ident := 118%positive.
 Definition _mbedtls_hmac_drbg_set_entropy_len : ident := 98%positive.
 Definition ___builtin_va_arg : ident := 26%positive.
-Definition __193 : ident := 19%positive.
+Definition _mbedtls_hmac_drbg_context : ident := 19%positive.
 Definition ___i64_sdiv : ident := 39%positive.
 Definition _seed : ident := 90%positive.
 Definition _K : ident := 83%positive.
 Definition _mbedtls_md_free : ident := 61%positive.
-Definition __128 : ident := 11%positive.
+Definition _mbedtls_md_context_t : ident := 11%positive.
 Definition _hmac_drbg_self_test_entropy : ident := 116%positive.
 Definition _mbedtls_hmac_drbg_set_prediction_resistance : ident := 97%positive.
 Definition ___stringlit_5 : ident := 122%positive.
@@ -232,7 +232,8 @@ Definition f_mbedtls_zeroize := {|
 Definition f_mbedtls_hmac_drbg_init := {|
   fn_return := tvoid;
   fn_callconv := cc_default;
-  fn_params := ((_ctx, (tptr (Tstruct __193 noattr))) :: nil);
+  fn_params := ((_ctx, (tptr (Tstruct _mbedtls_hmac_drbg_context noattr))) ::
+                nil);
   fn_vars := nil;
   fn_temps := nil;
   fn_body :=
@@ -240,15 +241,15 @@ Definition f_mbedtls_hmac_drbg_init := {|
   (Evar _memset (Tfunction
                   (Tcons (tptr tvoid) (Tcons tint (Tcons tuint Tnil)))
                   (tptr tvoid) cc_default))
-  ((Etempvar _ctx (tptr (Tstruct __193 noattr))) ::
+  ((Etempvar _ctx (tptr (Tstruct _mbedtls_hmac_drbg_context noattr))) ::
    (Econst_int (Int.repr 0) tint) ::
-   (Esizeof (Tstruct __193 noattr) tuint) :: nil))
+   (Esizeof (Tstruct _mbedtls_hmac_drbg_context noattr) tuint) :: nil))
 |}.
 
 Definition f_mbedtls_hmac_drbg_update := {|
   fn_return := tvoid;
   fn_callconv := cc_default;
-  fn_params := ((_ctx, (tptr (Tstruct __193 noattr))) ::
+  fn_params := ((_ctx, (tptr (Tstruct _mbedtls_hmac_drbg_context noattr))) ::
                 (_additional, (tptr tuchar)) :: (_add_len, tuint) :: nil);
   fn_vars := ((_sep, (tarray tuchar 1)) :: (_K, (tarray tuchar 32)) :: nil);
   fn_temps := ((_md_len, tuint) :: (_rounds, tuchar) ::
@@ -264,8 +265,10 @@ Definition f_mbedtls_hmac_drbg_update := {|
                                      Tnil) tuchar cc_default))
       ((Efield
          (Efield
-           (Ederef (Etempvar _ctx (tptr (Tstruct __193 noattr)))
-             (Tstruct __193 noattr)) _md_ctx (Tstruct __128 noattr)) _md_info
+           (Ederef
+             (Etempvar _ctx (tptr (Tstruct _mbedtls_hmac_drbg_context noattr)))
+             (Tstruct _mbedtls_hmac_drbg_context noattr)) _md_ctx
+           (Tstruct _mbedtls_md_context_t noattr)) _md_info
          (tptr (Tstruct _mbedtls_md_info_t noattr))) :: nil))
     (Sset _md_len (Etempvar 127%positive tuchar)))
   (Ssequence
@@ -302,43 +305,50 @@ Definition f_mbedtls_hmac_drbg_update := {|
             (Scall None
               (Evar _mbedtls_md_hmac_reset (Tfunction
                                              (Tcons
-                                               (tptr (Tstruct __128 noattr))
+                                               (tptr (Tstruct _mbedtls_md_context_t noattr))
                                                Tnil) tint cc_default))
               ((Eaddrof
                  (Efield
-                   (Ederef (Etempvar _ctx (tptr (Tstruct __193 noattr)))
-                     (Tstruct __193 noattr)) _md_ctx (Tstruct __128 noattr))
-                 (tptr (Tstruct __128 noattr))) :: nil))
+                   (Ederef
+                     (Etempvar _ctx (tptr (Tstruct _mbedtls_hmac_drbg_context noattr)))
+                     (Tstruct _mbedtls_hmac_drbg_context noattr)) _md_ctx
+                   (Tstruct _mbedtls_md_context_t noattr))
+                 (tptr (Tstruct _mbedtls_md_context_t noattr))) :: nil))
             (Ssequence
               (Scall None
                 (Evar _mbedtls_md_hmac_update (Tfunction
                                                 (Tcons
-                                                  (tptr (Tstruct __128 noattr))
+                                                  (tptr (Tstruct _mbedtls_md_context_t noattr))
                                                   (Tcons (tptr tuchar)
                                                     (Tcons tuint Tnil))) tint
                                                 cc_default))
                 ((Eaddrof
                    (Efield
-                     (Ederef (Etempvar _ctx (tptr (Tstruct __193 noattr)))
-                       (Tstruct __193 noattr)) _md_ctx
-                     (Tstruct __128 noattr)) (tptr (Tstruct __128 noattr))) ::
+                     (Ederef
+                       (Etempvar _ctx (tptr (Tstruct _mbedtls_hmac_drbg_context noattr)))
+                       (Tstruct _mbedtls_hmac_drbg_context noattr)) _md_ctx
+                     (Tstruct _mbedtls_md_context_t noattr))
+                   (tptr (Tstruct _mbedtls_md_context_t noattr))) ::
                  (Efield
-                   (Ederef (Etempvar _ctx (tptr (Tstruct __193 noattr)))
-                     (Tstruct __193 noattr)) _V (tarray tuchar 32)) ::
-                 (Etempvar _md_len tuint) :: nil))
+                   (Ederef
+                     (Etempvar _ctx (tptr (Tstruct _mbedtls_hmac_drbg_context noattr)))
+                     (Tstruct _mbedtls_hmac_drbg_context noattr)) _V
+                   (tarray tuchar 32)) :: (Etempvar _md_len tuint) :: nil))
               (Ssequence
                 (Scall None
                   (Evar _mbedtls_md_hmac_update (Tfunction
                                                   (Tcons
-                                                    (tptr (Tstruct __128 noattr))
+                                                    (tptr (Tstruct _mbedtls_md_context_t noattr))
                                                     (Tcons (tptr tuchar)
                                                       (Tcons tuint Tnil)))
                                                   tint cc_default))
                   ((Eaddrof
                      (Efield
-                       (Ederef (Etempvar _ctx (tptr (Tstruct __193 noattr)))
-                         (Tstruct __193 noattr)) _md_ctx
-                       (Tstruct __128 noattr)) (tptr (Tstruct __128 noattr))) ::
+                       (Ederef
+                         (Etempvar _ctx (tptr (Tstruct _mbedtls_hmac_drbg_context noattr)))
+                         (Tstruct _mbedtls_hmac_drbg_context noattr)) _md_ctx
+                       (Tstruct _mbedtls_md_context_t noattr))
+                     (tptr (Tstruct _mbedtls_md_context_t noattr))) ::
                    (Evar _sep (tarray tuchar 1)) ::
                    (Econst_int (Int.repr 1) tint) :: nil))
                 (Ssequence
@@ -347,17 +357,17 @@ Definition f_mbedtls_hmac_drbg_update := {|
                     (Scall None
                       (Evar _mbedtls_md_hmac_update (Tfunction
                                                       (Tcons
-                                                        (tptr (Tstruct __128 noattr))
+                                                        (tptr (Tstruct _mbedtls_md_context_t noattr))
                                                         (Tcons (tptr tuchar)
                                                           (Tcons tuint Tnil)))
                                                       tint cc_default))
                       ((Eaddrof
                          (Efield
                            (Ederef
-                             (Etempvar _ctx (tptr (Tstruct __193 noattr)))
-                             (Tstruct __193 noattr)) _md_ctx
-                           (Tstruct __128 noattr))
-                         (tptr (Tstruct __128 noattr))) ::
+                             (Etempvar _ctx (tptr (Tstruct _mbedtls_hmac_drbg_context noattr)))
+                             (Tstruct _mbedtls_hmac_drbg_context noattr))
+                           _md_ctx (Tstruct _mbedtls_md_context_t noattr))
+                         (tptr (Tstruct _mbedtls_md_context_t noattr))) ::
                        (Etempvar _additional (tptr tuchar)) ::
                        (Etempvar _add_len tuint) :: nil))
                     Sskip)
@@ -365,23 +375,23 @@ Definition f_mbedtls_hmac_drbg_update := {|
                     (Scall None
                       (Evar _mbedtls_md_hmac_finish (Tfunction
                                                       (Tcons
-                                                        (tptr (Tstruct __128 noattr))
+                                                        (tptr (Tstruct _mbedtls_md_context_t noattr))
                                                         (Tcons (tptr tuchar)
                                                           Tnil)) tint
                                                       cc_default))
                       ((Eaddrof
                          (Efield
                            (Ederef
-                             (Etempvar _ctx (tptr (Tstruct __193 noattr)))
-                             (Tstruct __193 noattr)) _md_ctx
-                           (Tstruct __128 noattr))
-                         (tptr (Tstruct __128 noattr))) ::
+                             (Etempvar _ctx (tptr (Tstruct _mbedtls_hmac_drbg_context noattr)))
+                             (Tstruct _mbedtls_hmac_drbg_context noattr))
+                           _md_ctx (Tstruct _mbedtls_md_context_t noattr))
+                         (tptr (Tstruct _mbedtls_md_context_t noattr))) ::
                        (Evar _K (tarray tuchar 32)) :: nil))
                     (Ssequence
                       (Scall None
                         (Evar _mbedtls_md_hmac_starts (Tfunction
                                                         (Tcons
-                                                          (tptr (Tstruct __128 noattr))
+                                                          (tptr (Tstruct _mbedtls_md_context_t noattr))
                                                           (Tcons
                                                             (tptr tuchar)
                                                             (Tcons tuint
@@ -390,17 +400,17 @@ Definition f_mbedtls_hmac_drbg_update := {|
                         ((Eaddrof
                            (Efield
                              (Ederef
-                               (Etempvar _ctx (tptr (Tstruct __193 noattr)))
-                               (Tstruct __193 noattr)) _md_ctx
-                             (Tstruct __128 noattr))
-                           (tptr (Tstruct __128 noattr))) ::
+                               (Etempvar _ctx (tptr (Tstruct _mbedtls_hmac_drbg_context noattr)))
+                               (Tstruct _mbedtls_hmac_drbg_context noattr))
+                             _md_ctx (Tstruct _mbedtls_md_context_t noattr))
+                           (tptr (Tstruct _mbedtls_md_context_t noattr))) ::
                          (Evar _K (tarray tuchar 32)) ::
                          (Etempvar _md_len tuint) :: nil))
                       (Ssequence
                         (Scall None
                           (Evar _mbedtls_md_hmac_update (Tfunction
                                                           (Tcons
-                                                            (tptr (Tstruct __128 noattr))
+                                                            (tptr (Tstruct _mbedtls_md_context_t noattr))
                                                             (Tcons
                                                               (tptr tuchar)
                                                               (Tcons tuint
@@ -409,19 +419,21 @@ Definition f_mbedtls_hmac_drbg_update := {|
                           ((Eaddrof
                              (Efield
                                (Ederef
-                                 (Etempvar _ctx (tptr (Tstruct __193 noattr)))
-                                 (Tstruct __193 noattr)) _md_ctx
-                               (Tstruct __128 noattr))
-                             (tptr (Tstruct __128 noattr))) ::
+                                 (Etempvar _ctx (tptr (Tstruct _mbedtls_hmac_drbg_context noattr)))
+                                 (Tstruct _mbedtls_hmac_drbg_context noattr))
+                               _md_ctx
+                               (Tstruct _mbedtls_md_context_t noattr))
+                             (tptr (Tstruct _mbedtls_md_context_t noattr))) ::
                            (Efield
                              (Ederef
-                               (Etempvar _ctx (tptr (Tstruct __193 noattr)))
-                               (Tstruct __193 noattr)) _V (tarray tuchar 32)) ::
+                               (Etempvar _ctx (tptr (Tstruct _mbedtls_hmac_drbg_context noattr)))
+                               (Tstruct _mbedtls_hmac_drbg_context noattr))
+                             _V (tarray tuchar 32)) ::
                            (Etempvar _md_len tuint) :: nil))
                         (Scall None
                           (Evar _mbedtls_md_hmac_finish (Tfunction
                                                           (Tcons
-                                                            (tptr (Tstruct __128 noattr))
+                                                            (tptr (Tstruct _mbedtls_md_context_t noattr))
                                                             (Tcons
                                                               (tptr tuchar)
                                                               Tnil)) tint
@@ -429,15 +441,16 @@ Definition f_mbedtls_hmac_drbg_update := {|
                           ((Eaddrof
                              (Efield
                                (Ederef
-                                 (Etempvar _ctx (tptr (Tstruct __193 noattr)))
-                                 (Tstruct __193 noattr)) _md_ctx
-                               (Tstruct __128 noattr))
-                             (tptr (Tstruct __128 noattr))) ::
+                                 (Etempvar _ctx (tptr (Tstruct _mbedtls_hmac_drbg_context noattr)))
+                                 (Tstruct _mbedtls_hmac_drbg_context noattr))
+                               _md_ctx
+                               (Tstruct _mbedtls_md_context_t noattr))
+                             (tptr (Tstruct _mbedtls_md_context_t noattr))) ::
                            (Efield
                              (Ederef
-                               (Etempvar _ctx (tptr (Tstruct __193 noattr)))
-                               (Tstruct __193 noattr)) _V (tarray tuchar 32)) ::
-                           nil))))))))))
+                               (Etempvar _ctx (tptr (Tstruct _mbedtls_hmac_drbg_context noattr)))
+                               (Tstruct _mbedtls_hmac_drbg_context noattr))
+                             _V (tarray tuchar 32)) :: nil))))))))))
         (Sassign
           (Ederef
             (Ebinop Oadd (Evar _sep (tarray tuchar 1))
@@ -452,7 +465,7 @@ Definition f_mbedtls_hmac_drbg_update := {|
 Definition f_mbedtls_hmac_drbg_seed_buf := {|
   fn_return := tint;
   fn_callconv := cc_default;
-  fn_params := ((_ctx, (tptr (Tstruct __193 noattr))) ::
+  fn_params := ((_ctx, (tptr (Tstruct _mbedtls_hmac_drbg_context noattr))) ::
                 (_md_info, (tptr (Tstruct _mbedtls_md_info_t noattr))) ::
                 (_data, (tptr tuchar)) :: (_data_len, tuint) :: nil);
   fn_vars := nil;
@@ -466,15 +479,18 @@ Definition f_mbedtls_hmac_drbg_seed_buf := {|
       (Ssequence
         (Scall (Some 130%positive)
           (Evar _mbedtls_md_setup (Tfunction
-                                    (Tcons (tptr (Tstruct __128 noattr))
+                                    (Tcons
+                                      (tptr (Tstruct _mbedtls_md_context_t noattr))
                                       (Tcons
                                         (tptr (Tstruct _mbedtls_md_info_t noattr))
                                         (Tcons tint Tnil))) tint cc_default))
           ((Eaddrof
              (Efield
-               (Ederef (Etempvar _ctx (tptr (Tstruct __193 noattr)))
-                 (Tstruct __193 noattr)) _md_ctx (Tstruct __128 noattr))
-             (tptr (Tstruct __128 noattr))) ::
+               (Ederef
+                 (Etempvar _ctx (tptr (Tstruct _mbedtls_hmac_drbg_context noattr)))
+                 (Tstruct _mbedtls_hmac_drbg_context noattr)) _md_ctx
+               (Tstruct _mbedtls_md_context_t noattr))
+             (tptr (Tstruct _mbedtls_md_context_t noattr))) ::
            (Etempvar _md_info (tptr (Tstruct _mbedtls_md_info_t noattr))) ::
            (Econst_int (Int.repr 1) tint) :: nil))
         (Sset 131%positive (Etempvar 130%positive tint)))
@@ -494,19 +510,23 @@ Definition f_mbedtls_hmac_drbg_seed_buf := {|
          nil))
       (Scall None
         (Evar _mbedtls_md_hmac_starts (Tfunction
-                                        (Tcons (tptr (Tstruct __128 noattr))
+                                        (Tcons
+                                          (tptr (Tstruct _mbedtls_md_context_t noattr))
                                           (Tcons (tptr tuchar)
                                             (Tcons tuint Tnil))) tint
                                         cc_default))
         ((Eaddrof
            (Efield
-             (Ederef (Etempvar _ctx (tptr (Tstruct __193 noattr)))
-               (Tstruct __193 noattr)) _md_ctx (Tstruct __128 noattr))
-           (tptr (Tstruct __128 noattr))) ::
+             (Ederef
+               (Etempvar _ctx (tptr (Tstruct _mbedtls_hmac_drbg_context noattr)))
+               (Tstruct _mbedtls_hmac_drbg_context noattr)) _md_ctx
+             (Tstruct _mbedtls_md_context_t noattr))
+           (tptr (Tstruct _mbedtls_md_context_t noattr))) ::
          (Efield
-           (Ederef (Etempvar _ctx (tptr (Tstruct __193 noattr)))
-             (Tstruct __193 noattr)) _V (tarray tuchar 32)) ::
-         (Etempvar 132%positive tuchar) :: nil)))
+           (Ederef
+             (Etempvar _ctx (tptr (Tstruct _mbedtls_hmac_drbg_context noattr)))
+             (Tstruct _mbedtls_hmac_drbg_context noattr)) _V
+           (tarray tuchar 32)) :: (Etempvar 132%positive tuchar) :: nil)))
     (Ssequence
       (Ssequence
         (Scall (Some 133%positive)
@@ -522,19 +542,20 @@ Definition f_mbedtls_hmac_drbg_seed_buf := {|
                             (Tcons tint (Tcons tuint Tnil))) (tptr tvoid)
                           cc_default))
           ((Efield
-             (Ederef (Etempvar _ctx (tptr (Tstruct __193 noattr)))
-               (Tstruct __193 noattr)) _V (tarray tuchar 32)) ::
-           (Econst_int (Int.repr 1) tint) ::
+             (Ederef
+               (Etempvar _ctx (tptr (Tstruct _mbedtls_hmac_drbg_context noattr)))
+               (Tstruct _mbedtls_hmac_drbg_context noattr)) _V
+             (tarray tuchar 32)) :: (Econst_int (Int.repr 1) tint) ::
            (Etempvar 133%positive tuchar) :: nil)))
       (Ssequence
         (Scall None
           (Evar _mbedtls_hmac_drbg_update (Tfunction
                                             (Tcons
-                                              (tptr (Tstruct __193 noattr))
+                                              (tptr (Tstruct _mbedtls_hmac_drbg_context noattr))
                                               (Tcons (tptr tuchar)
                                                 (Tcons tuint Tnil))) tvoid
                                             cc_default))
-          ((Etempvar _ctx (tptr (Tstruct __193 noattr))) ::
+          ((Etempvar _ctx (tptr (Tstruct _mbedtls_hmac_drbg_context noattr))) ::
            (Etempvar _data (tptr tuchar)) :: (Etempvar _data_len tuint) ::
            nil))
         (Sreturn (Some (Econst_int (Int.repr 0) tint)))))))
@@ -543,7 +564,7 @@ Definition f_mbedtls_hmac_drbg_seed_buf := {|
 Definition f_mbedtls_hmac_drbg_reseed := {|
   fn_return := tint;
   fn_callconv := cc_default;
-  fn_params := ((_ctx, (tptr (Tstruct __193 noattr))) ::
+  fn_params := ((_ctx, (tptr (Tstruct _mbedtls_hmac_drbg_context noattr))) ::
                 (_additional, (tptr tuchar)) :: (_len, tuint) :: nil);
   fn_vars := ((_seed, (tarray tuchar 384)) :: nil);
   fn_temps := ((_seedlen, tuint) :: (136%positive, tint) ::
@@ -559,10 +580,11 @@ Definition f_mbedtls_hmac_drbg_reseed := {|
           (Ebinop Ogt
             (Ebinop Oadd
               (Efield
-                (Ederef (Etempvar _ctx (tptr (Tstruct __193 noattr)))
-                  (Tstruct __193 noattr)) _entropy_len tuint)
-              (Etempvar _len tuint) tuint) (Econst_int (Int.repr 384) tint)
-            tint) tbool)))
+                (Ederef
+                  (Etempvar _ctx (tptr (Tstruct _mbedtls_hmac_drbg_context noattr)))
+                  (Tstruct _mbedtls_hmac_drbg_context noattr)) _entropy_len
+                tuint) (Etempvar _len tuint) tuint)
+            (Econst_int (Int.repr 384) tint) tint) tbool)))
     (Sifthenelse (Etempvar 134%positive tint)
       (Sreturn (Some (Eunop Oneg (Econst_int (Int.repr 5) tint) tint)))
       Sskip))
@@ -577,19 +599,23 @@ Definition f_mbedtls_hmac_drbg_reseed := {|
       (Ssequence
         (Scall (Some 135%positive)
           (Efield
-            (Ederef (Etempvar _ctx (tptr (Tstruct __193 noattr)))
-              (Tstruct __193 noattr)) _f_entropy
+            (Ederef
+              (Etempvar _ctx (tptr (Tstruct _mbedtls_hmac_drbg_context noattr)))
+              (Tstruct _mbedtls_hmac_drbg_context noattr)) _f_entropy
             (tptr (Tfunction
                     (Tcons (tptr tvoid)
                       (Tcons (tptr tuchar) (Tcons tuint Tnil))) tint
                     cc_default)))
           ((Efield
-             (Ederef (Etempvar _ctx (tptr (Tstruct __193 noattr)))
-               (Tstruct __193 noattr)) _p_entropy (tptr tvoid)) ::
-           (Evar _seed (tarray tuchar 384)) ::
+             (Ederef
+               (Etempvar _ctx (tptr (Tstruct _mbedtls_hmac_drbg_context noattr)))
+               (Tstruct _mbedtls_hmac_drbg_context noattr)) _p_entropy
+             (tptr tvoid)) :: (Evar _seed (tarray tuchar 384)) ::
            (Efield
-             (Ederef (Etempvar _ctx (tptr (Tstruct __193 noattr)))
-               (Tstruct __193 noattr)) _entropy_len tuint) :: nil))
+             (Ederef
+               (Etempvar _ctx (tptr (Tstruct _mbedtls_hmac_drbg_context noattr)))
+               (Tstruct _mbedtls_hmac_drbg_context noattr)) _entropy_len
+             tuint) :: nil))
         (Sifthenelse (Ebinop One (Etempvar 135%positive tint)
                        (Econst_int (Int.repr 0) tint) tint)
           (Sreturn (Some (Eunop Oneg (Econst_int (Int.repr 9) tint) tint)))
@@ -597,8 +623,10 @@ Definition f_mbedtls_hmac_drbg_reseed := {|
       (Ssequence
         (Sset _seedlen
           (Efield
-            (Ederef (Etempvar _ctx (tptr (Tstruct __193 noattr)))
-              (Tstruct __193 noattr)) _entropy_len tuint))
+            (Ederef
+              (Etempvar _ctx (tptr (Tstruct _mbedtls_hmac_drbg_context noattr)))
+              (Tstruct _mbedtls_hmac_drbg_context noattr)) _entropy_len
+            tuint))
         (Ssequence
           (Ssequence
             (Sifthenelse (Ebinop One (Etempvar _additional (tptr tuchar))
@@ -628,26 +656,27 @@ Definition f_mbedtls_hmac_drbg_reseed := {|
             (Scall None
               (Evar _mbedtls_hmac_drbg_update (Tfunction
                                                 (Tcons
-                                                  (tptr (Tstruct __193 noattr))
+                                                  (tptr (Tstruct _mbedtls_hmac_drbg_context noattr))
                                                   (Tcons (tptr tuchar)
                                                     (Tcons tuint Tnil)))
                                                 tvoid cc_default))
-              ((Etempvar _ctx (tptr (Tstruct __193 noattr))) ::
+              ((Etempvar _ctx (tptr (Tstruct _mbedtls_hmac_drbg_context noattr))) ::
                (Evar _seed (tarray tuchar 384)) ::
                (Etempvar _seedlen tuint) :: nil))
             (Ssequence
               (Sassign
                 (Efield
-                  (Ederef (Etempvar _ctx (tptr (Tstruct __193 noattr)))
-                    (Tstruct __193 noattr)) _reseed_counter tint)
-                (Econst_int (Int.repr 1) tint))
+                  (Ederef
+                    (Etempvar _ctx (tptr (Tstruct _mbedtls_hmac_drbg_context noattr)))
+                    (Tstruct _mbedtls_hmac_drbg_context noattr))
+                  _reseed_counter tint) (Econst_int (Int.repr 1) tint))
               (Sreturn (Some (Econst_int (Int.repr 0) tint))))))))))
 |}.
 
 Definition f_mbedtls_hmac_drbg_seed := {|
   fn_return := tint;
   fn_callconv := cc_default;
-  fn_params := ((_ctx, (tptr (Tstruct __193 noattr))) ::
+  fn_params := ((_ctx, (tptr (Tstruct _mbedtls_hmac_drbg_context noattr))) ::
                 (_md_info, (tptr (Tstruct _mbedtls_md_info_t noattr))) ::
                 (_f_entropy,
                  (tptr (Tfunction
@@ -668,15 +697,18 @@ Definition f_mbedtls_hmac_drbg_seed := {|
       (Ssequence
         (Scall (Some 137%positive)
           (Evar _mbedtls_md_setup (Tfunction
-                                    (Tcons (tptr (Tstruct __128 noattr))
+                                    (Tcons
+                                      (tptr (Tstruct _mbedtls_md_context_t noattr))
                                       (Tcons
                                         (tptr (Tstruct _mbedtls_md_info_t noattr))
                                         (Tcons tint Tnil))) tint cc_default))
           ((Eaddrof
              (Efield
-               (Ederef (Etempvar _ctx (tptr (Tstruct __193 noattr)))
-                 (Tstruct __193 noattr)) _md_ctx (Tstruct __128 noattr))
-             (tptr (Tstruct __128 noattr))) ::
+               (Ederef
+                 (Etempvar _ctx (tptr (Tstruct _mbedtls_hmac_drbg_context noattr)))
+                 (Tstruct _mbedtls_hmac_drbg_context noattr)) _md_ctx
+               (Tstruct _mbedtls_md_context_t noattr))
+             (tptr (Tstruct _mbedtls_md_context_t noattr))) ::
            (Etempvar _md_info (tptr (Tstruct _mbedtls_md_info_t noattr))) ::
            (Econst_int (Int.repr 1) tint) :: nil))
         (Sset 138%positive (Etempvar 137%positive tint)))
@@ -698,19 +730,23 @@ Definition f_mbedtls_hmac_drbg_seed := {|
     (Ssequence
       (Scall None
         (Evar _mbedtls_md_hmac_starts (Tfunction
-                                        (Tcons (tptr (Tstruct __128 noattr))
+                                        (Tcons
+                                          (tptr (Tstruct _mbedtls_md_context_t noattr))
                                           (Tcons (tptr tuchar)
                                             (Tcons tuint Tnil))) tint
                                         cc_default))
         ((Eaddrof
            (Efield
-             (Ederef (Etempvar _ctx (tptr (Tstruct __193 noattr)))
-               (Tstruct __193 noattr)) _md_ctx (Tstruct __128 noattr))
-           (tptr (Tstruct __128 noattr))) ::
+             (Ederef
+               (Etempvar _ctx (tptr (Tstruct _mbedtls_hmac_drbg_context noattr)))
+               (Tstruct _mbedtls_hmac_drbg_context noattr)) _md_ctx
+             (Tstruct _mbedtls_md_context_t noattr))
+           (tptr (Tstruct _mbedtls_md_context_t noattr))) ::
          (Efield
-           (Ederef (Etempvar _ctx (tptr (Tstruct __193 noattr)))
-             (Tstruct __193 noattr)) _V (tarray tuchar 32)) ::
-         (Etempvar _md_size tuint) :: nil))
+           (Ederef
+             (Etempvar _ctx (tptr (Tstruct _mbedtls_hmac_drbg_context noattr)))
+             (Tstruct _mbedtls_hmac_drbg_context noattr)) _V
+           (tarray tuchar 32)) :: (Etempvar _md_size tuint) :: nil))
       (Ssequence
         (Scall None
           (Evar _memset (Tfunction
@@ -718,15 +754,17 @@ Definition f_mbedtls_hmac_drbg_seed := {|
                             (Tcons tint (Tcons tuint Tnil))) (tptr tvoid)
                           cc_default))
           ((Efield
-             (Ederef (Etempvar _ctx (tptr (Tstruct __193 noattr)))
-               (Tstruct __193 noattr)) _V (tarray tuchar 32)) ::
-           (Econst_int (Int.repr 1) tint) :: (Etempvar _md_size tuint) ::
-           nil))
+             (Ederef
+               (Etempvar _ctx (tptr (Tstruct _mbedtls_hmac_drbg_context noattr)))
+               (Tstruct _mbedtls_hmac_drbg_context noattr)) _V
+             (tarray tuchar 32)) :: (Econst_int (Int.repr 1) tint) ::
+           (Etempvar _md_size tuint) :: nil))
         (Ssequence
           (Sassign
             (Efield
-              (Ederef (Etempvar _ctx (tptr (Tstruct __193 noattr)))
-                (Tstruct __193 noattr)) _f_entropy
+              (Ederef
+                (Etempvar _ctx (tptr (Tstruct _mbedtls_hmac_drbg_context noattr)))
+                (Tstruct _mbedtls_hmac_drbg_context noattr)) _f_entropy
               (tptr (Tfunction
                       (Tcons (tptr tvoid)
                         (Tcons (tptr tuchar) (Tcons tuint Tnil))) tint
@@ -739,15 +777,17 @@ Definition f_mbedtls_hmac_drbg_seed := {|
           (Ssequence
             (Sassign
               (Efield
-                (Ederef (Etempvar _ctx (tptr (Tstruct __193 noattr)))
-                  (Tstruct __193 noattr)) _p_entropy (tptr tvoid))
-              (Etempvar _p_entropy (tptr tvoid)))
+                (Ederef
+                  (Etempvar _ctx (tptr (Tstruct _mbedtls_hmac_drbg_context noattr)))
+                  (Tstruct _mbedtls_hmac_drbg_context noattr)) _p_entropy
+                (tptr tvoid)) (Etempvar _p_entropy (tptr tvoid)))
             (Ssequence
               (Sassign
                 (Efield
-                  (Ederef (Etempvar _ctx (tptr (Tstruct __193 noattr)))
-                    (Tstruct __193 noattr)) _reseed_interval tint)
-                (Econst_int (Int.repr 10000) tint))
+                  (Ederef
+                    (Etempvar _ctx (tptr (Tstruct _mbedtls_hmac_drbg_context noattr)))
+                    (Tstruct _mbedtls_hmac_drbg_context noattr))
+                  _reseed_interval tint) (Econst_int (Int.repr 10000) tint))
               (Ssequence
                 (Ssequence
                   (Sifthenelse (Ebinop Ole (Etempvar _md_size tuint)
@@ -770,8 +810,10 @@ Definition f_mbedtls_hmac_drbg_seed := {|
                 (Ssequence
                   (Sassign
                     (Efield
-                      (Ederef (Etempvar _ctx (tptr (Tstruct __193 noattr)))
-                        (Tstruct __193 noattr)) _entropy_len tuint)
+                      (Ederef
+                        (Etempvar _ctx (tptr (Tstruct _mbedtls_hmac_drbg_context noattr)))
+                        (Tstruct _mbedtls_hmac_drbg_context noattr))
+                      _entropy_len tuint)
                     (Ebinop Odiv
                       (Ebinop Omul (Etempvar _entropy_len tuint)
                         (Econst_int (Int.repr 3) tint) tuint)
@@ -783,7 +825,7 @@ Definition f_mbedtls_hmac_drbg_seed := {|
                           (Scall (Some 142%positive)
                             (Evar _mbedtls_hmac_drbg_reseed (Tfunction
                                                               (Tcons
-                                                                (tptr (Tstruct __193 noattr))
+                                                                (tptr (Tstruct _mbedtls_hmac_drbg_context noattr))
                                                                 (Tcons
                                                                   (tptr tuchar)
                                                                   (Tcons
@@ -791,7 +833,7 @@ Definition f_mbedtls_hmac_drbg_seed := {|
                                                                     Tnil)))
                                                               tint
                                                               cc_default))
-                            ((Etempvar _ctx (tptr (Tstruct __193 noattr))) ::
+                            ((Etempvar _ctx (tptr (Tstruct _mbedtls_hmac_drbg_context noattr))) ::
                              (Etempvar _custom (tptr tuchar)) ::
                              (Etempvar _len tuint) :: nil))
                           (Sset 143%positive (Etempvar 142%positive tint)))
@@ -806,53 +848,57 @@ Definition f_mbedtls_hmac_drbg_seed := {|
                       (Sassign
                         (Efield
                           (Ederef
-                            (Etempvar _ctx (tptr (Tstruct __193 noattr)))
-                            (Tstruct __193 noattr)) _entropy_len tuint)
-                        (Etempvar _entropy_len tuint))
+                            (Etempvar _ctx (tptr (Tstruct _mbedtls_hmac_drbg_context noattr)))
+                            (Tstruct _mbedtls_hmac_drbg_context noattr))
+                          _entropy_len tuint) (Etempvar _entropy_len tuint))
                       (Sreturn (Some (Econst_int (Int.repr 0) tint))))))))))))))
 |}.
 
 Definition f_mbedtls_hmac_drbg_set_prediction_resistance := {|
   fn_return := tvoid;
   fn_callconv := cc_default;
-  fn_params := ((_ctx, (tptr (Tstruct __193 noattr))) ::
+  fn_params := ((_ctx, (tptr (Tstruct _mbedtls_hmac_drbg_context noattr))) ::
                 (_resistance, tint) :: nil);
   fn_vars := nil;
   fn_temps := nil;
   fn_body :=
 (Sassign
   (Efield
-    (Ederef (Etempvar _ctx (tptr (Tstruct __193 noattr)))
-      (Tstruct __193 noattr)) _prediction_resistance tint)
-  (Etempvar _resistance tint))
+    (Ederef
+      (Etempvar _ctx (tptr (Tstruct _mbedtls_hmac_drbg_context noattr)))
+      (Tstruct _mbedtls_hmac_drbg_context noattr)) _prediction_resistance
+    tint) (Etempvar _resistance tint))
 |}.
 
 Definition f_mbedtls_hmac_drbg_set_entropy_len := {|
   fn_return := tvoid;
   fn_callconv := cc_default;
-  fn_params := ((_ctx, (tptr (Tstruct __193 noattr))) :: (_len, tuint) ::
-                nil);
+  fn_params := ((_ctx, (tptr (Tstruct _mbedtls_hmac_drbg_context noattr))) ::
+                (_len, tuint) :: nil);
   fn_vars := nil;
   fn_temps := nil;
   fn_body :=
 (Sassign
   (Efield
-    (Ederef (Etempvar _ctx (tptr (Tstruct __193 noattr)))
-      (Tstruct __193 noattr)) _entropy_len tuint) (Etempvar _len tuint))
+    (Ederef
+      (Etempvar _ctx (tptr (Tstruct _mbedtls_hmac_drbg_context noattr)))
+      (Tstruct _mbedtls_hmac_drbg_context noattr)) _entropy_len tuint)
+  (Etempvar _len tuint))
 |}.
 
 Definition f_mbedtls_hmac_drbg_set_reseed_interval := {|
   fn_return := tvoid;
   fn_callconv := cc_default;
-  fn_params := ((_ctx, (tptr (Tstruct __193 noattr))) :: (_interval, tint) ::
-                nil);
+  fn_params := ((_ctx, (tptr (Tstruct _mbedtls_hmac_drbg_context noattr))) ::
+                (_interval, tint) :: nil);
   fn_vars := nil;
   fn_temps := nil;
   fn_body :=
 (Sassign
   (Efield
-    (Ederef (Etempvar _ctx (tptr (Tstruct __193 noattr)))
-      (Tstruct __193 noattr)) _reseed_interval tint)
+    (Ederef
+      (Etempvar _ctx (tptr (Tstruct _mbedtls_hmac_drbg_context noattr)))
+      (Tstruct _mbedtls_hmac_drbg_context noattr)) _reseed_interval tint)
   (Etempvar _interval tint))
 |}.
 
@@ -863,7 +909,8 @@ Definition f_mbedtls_hmac_drbg_random_with_add := {|
                 (_out_len, tuint) :: (_additional, (tptr tuchar)) ::
                 (_add_len, tuint) :: nil);
   fn_vars := nil;
-  fn_temps := ((_ret, tint) :: (_ctx, (tptr (Tstruct __193 noattr))) ::
+  fn_temps := ((_ret, tint) ::
+               (_ctx, (tptr (Tstruct _mbedtls_hmac_drbg_context noattr))) ::
                (_md_len, tuint) :: (_left, tuint) :: (_out, (tptr tuchar)) ::
                (_use_len, tuint) :: (149%positive, tuint) ::
                (148%positive, tint) :: (147%positive, tint) ::
@@ -872,7 +919,8 @@ Definition f_mbedtls_hmac_drbg_random_with_add := {|
   fn_body :=
 (Ssequence
   (Sset _ctx
-    (Ecast (Etempvar _p_rng (tptr tvoid)) (tptr (Tstruct __193 noattr))))
+    (Ecast (Etempvar _p_rng (tptr tvoid))
+      (tptr (Tstruct _mbedtls_hmac_drbg_context noattr))))
   (Ssequence
     (Ssequence
       (Scall (Some 144%positive)
@@ -882,9 +930,11 @@ Definition f_mbedtls_hmac_drbg_random_with_add := {|
                                        Tnil) tuchar cc_default))
         ((Efield
            (Efield
-             (Ederef (Etempvar _ctx (tptr (Tstruct __193 noattr)))
-               (Tstruct __193 noattr)) _md_ctx (Tstruct __128 noattr))
-           _md_info (tptr (Tstruct _mbedtls_md_info_t noattr))) :: nil))
+             (Ederef
+               (Etempvar _ctx (tptr (Tstruct _mbedtls_hmac_drbg_context noattr)))
+               (Tstruct _mbedtls_hmac_drbg_context noattr)) _md_ctx
+             (Tstruct _mbedtls_md_context_t noattr)) _md_info
+           (tptr (Tstruct _mbedtls_md_info_t noattr))) :: nil))
       (Sset _md_len (Etempvar 144%positive tuchar)))
     (Ssequence
       (Sset _left (Etempvar _out_len tuint))
@@ -905,8 +955,9 @@ Definition f_mbedtls_hmac_drbg_random_with_add := {|
                 (Sifthenelse (Ebinop One
                                (Efield
                                  (Ederef
-                                   (Etempvar _ctx (tptr (Tstruct __193 noattr)))
-                                   (Tstruct __193 noattr)) _f_entropy
+                                   (Etempvar _ctx (tptr (Tstruct _mbedtls_hmac_drbg_context noattr)))
+                                   (Tstruct _mbedtls_hmac_drbg_context noattr))
+                                 _f_entropy
                                  (tptr (Tfunction
                                          (Tcons (tptr tvoid)
                                            (Tcons (tptr tuchar)
@@ -917,8 +968,8 @@ Definition f_mbedtls_hmac_drbg_random_with_add := {|
                   (Sifthenelse (Ebinop Oeq
                                  (Efield
                                    (Ederef
-                                     (Etempvar _ctx (tptr (Tstruct __193 noattr)))
-                                     (Tstruct __193 noattr))
+                                     (Etempvar _ctx (tptr (Tstruct _mbedtls_hmac_drbg_context noattr)))
+                                     (Tstruct _mbedtls_hmac_drbg_context noattr))
                                    _prediction_resistance tint)
                                  (Econst_int (Int.repr 1) tint) tint)
                     (Sset 147%positive
@@ -929,13 +980,14 @@ Definition f_mbedtls_hmac_drbg_random_with_add := {|
                           (Ebinop Ogt
                             (Efield
                               (Ederef
-                                (Etempvar _ctx (tptr (Tstruct __193 noattr)))
-                                (Tstruct __193 noattr)) _reseed_counter tint)
+                                (Etempvar _ctx (tptr (Tstruct _mbedtls_hmac_drbg_context noattr)))
+                                (Tstruct _mbedtls_hmac_drbg_context noattr))
+                              _reseed_counter tint)
                             (Efield
                               (Ederef
-                                (Etempvar _ctx (tptr (Tstruct __193 noattr)))
-                                (Tstruct __193 noattr)) _reseed_interval
-                              tint) tint) tbool))
+                                (Etempvar _ctx (tptr (Tstruct _mbedtls_hmac_drbg_context noattr)))
+                                (Tstruct _mbedtls_hmac_drbg_context noattr))
+                              _reseed_interval tint) tint) tbool))
                       (Sset 147%positive
                         (Ecast (Etempvar 147%positive tint) tbool))))
                   (Sset 147%positive (Econst_int (Int.repr 0) tint)))
@@ -947,7 +999,7 @@ Definition f_mbedtls_hmac_drbg_random_with_add := {|
                           (Scall (Some 145%positive)
                             (Evar _mbedtls_hmac_drbg_reseed (Tfunction
                                                               (Tcons
-                                                                (tptr (Tstruct __193 noattr))
+                                                                (tptr (Tstruct _mbedtls_hmac_drbg_context noattr))
                                                                 (Tcons
                                                                   (tptr tuchar)
                                                                   (Tcons
@@ -955,7 +1007,7 @@ Definition f_mbedtls_hmac_drbg_random_with_add := {|
                                                                     Tnil)))
                                                               tint
                                                               cc_default))
-                            ((Etempvar _ctx (tptr (Tstruct __193 noattr))) ::
+                            ((Etempvar _ctx (tptr (Tstruct _mbedtls_hmac_drbg_context noattr))) ::
                              (Etempvar _additional (tptr tuchar)) ::
                              (Etempvar _add_len tuint) :: nil))
                           (Sset 146%positive (Etempvar 145%positive tint)))
@@ -983,13 +1035,13 @@ Definition f_mbedtls_hmac_drbg_random_with_add := {|
                     (Scall None
                       (Evar _mbedtls_hmac_drbg_update (Tfunction
                                                         (Tcons
-                                                          (tptr (Tstruct __193 noattr))
+                                                          (tptr (Tstruct _mbedtls_hmac_drbg_context noattr))
                                                           (Tcons
                                                             (tptr tuchar)
                                                             (Tcons tuint
                                                               Tnil))) tvoid
                                                         cc_default))
-                      ((Etempvar _ctx (tptr (Tstruct __193 noattr))) ::
+                      ((Etempvar _ctx (tptr (Tstruct _mbedtls_hmac_drbg_context noattr))) ::
                        (Etempvar _additional (tptr tuchar)) ::
                        (Etempvar _add_len tuint) :: nil))
                     Sskip))
@@ -1010,21 +1062,23 @@ Definition f_mbedtls_hmac_drbg_random_with_add := {|
                         (Scall None
                           (Evar _mbedtls_md_hmac_reset (Tfunction
                                                          (Tcons
-                                                           (tptr (Tstruct __128 noattr))
+                                                           (tptr (Tstruct _mbedtls_md_context_t noattr))
                                                            Tnil) tint
                                                          cc_default))
                           ((Eaddrof
                              (Efield
                                (Ederef
-                                 (Etempvar _ctx (tptr (Tstruct __193 noattr)))
-                                 (Tstruct __193 noattr)) _md_ctx
-                               (Tstruct __128 noattr))
-                             (tptr (Tstruct __128 noattr))) :: nil))
+                                 (Etempvar _ctx (tptr (Tstruct _mbedtls_hmac_drbg_context noattr)))
+                                 (Tstruct _mbedtls_hmac_drbg_context noattr))
+                               _md_ctx
+                               (Tstruct _mbedtls_md_context_t noattr))
+                             (tptr (Tstruct _mbedtls_md_context_t noattr))) ::
+                           nil))
                         (Ssequence
                           (Scall None
                             (Evar _mbedtls_md_hmac_update (Tfunction
                                                             (Tcons
-                                                              (tptr (Tstruct __128 noattr))
+                                                              (tptr (Tstruct _mbedtls_md_context_t noattr))
                                                               (Tcons
                                                                 (tptr tuchar)
                                                                 (Tcons tuint
@@ -1033,21 +1087,22 @@ Definition f_mbedtls_hmac_drbg_random_with_add := {|
                             ((Eaddrof
                                (Efield
                                  (Ederef
-                                   (Etempvar _ctx (tptr (Tstruct __193 noattr)))
-                                   (Tstruct __193 noattr)) _md_ctx
-                                 (Tstruct __128 noattr))
-                               (tptr (Tstruct __128 noattr))) ::
+                                   (Etempvar _ctx (tptr (Tstruct _mbedtls_hmac_drbg_context noattr)))
+                                   (Tstruct _mbedtls_hmac_drbg_context noattr))
+                                 _md_ctx
+                                 (Tstruct _mbedtls_md_context_t noattr))
+                               (tptr (Tstruct _mbedtls_md_context_t noattr))) ::
                              (Efield
                                (Ederef
-                                 (Etempvar _ctx (tptr (Tstruct __193 noattr)))
-                                 (Tstruct __193 noattr)) _V
-                               (tarray tuchar 32)) ::
+                                 (Etempvar _ctx (tptr (Tstruct _mbedtls_hmac_drbg_context noattr)))
+                                 (Tstruct _mbedtls_hmac_drbg_context noattr))
+                               _V (tarray tuchar 32)) ::
                              (Etempvar _md_len tuint) :: nil))
                           (Ssequence
                             (Scall None
                               (Evar _mbedtls_md_hmac_finish (Tfunction
                                                               (Tcons
-                                                                (tptr (Tstruct __128 noattr))
+                                                                (tptr (Tstruct _mbedtls_md_context_t noattr))
                                                                 (Tcons
                                                                   (tptr tuchar)
                                                                   Tnil)) tint
@@ -1055,15 +1110,16 @@ Definition f_mbedtls_hmac_drbg_random_with_add := {|
                               ((Eaddrof
                                  (Efield
                                    (Ederef
-                                     (Etempvar _ctx (tptr (Tstruct __193 noattr)))
-                                     (Tstruct __193 noattr)) _md_ctx
-                                   (Tstruct __128 noattr))
-                                 (tptr (Tstruct __128 noattr))) ::
+                                     (Etempvar _ctx (tptr (Tstruct _mbedtls_hmac_drbg_context noattr)))
+                                     (Tstruct _mbedtls_hmac_drbg_context noattr))
+                                   _md_ctx
+                                   (Tstruct _mbedtls_md_context_t noattr))
+                                 (tptr (Tstruct _mbedtls_md_context_t noattr))) ::
                                (Efield
                                  (Ederef
-                                   (Etempvar _ctx (tptr (Tstruct __193 noattr)))
-                                   (Tstruct __193 noattr)) _V
-                                 (tarray tuchar 32)) :: nil))
+                                   (Etempvar _ctx (tptr (Tstruct _mbedtls_hmac_drbg_context noattr)))
+                                   (Tstruct _mbedtls_hmac_drbg_context noattr))
+                                 _V (tarray tuchar 32)) :: nil))
                             (Ssequence
                               (Scall None
                                 (Evar _memcpy (Tfunction
@@ -1074,9 +1130,9 @@ Definition f_mbedtls_hmac_drbg_random_with_add := {|
                                 ((Etempvar _out (tptr tuchar)) ::
                                  (Efield
                                    (Ederef
-                                     (Etempvar _ctx (tptr (Tstruct __193 noattr)))
-                                     (Tstruct __193 noattr)) _V
-                                   (tarray tuchar 32)) ::
+                                     (Etempvar _ctx (tptr (Tstruct _mbedtls_hmac_drbg_context noattr)))
+                                     (Tstruct _mbedtls_hmac_drbg_context noattr))
+                                   _V (tarray tuchar 32)) ::
                                  (Etempvar _use_len tuint) :: nil))
                               (Ssequence
                                 (Sset _out
@@ -1089,26 +1145,28 @@ Definition f_mbedtls_hmac_drbg_random_with_add := {|
                     (Scall None
                       (Evar _mbedtls_hmac_drbg_update (Tfunction
                                                         (Tcons
-                                                          (tptr (Tstruct __193 noattr))
+                                                          (tptr (Tstruct _mbedtls_hmac_drbg_context noattr))
                                                           (Tcons
                                                             (tptr tuchar)
                                                             (Tcons tuint
                                                               Tnil))) tvoid
                                                         cc_default))
-                      ((Etempvar _ctx (tptr (Tstruct __193 noattr))) ::
+                      ((Etempvar _ctx (tptr (Tstruct _mbedtls_hmac_drbg_context noattr))) ::
                        (Etempvar _additional (tptr tuchar)) ::
                        (Etempvar _add_len tuint) :: nil))
                     (Ssequence
                       (Sassign
                         (Efield
                           (Ederef
-                            (Etempvar _ctx (tptr (Tstruct __193 noattr)))
-                            (Tstruct __193 noattr)) _reseed_counter tint)
+                            (Etempvar _ctx (tptr (Tstruct _mbedtls_hmac_drbg_context noattr)))
+                            (Tstruct _mbedtls_hmac_drbg_context noattr))
+                          _reseed_counter tint)
                         (Ebinop Oadd
                           (Efield
                             (Ederef
-                              (Etempvar _ctx (tptr (Tstruct __193 noattr)))
-                              (Tstruct __193 noattr)) _reseed_counter tint)
+                              (Etempvar _ctx (tptr (Tstruct _mbedtls_hmac_drbg_context noattr)))
+                              (Tstruct _mbedtls_hmac_drbg_context noattr))
+                            _reseed_counter tint)
                           (Econst_int (Int.repr 1) tint) tint))
                       (Sreturn (Some (Econst_int (Int.repr 0) tint))))))))))))))
 |}.
@@ -1119,12 +1177,14 @@ Definition f_mbedtls_hmac_drbg_random := {|
   fn_params := ((_p_rng, (tptr tvoid)) :: (_output, (tptr tuchar)) ::
                 (_out_len, tuint) :: nil);
   fn_vars := nil;
-  fn_temps := ((_ret, tint) :: (_ctx, (tptr (Tstruct __193 noattr))) ::
+  fn_temps := ((_ret, tint) ::
+               (_ctx, (tptr (Tstruct _mbedtls_hmac_drbg_context noattr))) ::
                (150%positive, tint) :: nil);
   fn_body :=
 (Ssequence
   (Sset _ctx
-    (Ecast (Etempvar _p_rng (tptr tvoid)) (tptr (Tstruct __193 noattr))))
+    (Ecast (Etempvar _p_rng (tptr tvoid))
+      (tptr (Tstruct _mbedtls_hmac_drbg_context noattr))))
   (Ssequence
     (Ssequence
       (Scall (Some 150%positive)
@@ -1135,7 +1195,7 @@ Definition f_mbedtls_hmac_drbg_random := {|
                                                          (Tcons (tptr tuchar)
                                                            (Tcons tuint Tnil)))))
                                                    tint cc_default))
-        ((Etempvar _ctx (tptr (Tstruct __193 noattr))) ::
+        ((Etempvar _ctx (tptr (Tstruct _mbedtls_hmac_drbg_context noattr))) ::
          (Etempvar _output (tptr tuchar)) :: (Etempvar _out_len tuint) ::
          (Ecast (Econst_int (Int.repr 0) tint) (tptr tvoid)) ::
          (Econst_int (Int.repr 0) tint) :: nil))
@@ -1146,31 +1206,36 @@ Definition f_mbedtls_hmac_drbg_random := {|
 Definition f_mbedtls_hmac_drbg_free := {|
   fn_return := tvoid;
   fn_callconv := cc_default;
-  fn_params := ((_ctx, (tptr (Tstruct __193 noattr))) :: nil);
+  fn_params := ((_ctx, (tptr (Tstruct _mbedtls_hmac_drbg_context noattr))) ::
+                nil);
   fn_vars := nil;
   fn_temps := nil;
   fn_body :=
 (Ssequence
-  (Sifthenelse (Ebinop Oeq (Etempvar _ctx (tptr (Tstruct __193 noattr)))
+  (Sifthenelse (Ebinop Oeq
+                 (Etempvar _ctx (tptr (Tstruct _mbedtls_hmac_drbg_context noattr)))
                  (Ecast (Econst_int (Int.repr 0) tint) (tptr tvoid)) tint)
     (Sreturn None)
     Sskip)
   (Ssequence
     (Scall None
       (Evar _mbedtls_md_free (Tfunction
-                               (Tcons (tptr (Tstruct __128 noattr)) Tnil)
-                               tvoid cc_default))
+                               (Tcons
+                                 (tptr (Tstruct _mbedtls_md_context_t noattr))
+                                 Tnil) tvoid cc_default))
       ((Eaddrof
          (Efield
-           (Ederef (Etempvar _ctx (tptr (Tstruct __193 noattr)))
-             (Tstruct __193 noattr)) _md_ctx (Tstruct __128 noattr))
-         (tptr (Tstruct __128 noattr))) :: nil))
+           (Ederef
+             (Etempvar _ctx (tptr (Tstruct _mbedtls_hmac_drbg_context noattr)))
+             (Tstruct _mbedtls_hmac_drbg_context noattr)) _md_ctx
+           (Tstruct _mbedtls_md_context_t noattr))
+         (tptr (Tstruct _mbedtls_md_context_t noattr))) :: nil))
     (Scall None
       (Evar _mbedtls_zeroize (Tfunction
                                (Tcons (tptr tvoid) (Tcons tuint Tnil)) tvoid
                                cc_default))
-      ((Etempvar _ctx (tptr (Tstruct __193 noattr))) ::
-       (Esizeof (Tstruct __193 noattr) tuint) :: nil))))
+      ((Etempvar _ctx (tptr (Tstruct _mbedtls_hmac_drbg_context noattr))) ::
+       (Esizeof (Tstruct _mbedtls_hmac_drbg_context noattr) tuint) :: nil))))
 |}.
 
 Definition v_entropy_pr := {|
@@ -1361,8 +1426,8 @@ Definition f_mbedtls_hmac_drbg_self_test := {|
   fn_return := tint;
   fn_callconv := cc_default;
   fn_params := ((_verbose, tint) :: nil);
-  fn_vars := ((_ctx, (Tstruct __193 noattr)) :: (_buf, (tarray tuchar 80)) ::
-              nil);
+  fn_vars := ((_ctx, (Tstruct _mbedtls_hmac_drbg_context noattr)) ::
+              (_buf, (tarray tuchar 80)) :: nil);
   fn_temps := ((_md_info, (tptr (Tstruct _mbedtls_md_info_t noattr))) ::
                (160%positive, tint) :: (159%positive, tint) ::
                (158%positive, tint) :: (157%positive, tint) ::
@@ -1384,10 +1449,11 @@ Definition f_mbedtls_hmac_drbg_self_test := {|
   (Ssequence
     (Scall None
       (Evar _mbedtls_hmac_drbg_init (Tfunction
-                                      (Tcons (tptr (Tstruct __193 noattr))
+                                      (Tcons
+                                        (tptr (Tstruct _mbedtls_hmac_drbg_context noattr))
                                         Tnil) tvoid cc_default))
-      ((Eaddrof (Evar _ctx (Tstruct __193 noattr))
-         (tptr (Tstruct __193 noattr))) :: nil))
+      ((Eaddrof (Evar _ctx (Tstruct _mbedtls_hmac_drbg_context noattr))
+         (tptr (Tstruct _mbedtls_hmac_drbg_context noattr))) :: nil))
     (Ssequence
       (Sifthenelse (Ebinop One (Etempvar _verbose tint)
                      (Econst_int (Int.repr 0) tint) tint)
@@ -1403,7 +1469,7 @@ Definition f_mbedtls_hmac_drbg_self_test := {|
             (Scall (Some 152%positive)
               (Evar _mbedtls_hmac_drbg_seed (Tfunction
                                               (Tcons
-                                                (tptr (Tstruct __193 noattr))
+                                                (tptr (Tstruct _mbedtls_hmac_drbg_context noattr))
                                                 (Tcons
                                                   (tptr (Tstruct _mbedtls_md_info_t noattr))
                                                   (Tcons
@@ -1419,8 +1485,9 @@ Definition f_mbedtls_hmac_drbg_self_test := {|
                                                       (Tcons (tptr tuchar)
                                                         (Tcons tuint Tnil))))))
                                               tint cc_default))
-              ((Eaddrof (Evar _ctx (Tstruct __193 noattr))
-                 (tptr (Tstruct __193 noattr))) ::
+              ((Eaddrof
+                 (Evar _ctx (Tstruct _mbedtls_hmac_drbg_context noattr))
+                 (tptr (Tstruct _mbedtls_hmac_drbg_context noattr))) ::
                (Etempvar _md_info (tptr (Tstruct _mbedtls_md_info_t noattr))) ::
                (Evar _hmac_drbg_self_test_entropy (Tfunction
                                                     (Tcons (tptr tvoid)
@@ -1446,14 +1513,15 @@ Definition f_mbedtls_hmac_drbg_self_test := {|
             (Scall None
               (Evar _mbedtls_hmac_drbg_set_prediction_resistance (Tfunction
                                                                    (Tcons
-                                                                    (tptr (Tstruct __193 noattr))
+                                                                    (tptr (Tstruct _mbedtls_hmac_drbg_context noattr))
                                                                     (Tcons
                                                                     tint
                                                                     Tnil))
                                                                    tvoid
                                                                    cc_default))
-              ((Eaddrof (Evar _ctx (Tstruct __193 noattr))
-                 (tptr (Tstruct __193 noattr))) ::
+              ((Eaddrof
+                 (Evar _ctx (Tstruct _mbedtls_hmac_drbg_context noattr))
+                 (tptr (Tstruct _mbedtls_hmac_drbg_context noattr))) ::
                (Econst_int (Int.repr 1) tint) :: nil))
             (Ssequence
               (Ssequence
@@ -1463,8 +1531,9 @@ Definition f_mbedtls_hmac_drbg_self_test := {|
                                                       (Tcons (tptr tuchar)
                                                         (Tcons tuint Tnil)))
                                                     tint cc_default))
-                  ((Eaddrof (Evar _ctx (Tstruct __193 noattr))
-                     (tptr (Tstruct __193 noattr))) ::
+                  ((Eaddrof
+                     (Evar _ctx (Tstruct _mbedtls_hmac_drbg_context noattr))
+                     (tptr (Tstruct _mbedtls_hmac_drbg_context noattr))) ::
                    (Evar _buf (tarray tuchar 80)) ::
                    (Econst_int (Int.repr 80) tint) :: nil))
                 (Sifthenelse (Ebinop One (Etempvar 153%positive tint)
@@ -1488,8 +1557,9 @@ Definition f_mbedtls_hmac_drbg_self_test := {|
                                                         (Tcons (tptr tuchar)
                                                           (Tcons tuint Tnil)))
                                                       tint cc_default))
-                    ((Eaddrof (Evar _ctx (Tstruct __193 noattr))
-                       (tptr (Tstruct __193 noattr))) ::
+                    ((Eaddrof
+                       (Evar _ctx (Tstruct _mbedtls_hmac_drbg_context noattr))
+                       (tptr (Tstruct _mbedtls_hmac_drbg_context noattr))) ::
                      (Evar _buf (tarray tuchar 80)) ::
                      (Econst_int (Int.repr 80) tint) :: nil))
                   (Sifthenelse (Ebinop One (Etempvar 154%positive tint)
@@ -1533,20 +1603,24 @@ Definition f_mbedtls_hmac_drbg_self_test := {|
                     (Scall None
                       (Evar _mbedtls_hmac_drbg_free (Tfunction
                                                       (Tcons
-                                                        (tptr (Tstruct __193 noattr))
+                                                        (tptr (Tstruct _mbedtls_hmac_drbg_context noattr))
                                                         Tnil) tvoid
                                                       cc_default))
-                      ((Eaddrof (Evar _ctx (Tstruct __193 noattr))
-                         (tptr (Tstruct __193 noattr))) :: nil))
+                      ((Eaddrof
+                         (Evar _ctx (Tstruct _mbedtls_hmac_drbg_context noattr))
+                         (tptr (Tstruct _mbedtls_hmac_drbg_context noattr))) ::
+                       nil))
                     (Ssequence
                       (Scall None
                         (Evar _mbedtls_hmac_drbg_free (Tfunction
                                                         (Tcons
-                                                          (tptr (Tstruct __193 noattr))
+                                                          (tptr (Tstruct _mbedtls_hmac_drbg_context noattr))
                                                           Tnil) tvoid
                                                         cc_default))
-                        ((Eaddrof (Evar _ctx (Tstruct __193 noattr))
-                           (tptr (Tstruct __193 noattr))) :: nil))
+                        ((Eaddrof
+                           (Evar _ctx (Tstruct _mbedtls_hmac_drbg_context noattr))
+                           (tptr (Tstruct _mbedtls_hmac_drbg_context noattr))) ::
+                         nil))
                       (Ssequence
                         (Sifthenelse (Ebinop One (Etempvar _verbose tint)
                                        (Econst_int (Int.repr 0) tint) tint)
@@ -1570,11 +1644,13 @@ Definition f_mbedtls_hmac_drbg_self_test := {|
                             (Scall None
                               (Evar _mbedtls_hmac_drbg_init (Tfunction
                                                               (Tcons
-                                                                (tptr (Tstruct __193 noattr))
+                                                                (tptr (Tstruct _mbedtls_hmac_drbg_context noattr))
                                                                 Tnil) tvoid
                                                               cc_default))
-                              ((Eaddrof (Evar _ctx (Tstruct __193 noattr))
-                                 (tptr (Tstruct __193 noattr))) :: nil))
+                              ((Eaddrof
+                                 (Evar _ctx (Tstruct _mbedtls_hmac_drbg_context noattr))
+                                 (tptr (Tstruct _mbedtls_hmac_drbg_context noattr))) ::
+                               nil))
                             (Ssequence
                               (Sassign (Evar _test_offset tuint)
                                 (Econst_int (Int.repr 0) tint))
@@ -1583,7 +1659,7 @@ Definition f_mbedtls_hmac_drbg_self_test := {|
                                   (Scall (Some 156%positive)
                                     (Evar _mbedtls_hmac_drbg_seed (Tfunction
                                                                     (Tcons
-                                                                    (tptr (Tstruct __193 noattr))
+                                                                    (tptr (Tstruct _mbedtls_hmac_drbg_context noattr))
                                                                     (Tcons
                                                                     (tptr (Tstruct _mbedtls_md_info_t noattr))
                                                                     (Tcons
@@ -1608,8 +1684,8 @@ Definition f_mbedtls_hmac_drbg_self_test := {|
                                                                     tint
                                                                     cc_default))
                                     ((Eaddrof
-                                       (Evar _ctx (Tstruct __193 noattr))
-                                       (tptr (Tstruct __193 noattr))) ::
+                                       (Evar _ctx (Tstruct _mbedtls_hmac_drbg_context noattr))
+                                       (tptr (Tstruct _mbedtls_hmac_drbg_context noattr))) ::
                                      (Etempvar _md_info (tptr (Tstruct _mbedtls_md_info_t noattr))) ::
                                      (Evar _hmac_drbg_self_test_entropy 
                                      (Tfunction
@@ -1648,13 +1724,14 @@ Definition f_mbedtls_hmac_drbg_self_test := {|
                                     (Scall (Some 157%positive)
                                       (Evar _mbedtls_hmac_drbg_reseed 
                                       (Tfunction
-                                        (Tcons (tptr (Tstruct __193 noattr))
+                                        (Tcons
+                                          (tptr (Tstruct _mbedtls_hmac_drbg_context noattr))
                                           (Tcons (tptr tuchar)
                                             (Tcons tuint Tnil))) tint
                                         cc_default))
                                       ((Eaddrof
-                                         (Evar _ctx (Tstruct __193 noattr))
-                                         (tptr (Tstruct __193 noattr))) ::
+                                         (Evar _ctx (Tstruct _mbedtls_hmac_drbg_context noattr))
+                                         (tptr (Tstruct _mbedtls_hmac_drbg_context noattr))) ::
                                        (Ecast (Econst_int (Int.repr 0) tint)
                                          (tptr tvoid)) ::
                                        (Econst_int (Int.repr 0) tint) :: nil))
@@ -1688,8 +1765,8 @@ Definition f_mbedtls_hmac_drbg_self_test := {|
                                               (Tcons tuint Tnil))) tint
                                           cc_default))
                                         ((Eaddrof
-                                           (Evar _ctx (Tstruct __193 noattr))
-                                           (tptr (Tstruct __193 noattr))) ::
+                                           (Evar _ctx (Tstruct _mbedtls_hmac_drbg_context noattr))
+                                           (tptr (Tstruct _mbedtls_hmac_drbg_context noattr))) ::
                                          (Evar _buf (tarray tuchar 80)) ::
                                          (Econst_int (Int.repr 80) tint) ::
                                          nil))
@@ -1723,8 +1800,8 @@ Definition f_mbedtls_hmac_drbg_self_test := {|
                                                 (Tcons tuint Tnil))) tint
                                             cc_default))
                                           ((Eaddrof
-                                             (Evar _ctx (Tstruct __193 noattr))
-                                             (tptr (Tstruct __193 noattr))) ::
+                                             (Evar _ctx (Tstruct _mbedtls_hmac_drbg_context noattr))
+                                             (tptr (Tstruct _mbedtls_hmac_drbg_context noattr))) ::
                                            (Evar _buf (tarray tuchar 80)) ::
                                            (Econst_int (Int.repr 80) tint) ::
                                            nil))
@@ -1789,22 +1866,22 @@ Definition f_mbedtls_hmac_drbg_self_test := {|
                                             (Evar _mbedtls_hmac_drbg_free 
                                             (Tfunction
                                               (Tcons
-                                                (tptr (Tstruct __193 noattr))
+                                                (tptr (Tstruct _mbedtls_hmac_drbg_context noattr))
                                                 Tnil) tvoid cc_default))
                                             ((Eaddrof
-                                               (Evar _ctx (Tstruct __193 noattr))
-                                               (tptr (Tstruct __193 noattr))) ::
+                                               (Evar _ctx (Tstruct _mbedtls_hmac_drbg_context noattr))
+                                               (tptr (Tstruct _mbedtls_hmac_drbg_context noattr))) ::
                                              nil))
                                           (Ssequence
                                             (Scall None
                                               (Evar _mbedtls_hmac_drbg_free 
                                               (Tfunction
                                                 (Tcons
-                                                  (tptr (Tstruct __193 noattr))
+                                                  (tptr (Tstruct _mbedtls_hmac_drbg_context noattr))
                                                   Tnil) tvoid cc_default))
                                               ((Eaddrof
-                                                 (Evar _ctx (Tstruct __193 noattr))
-                                                 (tptr (Tstruct __193 noattr))) ::
+                                                 (Evar _ctx (Tstruct _mbedtls_hmac_drbg_context noattr))
+                                                 (tptr (Tstruct _mbedtls_hmac_drbg_context noattr))) ::
                                                nil))
                                             (Ssequence
                                               (Sifthenelse (Ebinop One
@@ -1855,14 +1932,15 @@ Definition f_main := {|
 |}.
 
 Definition composites : list composite_definition :=
-(Composite __128 Struct
+(Composite _mbedtls_md_context_t Struct
    ((_md_info, (tptr (Tstruct _mbedtls_md_info_t noattr))) ::
     (_md_ctx, (tptr tvoid)) :: (_hmac_ctx, (tptr tvoid)) :: nil)
    noattr ::
- Composite __193 Struct
-   ((_md_ctx, (Tstruct __128 noattr)) :: (_V, (tarray tuchar 32)) ::
-    (_reseed_counter, tint) :: (_entropy_len, tuint) ::
-    (_prediction_resistance, tint) :: (_reseed_interval, tint) ::
+ Composite _mbedtls_hmac_drbg_context Struct
+   ((_md_ctx, (Tstruct _mbedtls_md_context_t noattr)) ::
+    (_V, (tarray tuchar 32)) :: (_reseed_counter, tint) ::
+    (_entropy_len, tuint) :: (_prediction_resistance, tint) ::
+    (_reseed_interval, tint) ::
     (_f_entropy,
      (tptr (Tfunction
              (Tcons (tptr tvoid) (Tcons (tptr tuchar) (Tcons tuint Tnil)))
@@ -2086,12 +2164,13 @@ prog_defs :=
  (_mbedtls_md_free,
    Gfun(External (EF_external _mbedtls_md_free
                    (mksignature (AST.Tint :: nil) None cc_default))
-     (Tcons (tptr (Tstruct __128 noattr)) Tnil) tvoid cc_default)) ::
+     (Tcons (tptr (Tstruct _mbedtls_md_context_t noattr)) Tnil) tvoid
+     cc_default)) ::
  (_mbedtls_md_setup,
    Gfun(External (EF_external _mbedtls_md_setup
                    (mksignature (AST.Tint :: AST.Tint :: AST.Tint :: nil)
                      (Some AST.Tint) cc_default))
-     (Tcons (tptr (Tstruct __128 noattr))
+     (Tcons (tptr (Tstruct _mbedtls_md_context_t noattr))
        (Tcons (tptr (Tstruct _mbedtls_md_info_t noattr)) (Tcons tint Tnil)))
      tint cc_default)) ::
  (_mbedtls_md_get_size,
@@ -2103,24 +2182,25 @@ prog_defs :=
    Gfun(External (EF_external _mbedtls_md_hmac_starts
                    (mksignature (AST.Tint :: AST.Tint :: AST.Tint :: nil)
                      (Some AST.Tint) cc_default))
-     (Tcons (tptr (Tstruct __128 noattr))
+     (Tcons (tptr (Tstruct _mbedtls_md_context_t noattr))
        (Tcons (tptr tuchar) (Tcons tuint Tnil))) tint cc_default)) ::
  (_mbedtls_md_hmac_update,
    Gfun(External (EF_external _mbedtls_md_hmac_update
                    (mksignature (AST.Tint :: AST.Tint :: AST.Tint :: nil)
                      (Some AST.Tint) cc_default))
-     (Tcons (tptr (Tstruct __128 noattr))
+     (Tcons (tptr (Tstruct _mbedtls_md_context_t noattr))
        (Tcons (tptr tuchar) (Tcons tuint Tnil))) tint cc_default)) ::
  (_mbedtls_md_hmac_finish,
    Gfun(External (EF_external _mbedtls_md_hmac_finish
                    (mksignature (AST.Tint :: AST.Tint :: nil) (Some AST.Tint)
                      cc_default))
-     (Tcons (tptr (Tstruct __128 noattr)) (Tcons (tptr tuchar) Tnil)) tint
-     cc_default)) ::
+     (Tcons (tptr (Tstruct _mbedtls_md_context_t noattr))
+       (Tcons (tptr tuchar) Tnil)) tint cc_default)) ::
  (_mbedtls_md_hmac_reset,
    Gfun(External (EF_external _mbedtls_md_hmac_reset
                    (mksignature (AST.Tint :: nil) (Some AST.Tint) cc_default))
-     (Tcons (tptr (Tstruct __128 noattr)) Tnil) tint cc_default)) ::
+     (Tcons (tptr (Tstruct _mbedtls_md_context_t noattr)) Tnil) tint
+     cc_default)) ::
  (_memcpy,
    Gfun(External (EF_external _memcpy
                    (mksignature (AST.Tint :: AST.Tint :: AST.Tint :: nil)
