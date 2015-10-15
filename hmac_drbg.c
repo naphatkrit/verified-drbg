@@ -169,7 +169,7 @@ int mbedtls_hmac_drbg_seed( mbedtls_hmac_drbg_context *ctx,
     if( ( ret = mbedtls_md_setup( &ctx->md_ctx, md_info, 1 ) ) != 0 )
         return( ret );
 
-    md_size = mbedtls_md_get_size( md_info );
+    md_size = mbedtls_md_get_size( md_info ); // TODO hardcode this, get rid of info
 
     /*
      * Set initial working state.
