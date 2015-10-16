@@ -9,15 +9,13 @@ Instance CompSpecs : compspecs.
 Proof. make_compspecs prog. Defined.
 
 Inductive mdabs :=
-  MDabs: forall (md_info_ptr md_ctx_ptr hmac_ctx_ptr: int), mdabs.
+  MDabs: forall (h: hmacabs), mdabs.
 
 Definition mdstate: Type := (val * (val * val))%type.
 
-Definition md_relate (a: mdabs) (r: mdstate): Prop :=
-  match a with MDabs md_info_ptr md_ctx_ptr hmac_ctx_ptr =>
-               Vint md_info_ptr = fst r
-               /\ Vint md_ctx_ptr = fst (snd r)
-               /\ Vint hmac_ctx_ptr = snd (snd r)
+Definition md_relate (a: mdabs) (r: mdstate): mpred :=
+  match a with MDabs h =>
+               hmacstate_ h (snd (snd r))
   end.
 
 Definition t_struct_md_ctx_st := Tstruct _mbedtls_md_context_t noattr.
