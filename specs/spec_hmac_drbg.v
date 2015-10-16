@@ -41,13 +41,17 @@ Definition hmac256drbgabs_metadata_same (a: hmac256drbgabs) (b: hmac256drbgabs):
 
 Definition t_struct_hmac256drbg_context_st := Tstruct _mbedtls_hmac_drbg_context noattr.
 
+Definition hmac_drbg_update_post (final_state_abs: hmac256drbgabs) (ctx: val): mpred :=
+  EX final_state: hmac256drbgstate,
+                  (data_at Tsh t_struct_hmac256drbg_context_st final_state ctx) *
+                  (hmac256drbg_relate final_state_abs final_state).
+
 Definition hmac_drbg_update_spec :=
   DECLARE _mbedtls_hmac_drbg_update
    WITH contents: list int, key: list Z, value: list Z,
         additional: val, add_len: Z,
         ctx: val, initial_state: hmac256drbgstate,
-        initial_state_abs: hmac256drbgabs,
-        key': list Z, value': list Z, final_state_abs: hmac256drbgabs, final_state: hmac256drbgstate
+        initial_state_abs: hmac256drbgabs
     PRE [ _ctx OF (tptr t_struct_hmac256drbg_context_st), _additional OF (tptr tuchar), _add_len OF tint ]
        PROP (0 <= add_len <= Int.max_signed)
        LOCAL (temp _additional additional; temp _add_len (Vint (Int.repr add_len)))
@@ -57,10 +61,9 @@ Definition hmac_drbg_update_spec :=
          `(hmac256drbg_relate initial_state_abs initial_state)
            )
     POST [ tvoid ]
-       (* EX key': list Z, EX value': list Z, EX final_state_abs:_, EX final_state:_, *)
+       EX key': list Z, EX value': list Z, EX final_state_abs:_,
        PROP ((key', value') = HMAC256_DRBG_update (map Int.signed contents) key value; value' = hmac256drbgabs_value final_state_abs; hmac256drbgabs_metadata_same initial_state_abs final_state_abs)
        LOCAL ()
        SEP (
-         `(data_at Tsh t_struct_hmac256drbg_context_st final_state ctx);
-         `(hmac256drbg_relate final_state_abs final_state)
+         `(hmac_drbg_update_post final_state_abs ctx)
        ).
