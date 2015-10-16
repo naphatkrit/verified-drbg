@@ -29,6 +29,9 @@ Definition hmac256drbg_relate (a: hmac256drbgabs) (r: hmac256drbgstate) : mpred 
 Definition hmac256drbgabs_value (a: hmac256drbgabs): list Z :=
   match a with HMAC256DRBGabs _ V _ _ _ _ => V end.
 
+Definition hmac256drbgabs_has_key (k: list Z) (a: hmac256drbgabs): Prop :=
+  match a with HMAC256DRBGabs hmac _ _ _ _ _ => md_has_key k hmac end.
+
 Definition hmac256drbgabs_metadata_same (a: hmac256drbgabs) (b: hmac256drbgabs): Prop :=
   match a with HMAC256DRBGabs _ _ reseed_counter entropy_len prediction_resistance reseed_interval =>
                match b with HMAC256DRBGabs _ _ reseed_counter' entropy_len' prediction_resistance' reseed_interval' =>
@@ -53,7 +56,11 @@ Definition hmac_drbg_update_spec :=
         ctx: val, initial_state: hmac256drbgstate,
         initial_state_abs: hmac256drbgabs
     PRE [ _ctx OF (tptr t_struct_hmac256drbg_context_st), _additional OF (tptr tuchar), _add_len OF tint ]
-       PROP (0 <= add_len <= Int.max_signed)
+       PROP (
+         0 <= add_len <= Int.max_signed;
+         value = hmac256drbgabs_value initial_state_abs;
+         hmac256drbgabs_has_key key initial_state_abs
+       )
        LOCAL (temp _additional additional; temp _add_len (Vint (Int.repr add_len)))
        SEP (
          `(data_at Tsh (tarray tint add_len) (map Vint contents) additional);
@@ -62,7 +69,12 @@ Definition hmac_drbg_update_spec :=
            )
     POST [ tvoid ]
        EX key': list Z, EX value': list Z, EX final_state_abs:_,
-       PROP ((key', value') = HMAC256_DRBG_update (map Int.signed contents) key value; value' = hmac256drbgabs_value final_state_abs; hmac256drbgabs_metadata_same initial_state_abs final_state_abs)
+       PROP (
+           (key', value') = HMAC256_DRBG_update (map Int.signed contents) key value;
+           value' = hmac256drbgabs_value final_state_abs;
+           hmac256drbgabs_has_key key' final_state_abs;
+           hmac256drbgabs_metadata_same initial_state_abs final_state_abs
+         )
        LOCAL ()
        SEP (
          `(hmac_drbg_update_post final_state_abs ctx)
