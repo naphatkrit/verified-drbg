@@ -33,6 +33,7 @@ int mbedtls_md_hmac_starts( mbedtls_md_context_t *ctx, const unsigned char *key,
 }
 
 int mbedtls_md_hmac_reset( mbedtls_md_context_t *ctx ) {
+    // TODO call init with key=NULL
     unsigned char buf[SHA256_DIGEST_LENGTH]; //ie 32
     HMAC_Final(ctx->hmac_ctx, buf);
     return 0;

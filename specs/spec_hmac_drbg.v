@@ -18,11 +18,13 @@ Definition hmac256drbg_relate (a: hmac256drbgabs) (r: hmac256drbgstate) : mpred 
   match a with HMAC256DRBGabs md_ctx V reseed_counter entropy_len prediction_resistance reseed_interval =>
                match r with (md_ctx', (V', (reseed_counter', (entropy_len', (prediction_resistance', (reseed_interval', (f_entropy', p_entropy'))))))) =>
                             md_relate md_ctx md_ctx'
-                            && !! (map (fun x => Vint (Int.repr x)) V = V')
-                            && !! (Vint (Int.repr reseed_counter) = reseed_counter')
-                            && !! (Vint (Int.repr entropy_len) = entropy_len')
-                            && !! (match prediction_resistance with | true => (prediction_resistance' <> Vint (Int.repr 0)) | false => (prediction_resistance' = Vint (Int.repr 0)) end)
-                            && !! (Vint (Int.repr reseed_interval) = reseed_interval')
+                                      && !! (
+                                        map (fun x => Vint (Int.repr x)) V = V'
+                                        /\ Vint (Int.repr reseed_counter) = reseed_counter'
+                                        /\ Vint (Int.repr entropy_len) = entropy_len'
+                                        /\ Vint (Int.repr reseed_interval) = reseed_interval'
+                                        /\ if prediction_resistance then (prediction_resistance' <> Vint (Int.repr 0)) else (prediction_resistance' = Vint (Int.repr 0))
+                                      )
                end
   end.
 
@@ -51,26 +53,25 @@ Definition hmac_drbg_update_post (final_state_abs: hmac256drbgabs) (ctx: val): m
 
 Definition hmac_drbg_update_spec :=
   DECLARE _mbedtls_hmac_drbg_update
-   WITH contents: list int, key: list Z, value: list Z,
+   WITH contents: list int, key: list Z,
         additional: val, add_len: Z,
         ctx: val, initial_state: hmac256drbgstate,
         initial_state_abs: hmac256drbgabs
     PRE [ _ctx OF (tptr t_struct_hmac256drbg_context_st), _additional OF (tptr tuchar), _add_len OF tint ]
        PROP (
-         0 <= add_len <= Int.max_signed;
-         value = hmac256drbgabs_value initial_state_abs;
+         0 <= add_len <= Int.max_unsigned;
          hmac256drbgabs_has_key key initial_state_abs
        )
        LOCAL (temp _additional additional; temp _add_len (Vint (Int.repr add_len)))
        SEP (
-         `(data_at Tsh (tarray tint add_len) (map Vint contents) additional);
+         `(data_at Tsh (tarray tuchar add_len) (map Vint contents) additional);
          `(data_at Tsh t_struct_hmac256drbg_context_st initial_state ctx);
          `(hmac256drbg_relate initial_state_abs initial_state)
            )
     POST [ tvoid ]
        EX key': list Z, EX value': list Z, EX final_state_abs:_,
        PROP (
-           (key', value') = HMAC256_DRBG_update (map Int.signed contents) key value;
+           (key', value') = HMAC256_DRBG_update (map Int.signed contents) key (hmac256drbgabs_value initial_state_abs);
            value' = hmac256drbgabs_value final_state_abs;
            hmac256drbgabs_has_key key' final_state_abs;
            hmac256drbgabs_metadata_same initial_state_abs final_state_abs
@@ -79,3 +80,4 @@ Definition hmac_drbg_update_spec :=
        SEP (
          `(hmac_drbg_update_post final_state_abs ctx)
        ).
+(* TODO isbyte, data_block *)
