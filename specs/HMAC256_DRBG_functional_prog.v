@@ -1,6 +1,6 @@
 Require Import Coqlib.
 Require Import List. Import ListNotations.
-Require Import HMAC256_functional_prog.
+Require Import sha.HMAC256_functional_prog.
 Require Import DRBG_instantiate_function.
 Require Import HMAC_DRBG_instantiate_algorithm.
 Require Import DRBG_generate_function.
