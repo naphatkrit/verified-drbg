@@ -88,6 +88,7 @@ Definition HmacDrbgVarSpecs : varspecs := (sha._K256, tarray tuint 64)::nil.
 Definition HmacDrbgFunSpecs : funspecs := 
   hmac_drbg_update_spec::
   md_reset_spec::md_final_spec::md_update_spec::md_starts_spec::
+  md_get_size_spec::
   OPENSSL_HMAC_ABSTRACT_SPEC.hmac_update_spec::
   OPENSSL_HMAC_ABSTRACT_SPEC.hmac_final_spec::
   OPENSSL_HMAC_ABSTRACT_SPEC.hmac_reset_spec::

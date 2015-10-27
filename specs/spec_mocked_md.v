@@ -46,6 +46,18 @@ Lemma FULL_EMPTY key c: FULL key c |-- EMPTY c.
 Proof.
   unfold FULL, EMPTY. normalize.
 Admitted. (* TODO *)
+
+Definition md_get_size_spec :=
+  DECLARE _mbedtls_md_get_size
+   WITH c : val, l:Z, key:list Z, kv:val, d:list Z
+   PRE [ _ctx OF tptr t_struct_md_ctx_st]
+         PROP ()
+         LOCAL ()
+         SEP ()
+  POST [ tint ] 
+     PROP ()
+     LOCAL (temp ret_temp (Vint (Int.repr (Z.of_nat SHA256.DigestLength))))
+     SEP ().
  
 Definition md_reset_spec :=
   DECLARE _mbedtls_md_hmac_reset
