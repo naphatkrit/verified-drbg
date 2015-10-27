@@ -5,6 +5,8 @@ Local Open Scope logic.
 Require Import hmac_drbg.
 Require Import HMAC256_DRBG_functional_prog.
 Require Import spec_mocked_md.
+Require Import sha.spec_hmacNK.
+Require Import sha.funspec_hmacNK.
 
 Instance CompSpecs : compspecs.
 Proof. make_compspecs prog. Defined.
@@ -80,3 +82,17 @@ Definition hmac_drbg_update_spec :=
          `(hmac_drbg_update_post final_state_abs ctx)
        ).
 (* TODO isbyte, data_block *)
+
+Definition HmacDrbgVarSpecs : varspecs := (sha._K256, tarray tuint 64)::nil.
+
+Definition HmacDrbgFunSpecs : funspecs := 
+  hmac_drbg_update_spec::
+  md_reset_spec::md_final_spec::md_update_spec::md_starts_spec::
+  OPENSSL_HMAC_ABSTRACT_SPEC.hmac_update_spec::
+  OPENSSL_HMAC_ABSTRACT_SPEC.hmac_final_spec::
+  OPENSSL_HMAC_ABSTRACT_SPEC.hmac_reset_spec::
+  OPENSSL_HMAC_ABSTRACT_SPEC.hmac_starts_spec::
+  memcpy_spec_data_at:: memset_spec::
+  sha256init_spec::sha256update_spec::sha256final_spec::(*SHA256_spec::*)
+  HMAC_Init_spec:: HMAC_Update_spec::HMAC_Cleanup_spec::
+  HMAC_Final_spec:: HMAC_spec ::nil.

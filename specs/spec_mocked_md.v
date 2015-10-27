@@ -47,7 +47,7 @@ Proof.
   unfold FULL, EMPTY. normalize.
 Admitted. (* TODO *)
  
-Definition hmac_reset_spec :=
+Definition md_reset_spec :=
   DECLARE _mbedtls_md_hmac_reset
    WITH c : val, l:Z, key:list Z, kv:val, d:list Z
    PRE [ _ctx OF tptr t_struct_md_ctx_st]
@@ -59,7 +59,7 @@ Definition hmac_reset_spec :=
      LOCAL ()
      SEP (`(REP (hABS key nil) c); `(K_vector kv)).
 
-Definition hmac_starts_spec :=
+Definition md_starts_spec :=
   DECLARE _mbedtls_md_hmac_starts
    WITH c : val, l:Z, key:list Z, kv:val, b:block, i:Int.int
    PRE [ _ctx OF tptr t_struct_md_ctx_st,
@@ -75,7 +75,7 @@ Definition hmac_starts_spec :=
      LOCAL ()
      SEP (`(REP (hABS key nil) c); `(data_block Tsh key (Vptr b i)); `(K_vector kv)).
 
-Definition hmac_update_spec :=
+Definition md_update_spec :=
   DECLARE _mbedtls_md_hmac_update
    WITH key: list Z, c : val, d:val, data:list Z, data1:list Z, kv:val
    PRE [ _ctx OF tptr t_struct_md_ctx_st, 
@@ -92,7 +92,7 @@ Definition hmac_update_spec :=
           SEP(`(REP (hABS key (data++data1)) c); 
               `(data_block Tsh data1 d);`(K_vector kv)).
 
-Definition hmac_final_spec :=
+Definition md_final_spec :=
   DECLARE _mbedtls_md_hmac_finish
    WITH data:list Z, key:list Z, c : val, md:val, shmd: share, kv:val
    PRE [ _ctx OF tptr t_struct_md_ctx_st,
