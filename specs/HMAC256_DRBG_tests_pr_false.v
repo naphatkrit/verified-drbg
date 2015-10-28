@@ -2,7 +2,7 @@ Require Import Coqlib.
 Require Import List. Import ListNotations.
 Require Import Coq.Strings.String.
 Require Import Coq.Strings.Ascii.
-Require Import functional_prog.
+Require Import sha.functional_prog.
 Require Import HMAC256_DRBG_functional_prog.
 Require Import DRBG_entropy_result.
 Require Import DRBG_state_handle.
