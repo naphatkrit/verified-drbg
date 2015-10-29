@@ -59,7 +59,7 @@ Definition hmac_drbg_update_spec :=
         additional: val, add_len: Z,
         ctx: val, initial_state: hmac256drbgstate,
         initial_state_abs: hmac256drbgabs
-    PRE [ _ctx OF (tptr t_struct_hmac256drbg_context_st), _additional OF (tptr tuchar), _add_len OF tint ]
+    PRE [ _ctx OF (tptr t_struct_hmac256drbg_context_st), _additional OF (tptr tuchar), _add_len OF tuint ]
        PROP (
          0 <= add_len <= Int.max_unsigned
        )

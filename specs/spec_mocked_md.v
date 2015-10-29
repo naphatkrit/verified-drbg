@@ -36,16 +36,6 @@ Definition EMPTY c :=
   EX r: mdstate,
         (UNDER_SPEC.EMPTY (snd (snd r)) && data_at Tsh t_struct_md_ctx_st r c).
 
-Lemma REP_FULL key data c: REP (hABS key data) c |-- FULL key c.
-Proof.
-  unfold REP, FULL. normalize.
-Admitted. (* TODO *)
-
-Lemma FULL_EMPTY key c: FULL key c |-- EMPTY c.
-Proof.
-  unfold FULL, EMPTY. normalize.
-Admitted. (* TODO *)
-
 Definition md_get_size_spec :=
   DECLARE _mbedtls_md_get_size
    WITH u:unit
@@ -53,7 +43,7 @@ Definition md_get_size_spec :=
          PROP ()
          LOCAL ()
          SEP ()
-  POST [ tint ] 
+  POST [ tuchar ] 
      PROP ()
      LOCAL (temp ret_temp (Vint (Int.repr (Z.of_nat SHA256.DigestLength))))
      SEP ().
