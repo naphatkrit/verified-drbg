@@ -1,5 +1,5 @@
 COQC=coqc -I ~/VST -R ~/compcert -as compcert
-VOFILES=DRBG_generate_function.vo DRBG_instantiate_function.vo DRBG_state_handle.vo HMAC256_DRBG_functional_prog.vo HMAC_DRBG_generate_algorithm.vo HMAC_DRBG_instantiate_algorithm.vo HMAC_DRBG_generate.vo HMAC_DRBG_update.vo DRBG_working_state.vo DRBG_generate_algorithm_result.vo HMAC_DRBG_reseed_algorithm.vo DRBG_entropy_result.vo DRBG_reseed_function.vo HMAC256_DRBG_tests_no_reseed.vo HMAC256_DRBG_tests_pr_false.vo HMAC256_DRBG_tests_pr_true.vo hmac_drbg.vo spec_hmac_drbg.vo mocked_md.vo spec_mocked_md.vo verif_hmac_drbg_update.vo mocked_md_compspecs.vo
+VOFILES=DRBG_generate_function.vo DRBG_instantiate_function.vo DRBG_state_handle.vo HMAC256_DRBG_functional_prog.vo HMAC_DRBG_generate_algorithm.vo HMAC_DRBG_instantiate_algorithm.vo HMAC_DRBG_generate.vo HMAC_DRBG_update.vo DRBG_working_state.vo DRBG_generate_algorithm_result.vo HMAC_DRBG_reseed_algorithm.vo DRBG_entropy_result.vo DRBG_reseed_function.vo HMAC256_DRBG_tests_no_reseed.vo HMAC256_DRBG_tests_pr_false.vo HMAC256_DRBG_tests_pr_true.vo hmac_drbg.vo spec_hmac_drbg.vo mocked_md.vo spec_mocked_md.vo verif_hmac_drbg_update.vo mocked_md_compspecs.vo verif_mocked_md.vo
 GLOBFILES=$(VOFILES:.vo=.glob)
 
 all: verifications
@@ -10,10 +10,13 @@ clean:
 
 tests: HMAC256_DRBG_tests_pr_false.vo HMAC256_DRBG_tests_pr_true.vo HMAC256_DRBG_tests_no_reseed.vo
 
-verifications: verif_hmac_drbg_update.vo
+verifications: verif_hmac_drbg_update.vo verif_mocked_md.vo
 
 %.vo : %.v
 	$(COQC) $<
+
+verif_mocked_md.vo: verif_mocked_md.v spec_mocked_md.vo mocked_md.vo
+	$(COQC) verif_mocked_md.v
 
 verif_hmac_drbg_update.vo: verif_hmac_drbg_update.v spec_hmac_drbg.vo hmac_drbg.vo
 	$(COQC) verif_hmac_drbg_update.v
