@@ -8,8 +8,7 @@ Require Import sha.funspec_hmacNK.
 Require Import sha.spec_sha.
 Require Import sha.HMAC256_functional_prog.
 
-Instance CompSpecs : compspecs.
-Proof. make_compspecs prog. Defined.
+Require Import mocked_md_compspecs.
 
 Module UNDER_SPEC := OPENSSL_HMAC_ABSTRACT_SPEC.
 
@@ -49,8 +48,8 @@ Admitted. (* TODO *)
 
 Definition md_get_size_spec :=
   DECLARE _mbedtls_md_get_size
-   WITH c : val, l:Z, key:list Z, kv:val, d:list Z
-   PRE [ _ctx OF tptr t_struct_md_ctx_st]
+   WITH u:unit
+   PRE [ _md_info OF tptr (Tstruct _mbedtls_md_info_t noattr)]
          PROP ()
          LOCAL ()
          SEP ()
