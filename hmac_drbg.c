@@ -43,6 +43,7 @@
 #endif /* MBEDTLS_PLATFORM_C */
 
 #include <stdlib.h>
+#include "md.h"
 #include "hmac.h"
 
 struct mbedtls_md_info_t {};
