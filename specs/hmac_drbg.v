@@ -305,7 +305,8 @@ Definition f_mbedtls_hmac_drbg_update := {|
   fn_callconv := cc_default;
   fn_params := ((_ctx, (tptr (Tstruct _mbedtls_hmac_drbg_context noattr))) ::
                 (_additional, (tptr tuchar)) :: (_add_len, tuint) :: nil);
-  fn_vars := ((_sep, (tarray tuchar 1)) :: (_K, (tarray tuchar 32)) :: nil);
+  fn_vars := ((_info, (Tstruct _mbedtls_md_info_t noattr)) ::
+              (_sep, (tarray tuchar 1)) :: (_K, (tarray tuchar 32)) :: nil);
   fn_temps := ((_md_len, tuint) :: (_rounds, tuchar) ::
                (126%positive, tint) :: (125%positive, tint) ::
                (124%positive, tuchar) :: nil);
@@ -317,12 +318,7 @@ Definition f_mbedtls_hmac_drbg_update := {|
                                    (Tcons
                                      (tptr (Tstruct _mbedtls_md_info_t noattr))
                                      Tnil) tuchar cc_default))
-      ((Efield
-         (Efield
-           (Ederef
-             (Etempvar _ctx (tptr (Tstruct _mbedtls_hmac_drbg_context noattr)))
-             (Tstruct _mbedtls_hmac_drbg_context noattr)) _md_ctx
-           (Tstruct _mbedtls_md_context_t noattr)) _md_info
+      ((Eaddrof (Evar _info (Tstruct _mbedtls_md_info_t noattr))
          (tptr (Tstruct _mbedtls_md_info_t noattr))) :: nil))
     (Sset _md_len (Etempvar 124%positive tuchar)))
   (Ssequence
