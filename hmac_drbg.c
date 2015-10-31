@@ -60,6 +60,12 @@ unsigned char mbedtls_md_get_size( const mbedtls_md_info_t *md_info ) {
     return 32;
 }
 
+void test_md_get_size() {
+	mbedtls_md_info_t info;
+	unsigned char ret;
+	ret = mbedtls_md_get_size(&info);
+}
+
 int mbedtls_md_setup( mbedtls_md_context_t *ctx, const mbedtls_md_info_t *md_info, int hmac ) {
 /*
     HMAC_CTX * sha_ctx = (HMAC_CTX *) malloc(sizeof(HMAC_CTX));
