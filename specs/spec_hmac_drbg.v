@@ -11,15 +11,7 @@ Require Import sha.funspec_hmacNK.
 Require Import sha.HMAC256_functional_prog.
 Require Import sha.spec_sha.
 
-Instance CompSpecs : compspecs.
-Proof. make_compspecs prog. Defined.
-
-(*
-Definition CompSpecs' : compspecs.
-Proof. make_compspecs1 prog. Defined.
-Instance CompSpecs : compspecs.
-Proof. make_compspecs2 CompSpecs'. Defined.
-*)
+Require Import hmac_drbg_compspecs.
 
 Module UNDER_SPEC := OPENSSL_HMAC_ABSTRACT_SPEC.
 

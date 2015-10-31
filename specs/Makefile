@@ -1,5 +1,5 @@
 COQC=coqc -I ~/VST -R ~/compcert -as compcert
-VOFILES=DRBG_generate_function.vo DRBG_instantiate_function.vo DRBG_state_handle.vo HMAC256_DRBG_functional_prog.vo HMAC_DRBG_generate_algorithm.vo HMAC_DRBG_instantiate_algorithm.vo HMAC_DRBG_generate.vo HMAC_DRBG_update.vo DRBG_working_state.vo DRBG_generate_algorithm_result.vo HMAC_DRBG_reseed_algorithm.vo DRBG_entropy_result.vo DRBG_reseed_function.vo HMAC256_DRBG_tests_no_reseed.vo HMAC256_DRBG_tests_pr_false.vo HMAC256_DRBG_tests_pr_true.vo hmac_drbg.vo spec_hmac_drbg.vo verif_hmac_drbg_update.vo verif_mocked_md.vo
+VOFILES=DRBG_generate_function.vo DRBG_instantiate_function.vo DRBG_state_handle.vo HMAC256_DRBG_functional_prog.vo HMAC_DRBG_generate_algorithm.vo HMAC_DRBG_instantiate_algorithm.vo HMAC_DRBG_generate.vo HMAC_DRBG_update.vo DRBG_working_state.vo DRBG_generate_algorithm_result.vo HMAC_DRBG_reseed_algorithm.vo DRBG_entropy_result.vo DRBG_reseed_function.vo HMAC256_DRBG_tests_no_reseed.vo HMAC256_DRBG_tests_pr_false.vo HMAC256_DRBG_tests_pr_true.vo hmac_drbg.vo spec_hmac_drbg.vo verif_hmac_drbg_update.vo verif_mocked_md.vo hmac_drbg_compspecs.vo
 GLOBFILES=$(VOFILES:.vo=.glob)
 
 all: verifications
@@ -10,7 +10,7 @@ clean:
 
 tests: HMAC256_DRBG_tests_pr_false.vo HMAC256_DRBG_tests_pr_true.vo HMAC256_DRBG_tests_no_reseed.vo
 
-verifications: verif_hmac_drbg_update.vo verif_mocked_md.vo
+verifications: verif_hmac_drbg_update.vo
 
 %.vo : %.v
 	$(COQC) $<
@@ -21,7 +21,10 @@ verif_mocked_md.vo: verif_mocked_md.v hmac_drbg.vo spec_hmac_drbg.vo
 verif_hmac_drbg_update.vo: verif_hmac_drbg_update.v spec_hmac_drbg.vo hmac_drbg.vo
 	$(COQC) verif_hmac_drbg_update.v
 
-spec_hmac_drbg.vo: spec_hmac_drbg.v hmac_drbg.vo HMAC256_DRBG_functional_prog.vo
+hmac_drbg_compspecs.vo: hmac_drbg_compspecs.v hmac_drbg.vo
+	$(COQC) hmac_drbg_compspecs.v
+
+spec_hmac_drbg.vo: spec_hmac_drbg.v hmac_drbg.vo HMAC256_DRBG_functional_prog.vo hmac_drbg_compspecs.vo
 	$(COQC) spec_hmac_drbg.v
 
 DRBG_reseed_function.vo: DRBG_reseed_function.v DRBG_state_handle.vo DRBG_working_state.vo DRBG_entropy_result.vo
