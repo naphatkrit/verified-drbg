@@ -31,8 +31,6 @@
 // #include MBEDTLS_CONFIG_FILE
 // #endif
 
-#define MBEDTLS_SELF_TEST
-
 #include "hmac_drbg.h"
 
 #include <string.h>
@@ -43,10 +41,11 @@
 #endif /* MBEDTLS_PLATFORM_C */
 
 #include <stdlib.h>
-#include "md.h"
 #include "hmac.h"
 
-struct mbedtls_md_info_t {};
+struct mbedtls_md_info_t {
+	int dummy;
+};
 
 static const mbedtls_md_info_t mocked_sha256_info;
 
