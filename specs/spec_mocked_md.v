@@ -8,7 +8,9 @@ Require Import sha.funspec_hmacNK.
 Require Import sha.spec_sha.
 Require Import sha.HMAC256_functional_prog.
 
+(*
 Require Import mocked_md_compspecs.
+*)
 
 Module UNDER_SPEC := OPENSSL_HMAC_ABSTRACT_SPEC.
 

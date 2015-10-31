@@ -13,6 +13,6 @@ Proof.
   name ctx' _ctx.
   name add_len' _add_len.
   name additional' _additional.
-  rename lvar0 into sep. rename lvar1 into K. 
-  forward_call tt.
+  rename lvar0 into sep. rename lvar1 into K.
+  forward_call tt md_len.
 Admitted.
