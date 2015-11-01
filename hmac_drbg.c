@@ -147,7 +147,13 @@ void mbedtls_hmac_drbg_update( mbedtls_hmac_drbg_context *ctx,
     unsigned char K[MBEDTLS_MD_MAX_SIZE];
 
     md_len = mbedtls_md_get_size( &info /* ctx->md_ctx.md_info*/ );
-    rounds = ( additional != NULL && add_len != 0 ) ? 2 : 1;
+    if (additional != NULL && add_len != 0) {
+        rounds = 2;
+    } else {
+        rounds = 1;
+    }
+
+    /* rounds = ( additional != NULL && add_len != 0 ) ? 2 : 1; */
 
     for( sep[0] = 0; sep[0] < rounds; sep[0]++ )
     {
