@@ -308,7 +308,8 @@ Definition f_mbedtls_hmac_drbg_update := {|
   fn_vars := ((_info, (Tstruct _mbedtls_md_info_t noattr)) ::
               (_sep, (tarray tuchar 1)) :: (_K, (tarray tuchar 32)) :: nil);
   fn_temps := ((_md_len, tuint) :: (_rounds, tuchar) ::
-               (125%positive, tint) :: (124%positive, tuchar) :: nil);
+               (126%positive, tint) :: (125%positive, tint) ::
+               (124%positive, tuchar) :: nil);
   fn_body :=
 (Ssequence
   (Ssequence
@@ -322,17 +323,19 @@ Definition f_mbedtls_hmac_drbg_update := {|
     (Sset _md_len (Etempvar 124%positive tuchar)))
   (Ssequence
     (Ssequence
-      (Sifthenelse (Ebinop One (Etempvar _additional (tptr tuchar))
-                     (Ecast (Econst_int (Int.repr 0) tint) (tptr tvoid))
-                     tint)
-        (Sset 125%positive
-          (Ecast
-            (Ebinop One (Etempvar _add_len tuint)
-              (Econst_int (Int.repr 0) tint) tint) tbool))
-        (Sset 125%positive (Econst_int (Int.repr 0) tint)))
-      (Sifthenelse (Etempvar 125%positive tint)
-        (Sset _rounds (Ecast (Econst_int (Int.repr 2) tint) tuchar))
-        (Sset _rounds (Ecast (Econst_int (Int.repr 1) tint) tuchar))))
+      (Ssequence
+        (Sifthenelse (Ebinop One (Etempvar _additional (tptr tuchar))
+                       (Ecast (Econst_int (Int.repr 0) tint) (tptr tvoid))
+                       tint)
+          (Sset 125%positive
+            (Ecast
+              (Ebinop One (Etempvar _add_len tuint)
+                (Econst_int (Int.repr 0) tint) tint) tbool))
+          (Sset 125%positive (Econst_int (Int.repr 0) tint)))
+        (Sifthenelse (Etempvar 125%positive tint)
+          (Sset 126%positive (Ecast (Econst_int (Int.repr 2) tint) tint))
+          (Sset 126%positive (Ecast (Econst_int (Int.repr 1) tint) tint))))
+      (Sset _rounds (Ecast (Etempvar 126%positive tint) tuchar)))
     (Ssequence
       (Sassign
         (Ederef
@@ -516,15 +519,15 @@ Definition f_mbedtls_hmac_drbg_seed_buf := {|
                 (_md_info, (tptr (Tstruct _mbedtls_md_info_t noattr))) ::
                 (_data, (tptr tuchar)) :: (_data_len, tuint) :: nil);
   fn_vars := nil;
-  fn_temps := ((_ret, tint) :: (129%positive, tuchar) ::
-               (128%positive, tuchar) :: (127%positive, tint) ::
-               (126%positive, tint) :: nil);
+  fn_temps := ((_ret, tint) :: (130%positive, tuchar) ::
+               (129%positive, tuchar) :: (128%positive, tint) ::
+               (127%positive, tint) :: nil);
   fn_body :=
 (Ssequence
   (Ssequence
     (Ssequence
       (Ssequence
-        (Scall (Some 126%positive)
+        (Scall (Some 127%positive)
           (Evar _mbedtls_md_setup (Tfunction
                                     (Tcons
                                       (tptr (Tstruct _mbedtls_md_context_t noattr))
@@ -540,15 +543,15 @@ Definition f_mbedtls_hmac_drbg_seed_buf := {|
              (tptr (Tstruct _mbedtls_md_context_t noattr))) ::
            (Etempvar _md_info (tptr (Tstruct _mbedtls_md_info_t noattr))) ::
            (Econst_int (Int.repr 1) tint) :: nil))
-        (Sset 127%positive (Etempvar 126%positive tint)))
-      (Sset _ret (Etempvar 127%positive tint)))
-    (Sifthenelse (Ebinop One (Ecast (Etempvar 127%positive tint) tint)
+        (Sset 128%positive (Etempvar 127%positive tint)))
+      (Sset _ret (Etempvar 128%positive tint)))
+    (Sifthenelse (Ebinop One (Ecast (Etempvar 128%positive tint) tint)
                    (Econst_int (Int.repr 0) tint) tint)
       (Sreturn (Some (Etempvar _ret tint)))
       Sskip))
   (Ssequence
     (Ssequence
-      (Scall (Some 128%positive)
+      (Scall (Some 129%positive)
         (Evar _mbedtls_md_get_size (Tfunction
                                      (Tcons
                                        (tptr (Tstruct _mbedtls_md_info_t noattr))
@@ -573,10 +576,10 @@ Definition f_mbedtls_hmac_drbg_seed_buf := {|
            (Ederef
              (Etempvar _ctx (tptr (Tstruct _mbedtls_hmac_drbg_context noattr)))
              (Tstruct _mbedtls_hmac_drbg_context noattr)) _V
-           (tarray tuchar 32)) :: (Etempvar 128%positive tuchar) :: nil)))
+           (tarray tuchar 32)) :: (Etempvar 129%positive tuchar) :: nil)))
     (Ssequence
       (Ssequence
-        (Scall (Some 129%positive)
+        (Scall (Some 130%positive)
           (Evar _mbedtls_md_get_size (Tfunction
                                        (Tcons
                                          (tptr (Tstruct _mbedtls_md_info_t noattr))
@@ -593,7 +596,7 @@ Definition f_mbedtls_hmac_drbg_seed_buf := {|
                (Etempvar _ctx (tptr (Tstruct _mbedtls_hmac_drbg_context noattr)))
                (Tstruct _mbedtls_hmac_drbg_context noattr)) _V
              (tarray tuchar 32)) :: (Econst_int (Int.repr 1) tint) ::
-           (Etempvar 129%positive tuchar) :: nil)))
+           (Etempvar 130%positive tuchar) :: nil)))
       (Ssequence
         (Scall None
           (Evar _mbedtls_hmac_drbg_update (Tfunction
@@ -614,15 +617,15 @@ Definition f_mbedtls_hmac_drbg_reseed := {|
   fn_params := ((_ctx, (tptr (Tstruct _mbedtls_hmac_drbg_context noattr))) ::
                 (_additional, (tptr tuchar)) :: (_len, tuint) :: nil);
   fn_vars := ((_seed, (tarray tuchar 384)) :: nil);
-  fn_temps := ((_seedlen, tuint) :: (132%positive, tint) ::
-               (131%positive, tint) :: (130%positive, tint) :: nil);
+  fn_temps := ((_seedlen, tuint) :: (133%positive, tint) ::
+               (132%positive, tint) :: (131%positive, tint) :: nil);
   fn_body :=
 (Ssequence
   (Ssequence
     (Sifthenelse (Ebinop Ogt (Etempvar _len tuint)
                    (Econst_int (Int.repr 256) tint) tint)
-      (Sset 130%positive (Econst_int (Int.repr 1) tint))
-      (Sset 130%positive
+      (Sset 131%positive (Econst_int (Int.repr 1) tint))
+      (Sset 131%positive
         (Ecast
           (Ebinop Ogt
             (Ebinop Oadd
@@ -632,7 +635,7 @@ Definition f_mbedtls_hmac_drbg_reseed := {|
                   (Tstruct _mbedtls_hmac_drbg_context noattr)) _entropy_len
                 tuint) (Etempvar _len tuint) tuint)
             (Econst_int (Int.repr 384) tint) tint) tbool)))
-    (Sifthenelse (Etempvar 130%positive tint)
+    (Sifthenelse (Etempvar 131%positive tint)
       (Sreturn (Some (Eunop Oneg (Econst_int (Int.repr 5) tint) tint)))
       Sskip))
   (Ssequence
@@ -644,7 +647,7 @@ Definition f_mbedtls_hmac_drbg_reseed := {|
        (Econst_int (Int.repr 384) tint) :: nil))
     (Ssequence
       (Ssequence
-        (Scall (Some 131%positive)
+        (Scall (Some 132%positive)
           (Efield
             (Ederef
               (Etempvar _ctx (tptr (Tstruct _mbedtls_hmac_drbg_context noattr)))
@@ -663,7 +666,7 @@ Definition f_mbedtls_hmac_drbg_reseed := {|
                (Etempvar _ctx (tptr (Tstruct _mbedtls_hmac_drbg_context noattr)))
                (Tstruct _mbedtls_hmac_drbg_context noattr)) _entropy_len
              tuint) :: nil))
-        (Sifthenelse (Ebinop One (Etempvar 131%positive tint)
+        (Sifthenelse (Ebinop One (Etempvar 132%positive tint)
                        (Econst_int (Int.repr 0) tint) tint)
           (Sreturn (Some (Eunop Oneg (Econst_int (Int.repr 9) tint) tint)))
           Sskip))
@@ -679,12 +682,12 @@ Definition f_mbedtls_hmac_drbg_reseed := {|
             (Sifthenelse (Ebinop One (Etempvar _additional (tptr tuchar))
                            (Ecast (Econst_int (Int.repr 0) tint)
                              (tptr tvoid)) tint)
-              (Sset 132%positive
+              (Sset 133%positive
                 (Ecast
                   (Ebinop One (Etempvar _len tuint)
                     (Econst_int (Int.repr 0) tint) tint) tbool))
-              (Sset 132%positive (Econst_int (Int.repr 0) tint)))
-            (Sifthenelse (Etempvar 132%positive tint)
+              (Sset 133%positive (Econst_int (Int.repr 0) tint)))
+            (Sifthenelse (Etempvar 133%positive tint)
               (Ssequence
                 (Scall None
                   (Evar _memcpy (Tfunction
@@ -733,16 +736,16 @@ Definition f_mbedtls_hmac_drbg_seed := {|
                 (_custom, (tptr tuchar)) :: (_len, tuint) :: nil);
   fn_vars := nil;
   fn_temps := ((_ret, tint) :: (_entropy_len, tuint) :: (_md_size, tuint) ::
-               (139%positive, tint) :: (138%positive, tint) ::
-               (137%positive, tint) :: (136%positive, tint) ::
-               (135%positive, tuchar) :: (134%positive, tint) ::
-               (133%positive, tint) :: nil);
+               (140%positive, tint) :: (139%positive, tint) ::
+               (138%positive, tint) :: (137%positive, tint) ::
+               (136%positive, tuchar) :: (135%positive, tint) ::
+               (134%positive, tint) :: nil);
   fn_body :=
 (Ssequence
   (Ssequence
     (Ssequence
       (Ssequence
-        (Scall (Some 133%positive)
+        (Scall (Some 134%positive)
           (Evar _mbedtls_md_setup (Tfunction
                                     (Tcons
                                       (tptr (Tstruct _mbedtls_md_context_t noattr))
@@ -758,22 +761,22 @@ Definition f_mbedtls_hmac_drbg_seed := {|
              (tptr (Tstruct _mbedtls_md_context_t noattr))) ::
            (Etempvar _md_info (tptr (Tstruct _mbedtls_md_info_t noattr))) ::
            (Econst_int (Int.repr 1) tint) :: nil))
-        (Sset 134%positive (Etempvar 133%positive tint)))
-      (Sset _ret (Etempvar 134%positive tint)))
-    (Sifthenelse (Ebinop One (Ecast (Etempvar 134%positive tint) tint)
+        (Sset 135%positive (Etempvar 134%positive tint)))
+      (Sset _ret (Etempvar 135%positive tint)))
+    (Sifthenelse (Ebinop One (Ecast (Etempvar 135%positive tint) tint)
                    (Econst_int (Int.repr 0) tint) tint)
       (Sreturn (Some (Etempvar _ret tint)))
       Sskip))
   (Ssequence
     (Ssequence
-      (Scall (Some 135%positive)
+      (Scall (Some 136%positive)
         (Evar _mbedtls_md_get_size (Tfunction
                                      (Tcons
                                        (tptr (Tstruct _mbedtls_md_info_t noattr))
                                        Tnil) tuchar cc_default))
         ((Etempvar _md_info (tptr (Tstruct _mbedtls_md_info_t noattr))) ::
          nil))
-      (Sset _md_size (Etempvar 135%positive tuchar)))
+      (Sset _md_size (Etempvar 136%positive tuchar)))
     (Ssequence
       (Scall None
         (Evar _mbedtls_md_hmac_starts (Tfunction
@@ -839,21 +842,21 @@ Definition f_mbedtls_hmac_drbg_seed := {|
                 (Ssequence
                   (Sifthenelse (Ebinop Ole (Etempvar _md_size tuint)
                                  (Econst_int (Int.repr 20) tint) tint)
-                    (Sset 136%positive
+                    (Sset 137%positive
                       (Ecast (Econst_int (Int.repr 16) tint) tint))
                     (Sifthenelse (Ebinop Ole (Etempvar _md_size tuint)
                                    (Econst_int (Int.repr 28) tint) tint)
                       (Ssequence
-                        (Sset 137%positive
+                        (Sset 138%positive
                           (Ecast (Econst_int (Int.repr 24) tint) tint))
-                        (Sset 136%positive
-                          (Ecast (Etempvar 137%positive tint) tint)))
-                      (Ssequence
                         (Sset 137%positive
+                          (Ecast (Etempvar 138%positive tint) tint)))
+                      (Ssequence
+                        (Sset 138%positive
                           (Ecast (Econst_int (Int.repr 32) tint) tint))
-                        (Sset 136%positive
-                          (Ecast (Etempvar 137%positive tint) tint)))))
-                  (Sset _entropy_len (Etempvar 136%positive tint)))
+                        (Sset 137%positive
+                          (Ecast (Etempvar 138%positive tint) tint)))))
+                  (Sset _entropy_len (Etempvar 137%positive tint)))
                 (Ssequence
                   (Sassign
                     (Efield
@@ -869,7 +872,7 @@ Definition f_mbedtls_hmac_drbg_seed := {|
                     (Ssequence
                       (Ssequence
                         (Ssequence
-                          (Scall (Some 138%positive)
+                          (Scall (Some 139%positive)
                             (Evar _mbedtls_hmac_drbg_reseed (Tfunction
                                                               (Tcons
                                                                 (tptr (Tstruct _mbedtls_hmac_drbg_context noattr))
@@ -883,10 +886,10 @@ Definition f_mbedtls_hmac_drbg_seed := {|
                             ((Etempvar _ctx (tptr (Tstruct _mbedtls_hmac_drbg_context noattr))) ::
                              (Etempvar _custom (tptr tuchar)) ::
                              (Etempvar _len tuint) :: nil))
-                          (Sset 139%positive (Etempvar 138%positive tint)))
-                        (Sset _ret (Etempvar 139%positive tint)))
+                          (Sset 140%positive (Etempvar 139%positive tint)))
+                        (Sset _ret (Etempvar 140%positive tint)))
                       (Sifthenelse (Ebinop One
-                                     (Ecast (Etempvar 139%positive tint)
+                                     (Ecast (Etempvar 140%positive tint)
                                        tint) (Econst_int (Int.repr 0) tint)
                                      tint)
                         (Sreturn (Some (Etempvar _ret tint)))
@@ -959,10 +962,10 @@ Definition f_mbedtls_hmac_drbg_random_with_add := {|
   fn_temps := ((_ret, tint) ::
                (_ctx, (tptr (Tstruct _mbedtls_hmac_drbg_context noattr))) ::
                (_md_len, tuint) :: (_left, tuint) :: (_out, (tptr tuchar)) ::
-               (_use_len, tuint) :: (145%positive, tuint) ::
-               (144%positive, tint) :: (143%positive, tint) ::
-               (142%positive, tint) :: (141%positive, tint) ::
-               (140%positive, tuchar) :: nil);
+               (_use_len, tuint) :: (146%positive, tuint) ::
+               (145%positive, tint) :: (144%positive, tint) ::
+               (143%positive, tint) :: (142%positive, tint) ::
+               (141%positive, tuchar) :: nil);
   fn_body :=
 (Ssequence
   (Sset _ctx
@@ -970,7 +973,7 @@ Definition f_mbedtls_hmac_drbg_random_with_add := {|
       (tptr (Tstruct _mbedtls_hmac_drbg_context noattr))))
   (Ssequence
     (Ssequence
-      (Scall (Some 140%positive)
+      (Scall (Some 141%positive)
         (Evar _mbedtls_md_get_size (Tfunction
                                      (Tcons
                                        (tptr (Tstruct _mbedtls_md_info_t noattr))
@@ -982,7 +985,7 @@ Definition f_mbedtls_hmac_drbg_random_with_add := {|
                (Tstruct _mbedtls_hmac_drbg_context noattr)) _md_ctx
              (Tstruct _mbedtls_md_context_t noattr)) _md_info
            (tptr (Tstruct _mbedtls_md_info_t noattr))) :: nil))
-      (Sset _md_len (Etempvar 140%positive tuchar)))
+      (Sset _md_len (Etempvar 141%positive tuchar)))
     (Ssequence
       (Sset _left (Etempvar _out_len tuint))
       (Ssequence
@@ -1019,10 +1022,10 @@ Definition f_mbedtls_hmac_drbg_random_with_add := {|
                                      (Tstruct _mbedtls_hmac_drbg_context noattr))
                                    _prediction_resistance tint)
                                  (Econst_int (Int.repr 1) tint) tint)
-                    (Sset 143%positive
+                    (Sset 144%positive
                       (Ecast (Econst_int (Int.repr 1) tint) tbool))
                     (Ssequence
-                      (Sset 143%positive
+                      (Sset 144%positive
                         (Ecast
                           (Ebinop Ogt
                             (Efield
@@ -1035,15 +1038,15 @@ Definition f_mbedtls_hmac_drbg_random_with_add := {|
                                 (Etempvar _ctx (tptr (Tstruct _mbedtls_hmac_drbg_context noattr)))
                                 (Tstruct _mbedtls_hmac_drbg_context noattr))
                               _reseed_interval tint) tint) tbool))
-                      (Sset 143%positive
-                        (Ecast (Etempvar 143%positive tint) tbool))))
-                  (Sset 143%positive (Econst_int (Int.repr 0) tint)))
-                (Sifthenelse (Etempvar 143%positive tint)
+                      (Sset 144%positive
+                        (Ecast (Etempvar 144%positive tint) tbool))))
+                  (Sset 144%positive (Econst_int (Int.repr 0) tint)))
+                (Sifthenelse (Etempvar 144%positive tint)
                   (Ssequence
                     (Ssequence
                       (Ssequence
                         (Ssequence
-                          (Scall (Some 141%positive)
+                          (Scall (Some 142%positive)
                             (Evar _mbedtls_hmac_drbg_reseed (Tfunction
                                                               (Tcons
                                                                 (tptr (Tstruct _mbedtls_hmac_drbg_context noattr))
@@ -1057,10 +1060,10 @@ Definition f_mbedtls_hmac_drbg_random_with_add := {|
                             ((Etempvar _ctx (tptr (Tstruct _mbedtls_hmac_drbg_context noattr))) ::
                              (Etempvar _additional (tptr tuchar)) ::
                              (Etempvar _add_len tuint) :: nil))
-                          (Sset 142%positive (Etempvar 141%positive tint)))
-                        (Sset _ret (Etempvar 142%positive tint)))
+                          (Sset 143%positive (Etempvar 142%positive tint)))
+                        (Sset _ret (Etempvar 143%positive tint)))
                       (Sifthenelse (Ebinop One
-                                     (Ecast (Etempvar 142%positive tint)
+                                     (Ecast (Etempvar 143%positive tint)
                                        tint) (Econst_int (Int.repr 0) tint)
                                      tint)
                         (Sreturn (Some (Etempvar _ret tint)))
@@ -1073,12 +1076,12 @@ Definition f_mbedtls_hmac_drbg_random_with_add := {|
                                  (Etempvar _additional (tptr tuchar))
                                  (Ecast (Econst_int (Int.repr 0) tint)
                                    (tptr tvoid)) tint)
-                    (Sset 144%positive
+                    (Sset 145%positive
                       (Ecast
                         (Ebinop One (Etempvar _add_len tuint)
                           (Econst_int (Int.repr 0) tint) tint) tbool))
-                    (Sset 144%positive (Econst_int (Int.repr 0) tint)))
-                  (Sifthenelse (Etempvar 144%positive tint)
+                    (Sset 145%positive (Econst_int (Int.repr 0) tint)))
+                  (Sifthenelse (Etempvar 145%positive tint)
                     (Scall None
                       (Evar _mbedtls_hmac_drbg_update (Tfunction
                                                         (Tcons
@@ -1100,11 +1103,11 @@ Definition f_mbedtls_hmac_drbg_random_with_add := {|
                       (Ssequence
                         (Sifthenelse (Ebinop Ogt (Etempvar _left tuint)
                                        (Etempvar _md_len tuint) tint)
-                          (Sset 145%positive
+                          (Sset 146%positive
                             (Ecast (Etempvar _md_len tuint) tuint))
-                          (Sset 145%positive
+                          (Sset 146%positive
                             (Ecast (Etempvar _left tuint) tuint)))
-                        (Sset _use_len (Etempvar 145%positive tuint)))
+                        (Sset _use_len (Etempvar 146%positive tuint)))
                       (Ssequence
                         (Scall None
                           (Evar _mbedtls_md_hmac_reset (Tfunction
@@ -1226,7 +1229,7 @@ Definition f_mbedtls_hmac_drbg_random := {|
   fn_vars := nil;
   fn_temps := ((_ret, tint) ::
                (_ctx, (tptr (Tstruct _mbedtls_hmac_drbg_context noattr))) ::
-               (146%positive, tint) :: nil);
+               (147%positive, tint) :: nil);
   fn_body :=
 (Ssequence
   (Sset _ctx
@@ -1234,7 +1237,7 @@ Definition f_mbedtls_hmac_drbg_random := {|
       (tptr (Tstruct _mbedtls_hmac_drbg_context noattr))))
   (Ssequence
     (Ssequence
-      (Scall (Some 146%positive)
+      (Scall (Some 147%positive)
         (Evar _mbedtls_hmac_drbg_random_with_add (Tfunction
                                                    (Tcons (tptr tvoid)
                                                      (Tcons (tptr tuchar)
@@ -1246,7 +1249,7 @@ Definition f_mbedtls_hmac_drbg_random := {|
          (Etempvar _output (tptr tuchar)) :: (Etempvar _out_len tuint) ::
          (Ecast (Econst_int (Int.repr 0) tint) (tptr tvoid)) ::
          (Econst_int (Int.repr 0) tint) :: nil))
-      (Sset _ret (Etempvar 146%positive tint)))
+      (Sset _ret (Etempvar 147%positive tint)))
     (Sreturn (Some (Etempvar _ret tint)))))
 |}.
 
