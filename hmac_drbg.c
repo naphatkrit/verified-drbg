@@ -140,20 +140,24 @@ void mbedtls_hmac_drbg_init( mbedtls_hmac_drbg_context *ctx )
 void mbedtls_hmac_drbg_update( mbedtls_hmac_drbg_context *ctx,
                        const unsigned char *additional, size_t add_len )
 {
-	mbedtls_md_info_t info;
+	const mbedtls_md_info_t *info;
+	unsigned char * value;
     size_t md_len;
     unsigned char rounds;
     unsigned char sep[1];
     unsigned char K[MBEDTLS_MD_MAX_SIZE];
 
-    md_len = mbedtls_md_get_size( &info /* ctx->md_ctx.md_info*/ );
-    rounds = ( additional != NULL && add_len != 0 ) ? 2 : 1;
+	info = ctx->md_ctx.md_info;
+    md_len = mbedtls_md_get_size( info );
+    rounds = ( add_len != 0 && additional != NULL ) ? 2 : 1;
+    /* rounds = ( additional != NULL && add_len != 0 ) ? 2 : 1; */
 
     for( sep[0] = 0; sep[0] < rounds; sep[0]++ )
     {
         /* Step 1 or 4 */
         mbedtls_md_hmac_reset( &ctx->md_ctx );
-        mbedtls_md_hmac_update( &ctx->md_ctx, ctx->V, md_len );
+		value = ctx->V;
+        mbedtls_md_hmac_update( &ctx->md_ctx, value, md_len );
         mbedtls_md_hmac_update( &ctx->md_ctx, sep, 1 );
         if( rounds == 2 )
             mbedtls_md_hmac_update( &ctx->md_ctx, additional, add_len );
@@ -161,8 +165,10 @@ void mbedtls_hmac_drbg_update( mbedtls_hmac_drbg_context *ctx,
 
         /* Step 2 or 5 */
         mbedtls_md_hmac_starts( &ctx->md_ctx, K, md_len );
-        mbedtls_md_hmac_update( &ctx->md_ctx, ctx->V, md_len );
-        mbedtls_md_hmac_finish( &ctx->md_ctx, ctx->V );
+		value = ctx->V;
+        mbedtls_md_hmac_update( &ctx->md_ctx, value, md_len );
+		value = ctx->V;
+        mbedtls_md_hmac_finish( &ctx->md_ctx, value );
     }
 }
 
