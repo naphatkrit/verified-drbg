@@ -18,7 +18,7 @@ verifications: verif_hmac_drbg_update.vo
 verif_mocked_md.vo: verif_mocked_md.v hmac_drbg.vo spec_hmac_drbg.vo
 	$(COQC) verif_mocked_md.v
 
-verif_hmac_drbg_update.vo: verif_hmac_drbg_update.v spec_hmac_drbg.vo hmac_drbg.vo
+verif_hmac_drbg_update.vo: verif_hmac_drbg_update.v spec_hmac_drbg.vo hmac_drbg.vo HMAC_DRBG_update.vo
 	$(COQC) verif_hmac_drbg_update.v
 
 hmac_drbg_compspecs.vo: hmac_drbg_compspecs.v hmac_drbg.vo
@@ -57,7 +57,7 @@ HMAC256_DRBG_tests_pr_false.vo: HMAC256_DRBG_tests_pr_false.v HMAC256_DRBG_funct
 HMAC256_DRBG_tests_pr_true.vo: HMAC256_DRBG_tests_pr_true.v HMAC256_DRBG_functional_prog.vo DRBG_entropy_result.vo DRBG_state_handle.vo DRBG_generate_function.vo DRBG_instantiate_function.vo DRBG_reseed_function.vo
 		$(COQC) HMAC256_DRBG_tests_pr_true.v
 
-HMAC_DRBG_generate_algorithm.vo: HMAC_DRBG_generate_algorithm.v DRBG_working_state.vo DRBG_state_handle.vo DRBG_generate_algorithm_result.vo
+HMAC_DRBG_generate_algorithm.vo: HMAC_DRBG_generate_algorithm.v DRBG_working_state.vo DRBG_state_handle.vo DRBG_generate_algorithm_result.vo HMAC_DRBG_update.vo
 	$(COQC) HMAC_DRBG_generate_algorithm.v
 
 HMAC_DRBG_instantiate_algorithm.vo: HMAC_DRBG_instantiate_algorithm.v HMAC_DRBG_update.vo DRBG_working_state.vo

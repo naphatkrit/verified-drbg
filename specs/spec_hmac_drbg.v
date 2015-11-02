@@ -139,6 +139,12 @@ Definition hmac256drbgabs_value (a: hmac256drbgabs): list Z :=
 Definition hmac256drbgabs_key (a: hmac256drbgabs): list Z :=
   match a with HMAC256DRBGabs (hABS key _) _ _ _ _ _ => key end.
 
+Definition hmac256drbgabs_update_value (a: hmac256drbgabs) (new_value: list Z): hmac256drbgabs :=
+  match a with HMAC256DRBGabs (hABS key data) _ reseed_counter entropy_len prediction_resistance reseed_interval => HMAC256DRBGabs (hABS key data) new_value reseed_counter entropy_len prediction_resistance reseed_interval end.
+
+Definition hmac256drbgabs_update_key (a: hmac256drbgabs) (new_key: list Z): hmac256drbgabs :=
+  match a with HMAC256DRBGabs (hABS _ data) V reseed_counter entropy_len prediction_resistance reseed_interval => HMAC256DRBGabs (hABS new_key data) V reseed_counter entropy_len prediction_resistance reseed_interval end.
+
 Definition hmac256drbgabs_metadata_same (a: hmac256drbgabs) (b: hmac256drbgabs): Prop :=
   match a with HMAC256DRBGabs _ _ reseed_counter entropy_len prediction_resistance reseed_interval =>
                match b with HMAC256DRBGabs _ _ reseed_counter' entropy_len' prediction_resistance' reseed_interval' =>
@@ -176,9 +182,7 @@ Definition hmac_drbg_update_spec :=
        EX key': list Z, EX value': list Z, EX final_state_abs:_,
        PROP (
            (key', value') = HMAC256_DRBG_update (map Int.signed contents) (hmac256drbgabs_key initial_state_abs) (hmac256drbgabs_value initial_state_abs);
-           value' = hmac256drbgabs_value final_state_abs;
-           key' = hmac256drbgabs_key final_state_abs;
-           hmac256drbgabs_metadata_same initial_state_abs final_state_abs
+           final_state_abs = hmac256drbgabs_update_key (hmac256drbgabs_update_value initial_state_abs value') key'
          )
        LOCAL ()
        SEP (
