@@ -145,6 +145,15 @@ Definition hmac256drbgabs_update_value (a: hmac256drbgabs) (new_value: list Z): 
 Definition hmac256drbgabs_update_key (a: hmac256drbgabs) (new_key: list Z): hmac256drbgabs :=
   match a with HMAC256DRBGabs (hABS _ data) V reseed_counter entropy_len prediction_resistance reseed_interval => HMAC256DRBGabs (hABS new_key data) V reseed_counter entropy_len prediction_resistance reseed_interval end.
 
+Definition hmac256drbgabs_empty_md (a: hmac256drbgabs): Prop :=
+  match a with
+    | HMAC256DRBGabs (hABS _ nil) _ _ _ _ _ => True
+    | HMAC256DRBGabs _ _ _ _ _ _ => False
+  end.
+
+Definition hmac256drbgabs_make_empty_md (a: hmac256drbgabs): hmac256drbgabs :=
+  match a with HMAC256DRBGabs (hABS key _) V reseed_counter entropy_len prediction_resistance reseed_interval => HMAC256DRBGabs (hABS key nil) V reseed_counter entropy_len prediction_resistance reseed_interval end.
+
 Definition hmac256drbgabs_metadata_same (a: hmac256drbgabs) (b: hmac256drbgabs): Prop :=
   match a with HMAC256DRBGabs _ _ reseed_counter entropy_len prediction_resistance reseed_interval =>
                match b with HMAC256DRBGabs _ _ reseed_counter' entropy_len' prediction_resistance' reseed_interval' =>
@@ -182,7 +191,9 @@ Definition hmac_drbg_update_spec :=
        EX key': list Z, EX value': list Z, EX final_state_abs:_,
        PROP (
            (key', value') = HMAC256_DRBG_update (map Int.signed contents) (hmac256drbgabs_key initial_state_abs) (hmac256drbgabs_value initial_state_abs);
-           final_state_abs = hmac256drbgabs_update_key (hmac256drbgabs_update_value initial_state_abs value') key'
+           key' = hmac256drbgabs_key final_state_abs;
+           value' = hmac256drbgabs_value final_state_abs;
+           hmac256drbgabs_metadata_same final_state_abs initial_state_abs
          )
        LOCAL ()
        SEP (
@@ -204,3 +215,68 @@ Definition HmacDrbgFunSpecs : funspecs :=
   sha256init_spec::sha256update_spec::sha256final_spec::(*SHA256_spec::*)
   HMAC_Init_spec:: HMAC_Update_spec::HMAC_Cleanup_spec::
   HMAC_Final_spec:: HMAC_spec ::nil.
+
+Lemma hmac256drbgabs_update_key_ident:
+  forall a key, key = hmac256drbgabs_key a -> hmac256drbgabs_update_key a key = a.
+Proof.
+  intros.
+  destruct a; destruct md_ctx.
+  simpl in H; subst.
+  reflexivity.
+Qed.
+
+Lemma hmac256drbgabs_update_value_ident:
+  forall a value, value = hmac256drbgabs_value a -> hmac256drbgabs_update_value a value = a.
+Proof.
+  intros.
+  destruct a; destruct md_ctx.
+  simpl in H; subst.
+  reflexivity.
+Qed.
+
+Lemma hmac256drbgabs_update_key_update_value_commute:
+  forall a key value, hmac256drbgabs_update_value (hmac256drbgabs_update_key a key) value = hmac256drbgabs_update_key (hmac256drbgabs_update_value a value) key.
+Proof.
+  destruct a. destruct md_ctx.
+  reflexivity.
+Qed.
+
+Lemma hmac256drbgabs_update_key_value_ident:
+  forall a1 a2 key value, key = hmac256drbgabs_key a1 -> value = hmac256drbgabs_value a1 -> hmac256drbgabs_metadata_same a1 a2 -> hmac256drbgabs_empty_md a1 -> hmac256drbgabs_empty_md a2 -> hmac256drbgabs_update_key (hmac256drbgabs_update_value a2 value) key = a1.
+Proof.
+  intros.
+  destruct a1, a2. destruct md_ctx, md_ctx0.
+  simpl. hnf in H1.
+  destruct H1 as [H'  [H'' [H''' H'''']]].
+  unfold hmac256drbgabs_empty_md in H2, H3.
+  destruct data; try solve [inversion H2].
+  destruct data0; try solve [inversion H3].
+  subst.
+  reflexivity.
+Qed.
+
+Lemma hmac256drbgabs_update_key_md_empty:
+  forall a key, hmac256drbgabs_empty_md a -> hmac256drbgabs_empty_md (hmac256drbgabs_update_key a key).
+Proof.
+  intros. destruct a. destruct md_ctx.
+  auto.
+Qed.
+
+Lemma hmac256drbgabs_update_value_md_empty:
+  forall a value, hmac256drbgabs_empty_md a -> hmac256drbgabs_empty_md (hmac256drbgabs_update_value a value).
+Proof.
+  intros. destruct a. destruct md_ctx.
+  auto.
+Qed.
+
+Lemma hmac256drbgabs_update_key_make_empty_md_commute:
+  forall a key, hmac256drbgabs_update_key (hmac256drbgabs_make_empty_md a) key = hmac256drbgabs_make_empty_md (hmac256drbgabs_update_key a key).
+Proof.
+  destruct a. destruct md_ctx. reflexivity.
+Qed.
+
+Lemma hmac256drbgabs_update_value_make_empty_md_commute:
+  forall a value, hmac256drbgabs_update_value (hmac256drbgabs_make_empty_md a) value = hmac256drbgabs_make_empty_md (hmac256drbgabs_update_value a value).
+Proof.
+  destruct a. destruct md_ctx. reflexivity.
+Qed.
