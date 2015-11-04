@@ -170,8 +170,8 @@ Proof.
         assert (0 <= Zlength contents) by (apply Zlength_nonneg).
         destruct (Zlength contents).
         simpl; omega.
-        simpl. admit.
-        admit. (* TODO *)
+        simpl. admit (* TODO *).
+        assert (contra: False) by (apply H; reflexivity); inversion contra.
       }
       apply denote_tc_comparable_split; auto 50 with valid_pointer.
       apply sepcon_valid_pointer1.
