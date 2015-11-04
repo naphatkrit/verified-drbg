@@ -35,18 +35,17 @@ Definition update_rounds (non_empty_additional: bool): Z :=
   if non_empty_additional then 2 else 1.
 
 Definition update_relate_final_state (ctx: val) (final_state_abs: hmac256drbgabs) :mpred :=
-  EX state: _,
-  (data_at Tsh t_struct_hmac256drbg_context_st state ctx) *
-  (hmac256drbg_relate final_state_abs state).
+  EX final_state: _,
+  (data_at Tsh t_struct_hmac256drbg_context_st final_state ctx) *
+  (hmac256drbg_relate final_state_abs final_state).
 
 Definition update_loop_invariant (non_empty_additional: bool) (add_len: Z) (ctx additional sep K md_len info: val) (contents: list int) (old_key old_value: list Z) (state_abs: hmac256drbgabs) (state: hmac256drbgstate) :=
-  EX i: Z, (* EX key: _, EX value: _, EX final_state_abs: _, *)
+  EX i: Z,
       PROP  (
-      (* (key, value) = HMAC_DRBG_update_round HMAC256 (map Int.signed contents) old_key old_value 0 (Z.to_nat i); *)
+      (* (key, value) = HMAC_DRBG_update_round HMAC256 (map Int.signed contents) old_key old_value 0 (Z.to_nat i);
       (*
       le i (update_rounds non_empty_additional);
        *)
-          (*
       key = hmac256drbgabs_key final_state_abs;
       value = hmac256drbgabs_value final_state_abs;
       hmac256drbgabs_metadata_same final_state_abs state_abs *)
@@ -58,14 +57,19 @@ Definition update_loop_invariant (non_empty_additional: bool) (add_len: Z) (ctx 
                (if non_empty_additional
                 then Vint (Int.repr 2)
                 else Vint (Int.repr 1)))); temp _md_len md_len;
-      lvar _K (tarray tuchar 32) K; lvar _sep (tarray tuchar 1) sep;
+       lvar _K (tarray tuchar 32) K; lvar _sep (tarray tuchar 1) sep;
+       lvar _info (Tstruct _mbedtls_md_info_t noattr) info;
       temp _additional additional; temp _add_len (Vint (Int.repr add_len));
       temp _sep_value (Vint (Int.repr i))
          )
       SEP  (
-        (*
-        `(update_relate_final_state ctx final_state_abs);
-*)
+        `(EX key: list Z, EX value: list Z, EX final_state_abs: hmac256drbgabs,
+           !!((key, value) = HMAC_DRBG_update_round HMAC256 (map Int.signed contents) old_key old_value 0 (Z.to_nat i) /\  key = hmac256drbgabs_key final_state_abs /\
+      value = hmac256drbgabs_value final_state_abs /\
+      hmac256drbgabs_metadata_same final_state_abs state_abs) &&
+           (update_relate_final_state ctx final_state_abs)
+         );
+        (* `(update_relate_final_state ctx final_state_abs); *)
         `(data_at_ Tsh (tarray tuchar 32) K);
         `(data_at Tsh (tarray tuchar add_len) (map Vint contents) additional);
         `(data_at_ Tsh (tarray tuchar 1) sep );
@@ -231,28 +235,66 @@ Proof.
 
   remember (hmac256drbgabs_key initial_state_abs) as initial_key.
   remember (hmac256drbgabs_value initial_state_abs) as initial_value.
-  forward_for_simple_bound rounds
-  (EX i:Z,
-      PROP ()
-      LOCAL (
-        temp _rounds (Vint (Int.zero_ext 8 (Int.repr rounds)));
-        temp _md_len md_len;
-        lvar _K (tarray tuchar 32) K;
-        lvar _sep (tarray tuchar 1) sep;
-        lvar _info (Tstruct _mbedtls_md_info_t noattr) info;
-        temp _additional additional;
-        temp _add_len (Vint (Int.repr add_len));
-        temp 128%positive (Vint (Int.repr rounds))
-      )
-      SEP (
-        `(data_at_ Tsh (tarray tuchar 32) K);
-        `(data_at_ Tsh (tarray tuchar 1) sep);
-        `(data_at_ Tsh (Tstruct _mbedtls_md_info_t noattr) info);
-        `(data_at Tsh (tarray tuchar add_len) (map Vint contents) additional)
-      )
-  ).
+  (* for ( sep_value = 0; sep_value < rounds; sep_value++ ) *)
   forward_for_simple_bound rounds (update_loop_invariant non_empty_additional add_len ctx additional sep K md_len info contents initial_key initial_value initial_state_abs initial_state).
+  {
+    (* Int.min_signed <= 0 <= rounds *)
+    rewrite Heqrounds; destruct non_empty_additional; auto.
+  }
+  {
+    (* rounds <= Int.max_signed *)
+    rewrite Heqrounds; destruct non_empty_additional; auto.
+  }
+  {
+    (* TODO *) admit.
+  }
+  {
+    (* pre conditions imply loop invariant *)
+    unfold update_relate_final_state.
+    normalize.
+    (* TODO sep_value, not provable *) admit.
+  }
+  {
+    (* loop body *)
+    unfold update_relate_final_state.
+    normalize.
+    intro key.
+    normalize.
+    intro value.
+    normalize.
+    intro state_abs.
+    normalize.
+    intro state.
+    (* TODO this should be one call to normalize *)
+    normalize.
+    forward.
+    (* TODO *) admit.
+  }
+  unfold update_relate_final_state.
+  (* return *)
+  forward.
 
+  remember (hmac256drbgabs_key final_state_abs) as key.
+  remember (hmac256drbgabs_value final_state_abs) as value.
+  (* prove function post condition *)
+  Exists K sep info key value final_state_abs.
+  unfold HMAC256_DRBG_functional_prog.HMAC256_DRBG_update.
+  rewrite HMAC_DRBG_update_concrete_correct.
+  entailer!.
+  {
+    rewrite H3.
+    destruct contents; unfold HMAC_DRBG_update_concrete.
+    {
+      (* contents = [] *)
+      reflexivity.
+    }
+    {
+      (* TODO *) admit.
+    }
+  }
+  unfold hmac_drbg_update_post.
+  Exists final_state.
+  entailer!.
   (*
   (* sep_value = 0 *)
   forward.

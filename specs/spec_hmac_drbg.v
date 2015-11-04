@@ -197,7 +197,8 @@ Definition hmac_drbg_update_spec :=
          )
        LOCAL ()
        SEP (
-         `(hmac_drbg_update_post final_state_abs ctx)
+         `(hmac_drbg_update_post final_state_abs ctx);
+         `(data_at Tsh (tarray tuchar add_len) (map Vint contents) additional)
        ).
 (* TODO isbyte, data_block *)
 
