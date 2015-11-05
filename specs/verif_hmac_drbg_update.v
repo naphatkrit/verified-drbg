@@ -1,12 +1,12 @@
 Require Import floyd.proofauto.
 Import ListNotations.
 Local Open Scope logic.
-Require Import floyd.sublist.
 
 Require Import hmac_drbg.
 Require Import spec_hmac_drbg.
 Require Import HMAC_DRBG_update.
 Require Import sha.HMAC256_functional_prog.
+Require Import sha.spec_sha.
 
 Fixpoint HMAC_DRBG_update_round (HMAC: list Z -> list Z -> list Z) (provided_data K V: list Z) (sep: Z) (round: nat): (list Z * list Z) :=
   match round with
@@ -39,7 +39,7 @@ Definition update_relate_final_state (ctx: val) (final_state_abs: hmac256drbgabs
   (data_at Tsh t_struct_hmac256drbg_context_st final_state ctx) *
   (hmac256drbg_relate final_state_abs final_state).
 
-Definition update_loop_invariant (non_empty_additional: bool) (add_len: Z) (ctx additional sep K md_len info: val) (contents: list int) (old_key old_value: list Z) (state_abs: hmac256drbgabs) (state: hmac256drbgstate) :=
+Definition update_loop_invariant (non_empty_additional: bool) (add_len: Z) (ctx additional sep K md_len info kv: val) (contents: list int) (old_key old_value: list Z) (state_abs: hmac256drbgabs) (state: hmac256drbgstate) :=
   EX i: Z,
       PROP  (
       (* (key, value) = HMAC_DRBG_update_round HMAC256 (map Int.signed contents) old_key old_value 0 (Z.to_nat i);
@@ -73,7 +73,8 @@ Definition update_loop_invariant (non_empty_additional: bool) (add_len: Z) (ctx 
         `(data_at_ Tsh (tarray tuchar 32) K);
         `(data_at Tsh (tarray tuchar add_len) (map Vint contents) additional);
         `(data_at_ Tsh (tarray tuchar 1) sep );
-        `(data_at_ Tsh (Tstruct _mbedtls_md_info_t noattr) info)
+        `(data_at_ Tsh (Tstruct _mbedtls_md_info_t noattr) info);
+        `(K_vector kv)
          ).
 
 (*
@@ -152,7 +153,9 @@ Proof.
       `(data_at_ Tsh (Tstruct _mbedtls_md_info_t noattr) info);
       `(data_at Tsh (tarray tuchar add_len) (map Vint contents) additional);
       `(data_at Tsh t_struct_hmac256drbg_context_st initial_state ctx);
-      `(hmac256drbg_relate initial_state_abs initial_state))
+      `(hmac256drbg_relate initial_state_abs initial_state);
+      `(K_vector kv)
+       )
     ).
   {
     (* show that add_len <> 0 implies the post condition *)
@@ -214,7 +217,9 @@ Proof.
       `(data_at_ Tsh (Tstruct _mbedtls_md_info_t noattr) info);
       `(data_at Tsh (tarray tuchar add_len) (map Vint contents) additional);
       `(data_at Tsh t_struct_hmac256drbg_context_st initial_state ctx);
-      `(hmac256drbg_relate initial_state_abs initial_state))
+      `(hmac256drbg_relate initial_state_abs initial_state);
+      `(K_vector kv)
+      )
   ).
   {
     (* non_empty_additional = true *)
@@ -231,7 +236,7 @@ Proof.
   remember (hmac256drbgabs_key initial_state_abs) as initial_key.
   remember (hmac256drbgabs_value initial_state_abs) as initial_value.
   (* for ( sep_value = 0; sep_value < rounds; sep_value++ ) *)
-  forward_for_simple_bound rounds (update_loop_invariant non_empty_additional add_len ctx additional sep K md_len info contents initial_key initial_value initial_state_abs initial_state).
+  forward_for_simple_bound rounds (update_loop_invariant non_empty_additional add_len ctx additional sep K md_len info kv contents initial_key initial_value initial_state_abs initial_state).
   {
     (* Int.min_signed <= 0 <= rounds *)
     rewrite Heqrounds; destruct non_empty_additional; auto.
@@ -276,6 +281,7 @@ Proof.
     (* TODO this should be one call to normalize *)
     normalize.
     forward.
+    forward_call (ctx, 0, (hmac256drbgabs_key state_abs), kv, (@nil Z)).
     (* TODO *) admit.
   }
   unfold update_relate_final_state.

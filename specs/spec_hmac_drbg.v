@@ -176,16 +176,18 @@ Definition hmac_drbg_update_spec :=
    WITH contents: list int,
         additional: val, add_len: Z,
         ctx: val, initial_state: hmac256drbgstate,
-        initial_state_abs: hmac256drbgabs
+        initial_state_abs: hmac256drbgabs,
+        kv: val
     PRE [ _ctx OF (tptr t_struct_hmac256drbg_context_st), _additional OF (tptr tuchar), _add_len OF tuint ]
        PROP (
          0 <= add_len <= Int.max_unsigned
        )
-       LOCAL (temp _additional additional; temp _add_len (Vint (Int.repr add_len)))
+       LOCAL (temp _additional additional; temp _add_len (Vint (Int.repr add_len)); gvar sha._K256 kv)
        SEP (
          `(data_at Tsh (tarray tuchar add_len) (map Vint contents) additional);
          `(data_at Tsh t_struct_hmac256drbg_context_st initial_state ctx);
-         `(hmac256drbg_relate initial_state_abs initial_state)
+         `(hmac256drbg_relate initial_state_abs initial_state);
+         `(K_vector kv)
            )
     POST [ tvoid ]
        EX key': list Z, EX value': list Z, EX final_state_abs:_,
@@ -198,7 +200,8 @@ Definition hmac_drbg_update_spec :=
        LOCAL ()
        SEP (
          `(hmac_drbg_update_post final_state_abs ctx);
-         `(data_at Tsh (tarray tuchar add_len) (map Vint contents) additional)
+         `(data_at Tsh (tarray tuchar add_len) (map Vint contents) additional);
+         `(K_vector kv)
        ).
 (* TODO isbyte, data_block *)
 
