@@ -174,11 +174,6 @@ Proof.
         assert (contra: False) by (apply H; reflexivity); inversion contra.
       }
       apply denote_tc_comparable_split; auto 50 with valid_pointer.
-      apply sepcon_valid_pointer1.
-      apply sepcon_valid_pointer1.
-      apply sepcon_valid_pointer2.
-      apply data_at_valid_ptr; auto.
-      (* TODO replace with solve_valid_pointer when it's been added to VST *)
     }
     entailer!.
     rewrite Zlength_map in *.
@@ -252,7 +247,20 @@ Proof.
     (* pre conditions imply loop invariant *)
     unfold update_relate_final_state.
     normalize.
-    (* TODO sep_value, not provable *) admit.
+    entailer!.
+    {
+      split.
+      {
+        rewrite Zlength_map in *.
+        destruct (eq_dec (Zlength contents) 0); destruct (eq_dec additional' nullval); auto.
+      }
+      {
+        (* TODO sep_value, not provable *) admit.
+      }
+    }
+    Exists (hmac256drbgabs_key initial_state_abs) (hmac256drbgabs_value initial_state_abs) initial_state_abs.
+    normalize. Exists initial_state.
+    entailer!. destruct initial_state_abs; simpl; auto.
   }
   {
     (* loop body *)
@@ -289,7 +297,12 @@ Proof.
       reflexivity.
     }
     {
-      (* TODO *) admit.
+      rewrite Zlength_map in *.
+      destruct (eq_dec (Zlength (i :: contents)) 0) as [Zlength_eq | Zlength_neq].
+      rewrite Zlength_cons, Zlength_correct in Zlength_eq; omega.
+      destruct (eq_dec additional' nullval) as [additional_eq | additional_neq].
+      subst. inversion H7 as [isptr_null H']; inversion isptr_null.
+      reflexivity.
     }
   }
   unfold hmac_drbg_update_post.
@@ -387,4 +400,4 @@ Proof.
     admit (* TODO *).    
   }
 *)
-Admitted.
+Qed.
