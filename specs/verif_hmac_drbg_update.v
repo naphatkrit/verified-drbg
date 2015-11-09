@@ -177,6 +177,12 @@ Proof.
         assert (contra: False) by (apply H; reflexivity); inversion contra.
       }
       apply denote_tc_comparable_split; auto 50 with valid_pointer.
+      (* TODO regressoin, this should have solved it *)
+      apply sepcon_valid_pointer1.
+      apply sepcon_valid_pointer1.
+      apply sepcon_valid_pointer1.
+      apply sepcon_valid_pointer2.
+      apply data_at_valid_ptr; auto.
     }
     entailer!.
     rewrite Zlength_map in *.
@@ -236,7 +242,43 @@ Proof.
   remember (hmac256drbgabs_key initial_state_abs) as initial_key.
   remember (hmac256drbgabs_value initial_state_abs) as initial_value.
   (* for ( sep_value = 0; sep_value < rounds; sep_value++ ) *)
-  forward_for_simple_bound rounds (update_loop_invariant non_empty_additional add_len ctx additional sep K md_len info kv contents initial_key initial_value initial_state_abs initial_state).
+  forward_for_simple_bound rounds (
+                              EX i: Z,
+      PROP  (
+      (* (key, value) = HMAC_DRBG_update_round HMAC256 (map Int.signed contents) old_key old_value 0 (Z.to_nat i);
+      (*
+      le i (update_rounds non_empty_additional);
+       *)
+      key = hmac256drbgabs_key final_state_abs;
+      value = hmac256drbgabs_value final_state_abs;
+      hmac256drbgabs_metadata_same final_state_abs state_abs *)
+        ) 
+      LOCAL 
+      (temp _rounds
+         (force_val
+            (sem_cast_i2i I8 Unsigned
+               (if non_empty_additional
+                then Vint (Int.repr 2)
+                else Vint (Int.repr 1)))); temp _md_len md_len;
+       lvar _K (tarray tuchar 32) K; lvar _sep (tarray tuchar 1) sep;
+       lvar _info (Tstruct _mbedtls_md_info_t noattr) info;
+      temp _additional additional; temp _add_len (Vint (Int.repr add_len))
+         )
+      SEP  (
+        `(EX key: list Z, EX value: list Z, EX final_state_abs: hmac256drbgabs,
+           !!((key, value) = HMAC_DRBG_update_round HMAC256 (map Int.signed contents) initial_key initial_value 0 (Z.to_nat i) /\  key = hmac256drbgabs_key final_state_abs /\
+      value = hmac256drbgabs_value final_state_abs /\
+      hmac256drbgabs_metadata_same final_state_abs initial_state_abs) &&
+           (update_relate_final_state ctx final_state_abs)
+         );
+        (* `(update_relate_final_state ctx final_state_abs); *)
+        `(data_at_ Tsh (tarray tuchar 32) K);
+        `(data_at Tsh (tarray tuchar add_len) (map Vint contents) additional);
+        `(data_at_ Tsh (tarray tuchar 1) sep );
+        `(data_at_ Tsh (Tstruct _mbedtls_md_info_t noattr) info);
+        `(K_vector kv)
+         )
+  ).
   {
     (* Int.min_signed <= 0 <= rounds *)
     rewrite Heqrounds; destruct non_empty_additional; auto.
@@ -246,22 +288,13 @@ Proof.
     rewrite Heqrounds; destruct non_empty_additional; auto.
   }
   {
-    (* TODO *) admit.
-  }
-  {
     (* pre conditions imply loop invariant *)
     unfold update_relate_final_state.
     normalize.
     entailer!.
     {
-      split.
-      {
-        rewrite Zlength_map in *.
-        destruct (eq_dec (Zlength contents) 0); destruct (eq_dec additional' nullval); auto.
-      }
-      {
-        (* TODO sep_value, not provable *) admit.
-      }
+      rewrite Zlength_map in *.
+      destruct (eq_dec (Zlength contents) 0); destruct (eq_dec additional' nullval); auto.
     }
     Exists (hmac256drbgabs_key initial_state_abs) (hmac256drbgabs_value initial_state_abs) initial_state_abs.
     normalize. Exists initial_state.
@@ -270,18 +303,13 @@ Proof.
   {
     (* loop body *)
     unfold update_relate_final_state.
-    normalize.
-    intro key.
-    normalize.
-    intro value.
-    normalize.
-    intro state_abs.
-    normalize.
-    intro state.
-    (* TODO this should be one call to normalize *)
-    normalize.
+    Intros key value state_abs state.
     forward.
+    unfold_data_at 1%nat.
+    rewrite (field_at_data_at _ _ [StructField _md_ctx]); simpl.
+    (*
     forward_call (ctx, 0, (hmac256drbgabs_key state_abs), kv, (@nil Z)).
+     *)
     (* TODO *) admit.
   }
   unfold update_relate_final_state.

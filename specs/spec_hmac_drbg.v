@@ -29,15 +29,15 @@ Definition md_relate (h: HABS) (r:mdstate) :=
 
 Definition REP (h: HABS) (c: val): mpred :=
   EX r: mdstate,
-        (md_relate h r && data_at Tsh t_struct_md_ctx_st r c).
+        (md_relate h r * data_at Tsh t_struct_md_ctx_st r c).
 
 Definition FULL key c:mpred :=
   EX r: mdstate,
-        (UNDER_SPEC.FULL key (snd (snd r)) && data_at Tsh t_struct_md_ctx_st r c).
+        (UNDER_SPEC.FULL key (snd (snd r)) * data_at Tsh t_struct_md_ctx_st r c).
 
 Definition EMPTY c :=
   EX r: mdstate,
-        (UNDER_SPEC.EMPTY (snd (snd r)) && data_at Tsh t_struct_md_ctx_st r c).
+        (UNDER_SPEC.EMPTY (snd (snd r)) * data_at Tsh t_struct_md_ctx_st r c).
 
 Definition md_get_size_spec :=
   DECLARE _mbedtls_md_get_size
