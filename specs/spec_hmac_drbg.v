@@ -27,18 +27,6 @@ Definition convert_abs (h: HABS): UNDER_SPEC.HABS :=
 Definition md_relate (h: HABS) (r:mdstate) :=
   UNDER_SPEC.REP (convert_abs h) (snd (snd r)).
 
-Definition REP (h: HABS) (c: val): mpred :=
-  EX r: mdstate,
-        (md_relate h r * data_at Tsh t_struct_md_ctx_st r c).
-
-Definition FULL key c:mpred :=
-  EX r: mdstate,
-        (UNDER_SPEC.FULL key (snd (snd r)) * data_at Tsh t_struct_md_ctx_st r c).
-
-Definition EMPTY c :=
-  EX r: mdstate,
-        (UNDER_SPEC.EMPTY (snd (snd r)) * data_at Tsh t_struct_md_ctx_st r c).
-
 Definition md_get_size_spec :=
   DECLARE _mbedtls_md_get_size
    WITH u:unit
@@ -53,15 +41,20 @@ Definition md_get_size_spec :=
  
 Definition md_reset_spec :=
   DECLARE _mbedtls_md_hmac_reset
-   WITH c : val, l:Z, key:list Z, kv:val, d:list Z
-   PRE [ _ctx OF tptr t_struct_md_ctx_st]
+   WITH c : val, r: mdstate, l:Z, key:list Z, kv:val
+   PRE [ _ctx OF tptr (Tstruct _mbedtls_md_context_t noattr)]
          PROP (has_lengthK l key)
          LOCAL (temp _ctx c; gvar sha._K256 kv)
-         SEP ( `(FULL key c); `(K_vector kv))
+         SEP (
+        `(UNDER_SPEC.FULL key (snd (snd r))); `(data_at Tsh (Tstruct _mbedtls_md_context_t noattr) r c); `(K_vector kv))
   POST [ tint ] 
      PROP ()
      LOCAL ()
-     SEP (`(REP (hABS key nil) c); `(K_vector kv)).
+     SEP (`(EX r: mdstate,
+                  (md_relate (hABS key nil) r * data_at Tsh (Tstruct _mbedtls_md_context_t noattr) r c)
+           );
+          `(K_vector kv)
+         ).
 
 Definition md_starts_spec :=
   DECLARE _mbedtls_md_hmac_starts
@@ -72,12 +65,18 @@ Definition md_starts_spec :=
          PROP (has_lengthK l key)
          LOCAL (temp _ctx c; temp _key (Vptr b i); temp _keylen (Vint (Int.repr l));
                 gvar sha._K256 kv)
-         SEP (`(EMPTY c); 
+         SEP (`(EX r: mdstate,
+        (UNDER_SPEC.EMPTY (snd (snd r)) * data_at Tsh t_struct_md_ctx_st r c));
               `(data_block Tsh key (Vptr b i)); `(K_vector kv))
   POST [ tvoid ] 
      PROP ()
      LOCAL ()
-     SEP (`(REP (hABS key nil) c); `(data_block Tsh key (Vptr b i)); `(K_vector kv)).
+     SEP (`(EX r: mdstate,
+                  (md_relate (hABS key nil) r * data_at Tsh t_struct_md_ctx_st r c)
+           );
+          `(data_block Tsh key (Vptr b i));
+          `(K_vector kv)
+         ).
 
 Definition md_update_spec :=
   DECLARE _mbedtls_md_hmac_update
@@ -89,11 +88,15 @@ Definition md_update_spec :=
                Zlength data1 + Zlength data + 64 < two_power_pos 61) 
          LOCAL (temp _ctx c; temp _input d; temp  _ilen (Vint (Int.repr (Zlength data1)));
                 gvar sha._K256 kv)
-         SEP(`(REP (hABS key data) c); `(data_block Tsh data1 d); `(K_vector kv))
+         SEP(`(EX r: mdstate,
+                  (md_relate (hABS key data) r * data_at Tsh t_struct_md_ctx_st r c)
+           ); `(data_block Tsh data1 d); `(K_vector kv))
   POST [ tvoid ] 
           PROP () 
           LOCAL ()
-          SEP(`(REP (hABS key (data++data1)) c); 
+          SEP(`(EX r: mdstate,
+                  (md_relate (hABS key (data ++ data1)) r * data_at Tsh t_struct_md_ctx_st r c)
+           ); 
               `(data_block Tsh data1 d);`(K_vector kv)).
 
 Definition md_final_spec :=
@@ -104,13 +107,16 @@ Definition md_final_spec :=
        PROP (writable_share shmd) 
        LOCAL (temp _output md; temp _ctx c;
               gvar sha._K256 kv)
-       SEP(`(REP (hABS key data) c); `(K_vector kv);
+       SEP(`(EX r: mdstate,
+                  (md_relate (hABS key data) r * data_at Tsh t_struct_md_ctx_st r c)
+           ); `(K_vector kv);
            `(memory_block shmd 32 md))
   POST [ tvoid ] 
           PROP () 
           LOCAL ()
           SEP(`(K_vector kv);
-              `(FULL key c);
+              `(EX r: mdstate,
+        (UNDER_SPEC.FULL key (snd (snd r)) * data_at Tsh t_struct_md_ctx_st r c));
               `(data_block shmd (HMAC256 data key) md)).
 (* end mocked_md *)
 
@@ -132,6 +138,9 @@ Definition hmac256drbg_relate (a: hmac256drbgabs) (r: hmac256drbgstate) : mpred 
                                       )
                end
   end.
+
+Definition hmac256drbgstate_md_FULL key (r: hmac256drbgstate) : mpred :=
+  UNDER_SPEC.FULL key (snd (snd (fst r))).
 
 Definition hmac256drbgabs_value (a: hmac256drbgabs): list Z :=
   match a with HMAC256DRBGabs _ V _ _ _ _ => V end.
@@ -169,6 +178,7 @@ Definition t_struct_hmac256drbg_context_st := Tstruct _mbedtls_hmac_drbg_context
 Definition hmac_drbg_update_post (final_state_abs: hmac256drbgabs) (ctx: val): mpred :=
   EX final_state: hmac256drbgstate,
                   (data_at Tsh t_struct_hmac256drbg_context_st final_state ctx) *
+                  (hmac256drbgstate_md_FULL (hmac256drbgabs_key final_state_abs) final_state) *
                   (hmac256drbg_relate final_state_abs final_state).
 
 Definition hmac_drbg_update_spec :=
@@ -186,6 +196,7 @@ Definition hmac_drbg_update_spec :=
        SEP (
          `(data_at Tsh (tarray tuchar add_len) (map Vint contents) additional);
          `(data_at Tsh t_struct_hmac256drbg_context_st initial_state ctx);
+         `(hmac256drbgstate_md_FULL (hmac256drbgabs_key initial_state_abs) initial_state);
          `(hmac256drbg_relate initial_state_abs initial_state);
          `(K_vector kv)
            )

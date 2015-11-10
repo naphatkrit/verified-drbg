@@ -35,9 +35,13 @@ Definition update_rounds (non_empty_additional: bool): Z :=
   if non_empty_additional then 2 else 1.
 
 Definition update_relate_final_state (ctx: val) (final_state_abs: hmac256drbgabs) :mpred :=
-  EX final_state: _,
+  EX final_state: hmac256drbgstate,
   (data_at Tsh t_struct_hmac256drbg_context_st final_state ctx) *
+  (hmac256drbgstate_md_FULL (hmac256drbgabs_key final_state_abs)
+          final_state) *
   (hmac256drbg_relate final_state_abs final_state).
+
+(*
 
 Definition update_loop_invariant (non_empty_additional: bool) (add_len: Z) (ctx additional sep K md_len info kv: val) (contents: list int) (old_key old_value: list Z) (state_abs: hmac256drbgabs) (state: hmac256drbgstate) :=
   EX i: Z,
@@ -76,7 +80,7 @@ Definition update_loop_invariant (non_empty_additional: bool) (add_len: Z) (ctx 
         `(data_at_ Tsh (Tstruct _mbedtls_md_info_t noattr) info);
         `(K_vector kv)
          ).
-
+*)
 (*
 Definition update_loop_pre_incr_invariant (non_empty_additional: bool) (add_len: Z) (ctx additional sep K md_len: val) (contents: list int) (old_key old_value: list Z) (state_abs: hmac256drbgabs) (state: hmac256drbgstate) :=
   EX i: _, EX key: _, EX value: _, EX final_state_abs: _,
@@ -146,7 +150,8 @@ Proof.
       lvar _sep (tarray tuchar 1) sep;
       lvar _info (Tstruct _mbedtls_md_info_t noattr) info;
       temp _additional additional; temp _add_len (Vint (Int.repr add_len));
-      temp 127%positive (Val.of_bool non_empty_additional)
+      temp 127%positive (Val.of_bool non_empty_additional);
+      gvar sha._K256 kv
              )
       SEP  (`(data_at_ Tsh (tarray tuchar 32) K);
       `(data_at_ Tsh (tarray tuchar 1) sep);
@@ -154,6 +159,8 @@ Proof.
       `(data_at Tsh (tarray tuchar add_len) (map Vint contents) additional);
       `(data_at Tsh t_struct_hmac256drbg_context_st initial_state ctx);
       `(hmac256drbg_relate initial_state_abs initial_state);
+      `(hmac256drbgstate_md_FULL (hmac256drbgabs_key initial_state_abs)
+          initial_state);
       `(K_vector kv)
        )
     ).
@@ -178,6 +185,7 @@ Proof.
       }
       apply denote_tc_comparable_split; auto 50 with valid_pointer.
       (* TODO regressoin, this should have solved it *)
+      apply sepcon_valid_pointer1.
       apply sepcon_valid_pointer1.
       apply sepcon_valid_pointer1.
       apply sepcon_valid_pointer1.
@@ -216,7 +224,8 @@ Proof.
       lvar _sep (tarray tuchar 1) sep;
       lvar _info (Tstruct _mbedtls_md_info_t noattr) info;
       temp _additional additional; temp _add_len (Vint (Int.repr add_len));
-      temp 128%positive (Vint (Int.repr rounds))
+      temp 128%positive (Vint (Int.repr rounds));
+      gvar sha._K256 kv
              )
       SEP  (`(data_at_ Tsh (tarray tuchar 32) K);
       `(data_at_ Tsh (tarray tuchar 1) sep);
@@ -224,6 +233,8 @@ Proof.
       `(data_at Tsh (tarray tuchar add_len) (map Vint contents) additional);
       `(data_at Tsh t_struct_hmac256drbg_context_st initial_state ctx);
       `(hmac256drbg_relate initial_state_abs initial_state);
+      `(hmac256drbgstate_md_FULL (hmac256drbgabs_key initial_state_abs)
+          initial_state);
       `(K_vector kv)
       )
   ).
@@ -262,7 +273,8 @@ Proof.
                 else Vint (Int.repr 1)))); temp _md_len md_len;
        lvar _K (tarray tuchar 32) K; lvar _sep (tarray tuchar 1) sep;
        lvar _info (Tstruct _mbedtls_md_info_t noattr) info;
-      temp _additional additional; temp _add_len (Vint (Int.repr add_len))
+       temp _additional additional; temp _add_len (Vint (Int.repr add_len));
+       gvar sha._K256 kv
          )
       SEP  (
         `(EX key: list Z, EX value: list Z, EX final_state_abs: hmac256drbgabs,
@@ -307,9 +319,13 @@ Proof.
     forward.
     unfold_data_at 1%nat.
     rewrite (field_at_data_at _ _ [StructField _md_ctx]); simpl.
-    (*
-    forward_call (ctx, 0, (hmac256drbgabs_key state_abs), kv, (@nil Z)).
-     *)
+    unfold hmac256drbgstate_md_FULL.
+    remember (hmac256drbgabs_key state_abs) as key.
+    remember (Zlength key) as l.
+    assert_PROP (spec_hmacNK.has_lengthK l key). admit (* TODO *).
+    Print md_reset_spec.
+    
+    forward_call ((field_address t_struct_hmac256drbg_context_st [StructField _md_ctx] ctx), (fst state), l, key, kv).
     (* TODO *) admit.
   }
   unfold update_relate_final_state.
@@ -335,7 +351,7 @@ Proof.
       destruct (eq_dec (Zlength (i :: contents)) 0) as [Zlength_eq | Zlength_neq].
       rewrite Zlength_cons, Zlength_correct in Zlength_eq; omega.
       destruct (eq_dec additional' nullval) as [additional_eq | additional_neq].
-      subst. inversion H7 as [isptr_null H']; inversion isptr_null.
+      subst. inversion H8 as [isptr_null H']; inversion isptr_null.
       reflexivity.
     }
   }
