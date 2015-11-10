@@ -155,7 +155,7 @@ Proof.
       temp _ctx ctx;
       lvar _sep (tarray tuchar 1) sep;
       temp _additional additional; temp _add_len (Vint (Int.repr add_len));
-      temp 127%positive (Val.of_bool non_empty_additional);
+      temp 126%positive (Val.of_bool non_empty_additional);
       gvar sha._K256 kv
              )
       SEP  (`(data_at_ Tsh (tarray tuchar 32) K);
@@ -230,7 +230,7 @@ Proof.
       temp _ctx ctx;
       lvar _sep (tarray tuchar 1) sep;
       temp _additional additional; temp _add_len (Vint (Int.repr add_len));
-      temp 128%positive (Vint (Int.repr rounds));
+      temp 127%positive (Vint (Int.repr rounds));
       gvar sha._K256 kv
              )
       SEP  (`(data_at_ Tsh (tarray tuchar 32) K);
@@ -331,7 +331,7 @@ Proof.
       admit (* TODO *).
     }
     subst v.
-    forward.
+    admit (* TODO *).
     (*
     (*
     gather_SEP 0 1 2 3 4 5 6 7.
