@@ -140,7 +140,7 @@ void mbedtls_hmac_drbg_init( mbedtls_hmac_drbg_context *ctx )
 void mbedtls_hmac_drbg_update( mbedtls_hmac_drbg_context *ctx,
                        const unsigned char *additional, size_t add_len )
 {
-	mbedtls_md_info_t info;
+	const mbedtls_md_info_t *info;
 	unsigned char * value;
     size_t md_len;
     int /* unsigned char */ rounds;
@@ -148,8 +148,8 @@ void mbedtls_hmac_drbg_update( mbedtls_hmac_drbg_context *ctx,
     unsigned char K[MBEDTLS_MD_MAX_SIZE];
 	int sep_value;
 
-	/* info = ctx->md_ctx.md_info; */
-    md_len = mbedtls_md_get_size( &info );
+	info = ctx->md_ctx.md_info;
+    md_len = mbedtls_md_get_size( info );
     rounds = ( add_len != 0 && additional != NULL ) ? 2 : 1;
     /* rounds = ( additional != NULL && add_len != 0 ) ? 2 : 1; */
 
