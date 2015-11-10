@@ -19,6 +19,8 @@ Inductive HABS := hABS: forall (key data:list Z), HABS.
 
 Definition mdstate: Type := (val * (val * val))%type.
 
+Definition md_info_state: Type := val%type.
+
 Definition t_struct_md_ctx_st := Tstruct _mbedtls_md_context_t noattr.
 
 Definition convert_abs (h: HABS): UNDER_SPEC.HABS :=
@@ -173,12 +175,17 @@ Definition hmac256drbgabs_metadata_same (a: hmac256drbgabs) (b: hmac256drbgabs):
                end
   end.
 
+Definition hmac256drbgstate_md_info_pointer (a: hmac256drbgstate): val := fst (fst a).
+
+Definition t_struct_mbedtls_md_info := Tstruct _mbedtls_md_info_t noattr.
+
 Definition t_struct_hmac256drbg_context_st := Tstruct _mbedtls_hmac_drbg_context noattr.
 
-Definition hmac_drbg_update_post (final_state_abs: hmac256drbgabs) (ctx: val): mpred :=
+Definition hmac_drbg_update_post (final_state_abs: hmac256drbgabs) (ctx: val) (info_contents: reptype t_struct_mbedtls_md_info): mpred :=
   EX final_state: hmac256drbgstate,
                   (data_at Tsh t_struct_hmac256drbg_context_st final_state ctx) *
                   (hmac256drbgstate_md_FULL (hmac256drbgabs_key final_state_abs) final_state) *
+                  (data_at Tsh t_struct_mbedtls_md_info info_contents (hmac256drbgstate_md_info_pointer final_state)) *
                   (hmac256drbg_relate final_state_abs final_state).
 
 Definition hmac_drbg_update_spec :=
@@ -187,17 +194,18 @@ Definition hmac_drbg_update_spec :=
         additional: val, add_len: Z,
         ctx: val, initial_state: hmac256drbgstate,
         initial_state_abs: hmac256drbgabs,
-        kv: val
+        kv: val, info_contents: md_info_state
     PRE [ _ctx OF (tptr t_struct_hmac256drbg_context_st), _additional OF (tptr tuchar), _add_len OF tuint ]
        PROP (
          0 <= add_len <= Int.max_unsigned
        )
-       LOCAL (temp _additional additional; temp _add_len (Vint (Int.repr add_len)); gvar sha._K256 kv)
+       LOCAL (temp _ctx ctx; temp _additional additional; temp _add_len (Vint (Int.repr add_len)); gvar sha._K256 kv)
        SEP (
          `(data_at Tsh (tarray tuchar add_len) (map Vint contents) additional);
          `(data_at Tsh t_struct_hmac256drbg_context_st initial_state ctx);
          `(hmac256drbgstate_md_FULL (hmac256drbgabs_key initial_state_abs) initial_state);
          `(hmac256drbg_relate initial_state_abs initial_state);
+         `(data_at Tsh t_struct_mbedtls_md_info info_contents (hmac256drbgstate_md_info_pointer initial_state));
          `(K_vector kv)
            )
     POST [ tvoid ]
@@ -210,7 +218,7 @@ Definition hmac_drbg_update_spec :=
          )
        LOCAL ()
        SEP (
-         `(hmac_drbg_update_post final_state_abs ctx);
+         `(hmac_drbg_update_post final_state_abs ctx info_contents);
          `(data_at Tsh (tarray tuchar add_len) (map Vint contents) additional);
          `(K_vector kv)
        ).

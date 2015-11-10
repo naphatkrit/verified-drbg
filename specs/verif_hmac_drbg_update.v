@@ -34,11 +34,13 @@ Qed.
 Definition update_rounds (non_empty_additional: bool): Z :=
   if non_empty_additional then 2 else 1.
 
-Definition update_relate_final_state (ctx: val) (final_state_abs: hmac256drbgabs) :mpred :=
+Definition update_relate_final_state (ctx: val) (final_state_abs: hmac256drbgabs) (info_contents: md_info_state) :mpred :=
   EX final_state: hmac256drbgstate,
   (data_at Tsh t_struct_hmac256drbg_context_st final_state ctx) *
   (hmac256drbgstate_md_FULL (hmac256drbgabs_key final_state_abs)
           final_state) *
+  (data_at Tsh t_struct_mbedtls_md_info info_contents
+           (hmac256drbgstate_md_info_pointer final_state)) *
   (hmac256drbg_relate final_state_abs final_state).
 
 (*
@@ -136,10 +138,13 @@ Proof.
   name ctx' _ctx.
   name add_len' _add_len.
   name additional' _additional.
-  rename lvar0 into info.
-  rename lvar1 into sep.
-  rename lvar2 into K.
-  (* md_len = mbedtls_md_get_size( ctx->md_ctx.md_info ); *)
+  rename lvar0 into sep.
+  rename lvar1 into K.
+
+  (* info = md_ctx.md_info *)
+  forward.
+  
+  (* md_len = mbedtls_md_get_size( info ); *)
   forward_call tt md_len.
 
   (* rounds = ( additional != NULL && add_len != 0 ) ? 2 : 1; *)
@@ -147,20 +152,21 @@ Proof.
   forward_if (
       PROP  ()
       LOCAL  (temp _md_len md_len; lvar _K (tarray tuchar 32) K;
+      temp _ctx ctx;
       lvar _sep (tarray tuchar 1) sep;
-      lvar _info (Tstruct _mbedtls_md_info_t noattr) info;
       temp _additional additional; temp _add_len (Vint (Int.repr add_len));
       temp 127%positive (Val.of_bool non_empty_additional);
       gvar sha._K256 kv
              )
       SEP  (`(data_at_ Tsh (tarray tuchar 32) K);
       `(data_at_ Tsh (tarray tuchar 1) sep);
-      `(data_at_ Tsh (Tstruct _mbedtls_md_info_t noattr) info);
       `(data_at Tsh (tarray tuchar add_len) (map Vint contents) additional);
       `(data_at Tsh t_struct_hmac256drbg_context_st initial_state ctx);
       `(hmac256drbg_relate initial_state_abs initial_state);
       `(hmac256drbgstate_md_FULL (hmac256drbgabs_key initial_state_abs)
           initial_state);
+      `(data_at Tsh t_struct_mbedtls_md_info info_contents
+          (hmac256drbgstate_md_info_pointer initial_state));
       `(K_vector kv)
        )
     ).
@@ -189,6 +195,7 @@ Proof.
       apply sepcon_valid_pointer1.
       apply sepcon_valid_pointer1.
       apply sepcon_valid_pointer1.
+      apply sepcon_valid_pointer1.
       apply sepcon_valid_pointer2.
       apply data_at_valid_ptr; auto.
     }
@@ -196,9 +203,9 @@ Proof.
     rewrite Zlength_map in *.
     destruct (eq_dec (Zlength contents) 0) as [zlength_eq | zlength_neq].
     assert (contra: False) by (apply H1; apply zlength_eq); inversion contra.
-    destruct additional'; try solve [inversion TC]. 
+    destruct additional'; try solve [inversion TC0]. 
     {
-      inv TC.
+      inv TC0.
       destruct (eq_dec (Vint Int.zero) nullval) as [additional_eq | additional_neq].
       auto.
       assert (contra: False) by (apply additional_neq; reflexivity); inversion contra.
@@ -221,20 +228,21 @@ Proof.
   forward_if (
       PROP  ()
       LOCAL  (temp _md_len md_len; lvar _K (tarray tuchar 32) K;
+      temp _ctx ctx;
       lvar _sep (tarray tuchar 1) sep;
-      lvar _info (Tstruct _mbedtls_md_info_t noattr) info;
       temp _additional additional; temp _add_len (Vint (Int.repr add_len));
       temp 128%positive (Vint (Int.repr rounds));
       gvar sha._K256 kv
              )
       SEP  (`(data_at_ Tsh (tarray tuchar 32) K);
       `(data_at_ Tsh (tarray tuchar 1) sep);
-      `(data_at_ Tsh (Tstruct _mbedtls_md_info_t noattr) info);
       `(data_at Tsh (tarray tuchar add_len) (map Vint contents) additional);
       `(data_at Tsh t_struct_hmac256drbg_context_st initial_state ctx);
       `(hmac256drbg_relate initial_state_abs initial_state);
       `(hmac256drbgstate_md_FULL (hmac256drbgabs_key initial_state_abs)
-          initial_state);
+                                 initial_state);
+      `(data_at Tsh t_struct_mbedtls_md_info info_contents
+                (hmac256drbgstate_md_info_pointer initial_state)); 
       `(K_vector kv)
       )
   ).
@@ -271,8 +279,8 @@ Proof.
                (if non_empty_additional
                 then Vint (Int.repr 2)
                 else Vint (Int.repr 1)))); temp _md_len md_len;
+       temp _ctx ctx;
        lvar _K (tarray tuchar 32) K; lvar _sep (tarray tuchar 1) sep;
-       lvar _info (Tstruct _mbedtls_md_info_t noattr) info;
        temp _additional additional; temp _add_len (Vint (Int.repr add_len));
        gvar sha._K256 kv
          )
@@ -281,13 +289,12 @@ Proof.
            !!((key, value) = HMAC_DRBG_update_round HMAC256 (map Int.signed contents) initial_key initial_value 0 (Z.to_nat i) /\  key = hmac256drbgabs_key final_state_abs /\
       value = hmac256drbgabs_value final_state_abs /\
       hmac256drbgabs_metadata_same final_state_abs initial_state_abs) &&
-           (update_relate_final_state ctx final_state_abs)
+           (update_relate_final_state ctx final_state_abs info_contents)
          );
         (* `(update_relate_final_state ctx final_state_abs); *)
         `(data_at_ Tsh (tarray tuchar 32) K);
         `(data_at Tsh (tarray tuchar add_len) (map Vint contents) additional);
         `(data_at_ Tsh (tarray tuchar 1) sep );
-        `(data_at_ Tsh (Tstruct _mbedtls_md_info_t noattr) info);
         `(K_vector kv)
          )
   ).
@@ -322,6 +329,7 @@ Proof.
     unfold hmac256drbgstate_md_FULL.
     remember (hmac256drbgabs_key state_abs) as key.
     remember (Zlength key) as l.
+    forward_call ((field_address t_struct_hmac256drbg_context_st [StructField _md_ctx] ctx), (fst state), l, key, kv).
     assert_PROP (spec_hmacNK.has_lengthK l key). admit (* TODO *).
     Print md_reset_spec.
     
@@ -335,7 +343,7 @@ Proof.
   remember (hmac256drbgabs_key final_state_abs) as key.
   remember (hmac256drbgabs_value final_state_abs) as value.
   (* prove function post condition *)
-  Exists K sep info key value final_state_abs.
+  Exists K sep key value final_state_abs.
   unfold HMAC256_DRBG_functional_prog.HMAC256_DRBG_update.
   rewrite HMAC_DRBG_update_concrete_correct.
   entailer!.
@@ -351,7 +359,7 @@ Proof.
       destruct (eq_dec (Zlength (i :: contents)) 0) as [Zlength_eq | Zlength_neq].
       rewrite Zlength_cons, Zlength_correct in Zlength_eq; omega.
       destruct (eq_dec additional' nullval) as [additional_eq | additional_neq].
-      subst. inversion H8 as [isptr_null H']; inversion isptr_null.
+      subst. inversion H7 as [isptr_null H']; inversion isptr_null.
       reflexivity.
     }
   }
