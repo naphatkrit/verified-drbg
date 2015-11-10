@@ -51,11 +51,11 @@ Definition md_reset_spec :=
         `(UNDER_SPEC.FULL key (snd (snd r))); `(data_at Tsh (Tstruct _mbedtls_md_context_t noattr) r c); `(K_vector kv))
   POST [ tint ] 
      PROP ()
-     LOCAL ()
-     SEP (`(EX r: mdstate,
-                  (md_relate (hABS key nil) r * data_at Tsh (Tstruct _mbedtls_md_context_t noattr) r c)
-           );
-          `(K_vector kv)
+     LOCAL (temp ret_temp (Vint (Int.zero)))
+     SEP (
+       `(md_relate (hABS key nil) r);
+       `(data_at Tsh (Tstruct _mbedtls_md_context_t noattr) r c);
+       `(K_vector kv)
          ).
 
 Definition md_starts_spec :=

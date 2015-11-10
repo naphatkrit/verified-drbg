@@ -182,7 +182,6 @@ Proof.
         assert (contra: False) by (apply H1; reflexivity); inversion contra.
         clear.
         rewrite Zlength_map. rewrite Zlength_cons.
-        Check Zlength_nonneg.
         assert (0 <= Zlength contents) by (apply Zlength_nonneg).
         destruct (Zlength contents).
         simpl; omega.
@@ -260,6 +259,7 @@ Proof.
 
   remember (hmac256drbgabs_key initial_state_abs) as initial_key.
   remember (hmac256drbgabs_value initial_state_abs) as initial_value.
+  (* verif_sha_final2.v, @exp (environ -> mpred) *)
   (* for ( sep_value = 0; sep_value < rounds; sep_value++ ) *)
   forward_for_simple_bound rounds (
                               EX i: Z,
@@ -272,13 +272,8 @@ Proof.
       value = hmac256drbgabs_value final_state_abs;
       hmac256drbgabs_metadata_same final_state_abs state_abs *)
         ) 
-      LOCAL 
-      (temp _rounds
-         (force_val
-            (sem_cast_i2i I8 Unsigned
-               (if non_empty_additional
-                then Vint (Int.repr 2)
-                else Vint (Int.repr 1)))); temp _md_len md_len;
+      LOCAL (
+       temp _md_len md_len;
        temp _ctx ctx;
        lvar _K (tarray tuchar 32) K; lvar _sep (tarray tuchar 1) sep;
        temp _additional additional; temp _add_len (Vint (Int.repr add_len));
@@ -311,30 +306,140 @@ Proof.
     unfold update_relate_final_state.
     normalize.
     entailer!.
-    {
-      rewrite Zlength_map in *.
-      destruct (eq_dec (Zlength contents) 0); destruct (eq_dec additional' nullval); auto.
-    }
     Exists (hmac256drbgabs_key initial_state_abs) (hmac256drbgabs_value initial_state_abs) initial_state_abs.
     normalize. Exists initial_state.
     entailer!. destruct initial_state_abs; simpl; auto.
   }
   {
     (* loop body *)
+    change (`(eq (Vint (Int.repr rounds))) (eval_expr (Etempvar _rounds tint))) with (temp _rounds (Vint (Int.repr rounds))).
     unfold update_relate_final_state.
     Intros key value state_abs state.
     forward.
+    unfold hmac256drbgstate_md_FULL.
     unfold_data_at 1%nat.
     rewrite (field_at_data_at _ _ [StructField _md_ctx]); simpl.
-    unfold hmac256drbgstate_md_FULL.
     remember (hmac256drbgabs_key state_abs) as key.
     remember (Zlength key) as l.
+    forward_call ((field_address t_struct_hmac256drbg_context_st [StructField _md_ctx] ctx), (fst state), l, key, kv) v.
+    {
+      (* prove that ctx->md_ctx is at struct offset 0 *)
+      admit (* TODO *).
+    }
+    {
+      (* prove that the (existing) key has the right length *)
+      admit (* TODO *).
+    }
+    subst v.
+    forward.
+    (*
+    (*
+    gather_SEP 0 1 2 3 4 5 6 7.
+    replace_SEP 0 `(data_at Tsh t_struct_hmac256drbg_context_st state ctx).
+*)
+    (*
     forward_call ((field_address t_struct_hmac256drbg_context_st [StructField _md_ctx] ctx), (fst state), l, key, kv).
+*)
+    eapply semax_seq'.
+    let Frame := fresh "Frame" in
+ evar (Frame: list (mpred)).
+ match goal with |- @semax ?CS _ _ _ _ _ =>
+ eapply (semax_call_id01_wow ((field_address t_struct_hmac256drbg_context_st [StructField _md_ctx] ctx), (fst state), l, key, kv) Frame);
+ [ reflexivity | lookup_spec_and_change_compspecs CS
+ | reflexivity | apply Coq.Init.Logic.I | reflexivity
+ | prove_local2ptree | repeat constructor 
+ | try apply local_True_right; entailer!
+ | reflexivity
+ | prove_local2ptree | repeat constructor 
+ | reflexivity | reflexivity
+ | Forall_pTree_from_elements
+ | Forall_pTree_from_elements
+ | unfold fold_right at 1 2; cancel
+ | .. (* cbv beta; extensionality rho; 
+   repeat rewrite exp_uncurry;
+   try rewrite no_post_exists; repeat rewrite exp_unfold;
+   apply exp_congr; intros ?vret; reflexivity
+ | intros; try match goal with  |- extract_trivial_liftx ?A _ =>
+        (has_evar A; fail 1) || (repeat constructor)
+     end
+ | unify_postcondition_exps
+ | unfold fold_right_and; repeat rewrite and_True; auto *)
+ ] end.
+
+ Focus 4.
+ unify_postcondition_exps.
+
+ Focus 4.
+ unfold fold_right_and; repeat rewrite and_True; auto.
+ 
+ Focus 2.
+
+ cbv beta. extensionality rho.
+   repeat rewrite exp_uncurry.
+   try rewrite no_post_exists. repeat rewrite exp_unfold.
+   apply exp_congr; intros ?vret; reflexivity.
+
+
+ try apply local_True_right; entailer!
+ .
+
+ 
+ 
+ reflexivity.
+prove_local2ptree. repeat constructor.
+ reflexivity. reflexivity.
+ {
+ Forall_pTree_from_elements.
+
+ Focus 2.
+ Forall_pTree_from_elements.
+ | unfold fold_right at 1 2; cancel
+ | cbv beta; extensionality rho; 
+   repeat rewrite exp_uncurry;
+   try rewrite no_post_exists; repeat rewrite exp_unfold;
+   apply exp_congr; intros ?vret; reflexivity
+ | intros; try match goal with  |- extract_trivial_liftx ?A _ =>
+        (has_evar A; fail 1) || (repeat constructor)
+     end
+ | unify_postcondition_exps
+ | unfold fold_right_and; repeat rewrite and_True; auto 
+ 
+ Forall_pTree_from_elements.
+ prove_local2ptree.
+    
+    let Frame := fresh "Frame" in
+ evar (Frame: list (mpred)).
+ match goal with |- @semax ?CS _ _ _ _ _ =>
+ eapply (semax_call_id00_wow ((field_address t_struct_hmac256drbg_context_st [StructField _md_ctx] ctx), (fst state), l, key, kv) Frame);
+ [ ..(* reflexivity | lookup_spec_and_change_compspecs CS
+ | reflexivity | reflexivity
+ | prove_local2ptree | repeat constructor 
+ | try apply local_True_right; entailer!
+ | reflexivity
+ | prove_local2ptree | repeat constructor 
+ | reflexivity | reflexivity
+ | Forall_pTree_from_elements
+ | Forall_pTree_from_elements
+ | unfold fold_right at 1 2; cancel
+ | cbv beta iota; 
+    repeat rewrite exp_uncurry;
+    try rewrite no_post_exists0; 
+    first [reflexivity | extensionality; simpl; reflexivity]
+ | intros; try match goal with  |- extract_trivial_liftx ?A _ =>
+        (has_evar A; fail 1) || (repeat constructor)
+     end
+ | unify_postcondition_exps
+ | unfold fold_right_and; repeat rewrite and_True; auto *)
+ ]
+ end.
+
+    
+    forward_call_id00_wow ((field_address t_struct_hmac256drbg_context_st [StructField _md_ctx] ctx), (fst state), l, key, kv).
     assert_PROP (spec_hmacNK.has_lengthK l key). admit (* TODO *).
     Print md_reset_spec.
     
     forward_call ((field_address t_struct_hmac256drbg_context_st [StructField _md_ctx] ctx), (fst state), l, key, kv).
-    (* TODO *) admit.
+    (* TODO *) admit. *)
   }
   unfold update_relate_final_state.
   (* return *)
@@ -348,7 +453,7 @@ Proof.
   rewrite HMAC_DRBG_update_concrete_correct.
   entailer!.
   {
-    rewrite H3.
+    rewrite H2.
     destruct contents; unfold HMAC_DRBG_update_concrete.
     {
       (* contents = [] *)
@@ -359,7 +464,7 @@ Proof.
       destruct (eq_dec (Zlength (i :: contents)) 0) as [Zlength_eq | Zlength_neq].
       rewrite Zlength_cons, Zlength_correct in Zlength_eq; omega.
       destruct (eq_dec additional' nullval) as [additional_eq | additional_neq].
-      subst. inversion H7 as [isptr_null H']; inversion isptr_null.
+      subst. inversion H6 as [isptr_null H']; inversion isptr_null.
       reflexivity.
     }
   }
