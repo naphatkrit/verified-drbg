@@ -60,65 +60,63 @@ Definition md_reset_spec :=
 
 Definition md_starts_spec :=
   DECLARE _mbedtls_md_hmac_starts
-   WITH c : val, l:Z, key:list Z, kv:val, b:block, i:Int.int
+   WITH c : val, r: mdstate, l:Z, key:list Z, kv:val, b:block, i:Int.int
    PRE [ _ctx OF tptr t_struct_md_ctx_st,
          _key OF tptr tuchar,
          _keylen OF tint ]
          PROP (has_lengthK l key)
          LOCAL (temp _ctx c; temp _key (Vptr b i); temp _keylen (Vint (Int.repr l));
                 gvar sha._K256 kv)
-         SEP (`(EX r: mdstate,
-        (UNDER_SPEC.EMPTY (snd (snd r)) * data_at Tsh t_struct_md_ctx_st r c));
+         SEP (`(UNDER_SPEC.EMPTY (snd (snd r)));
+              `(data_at Tsh t_struct_md_ctx_st r c);
               `(data_block Tsh key (Vptr b i)); `(K_vector kv))
-  POST [ tvoid ] 
+  POST [ tint ] 
      PROP ()
-     LOCAL ()
-     SEP (`(EX r: mdstate,
-                  (md_relate (hABS key nil) r * data_at Tsh t_struct_md_ctx_st r c)
-           );
+     LOCAL (temp ret_temp (Vint (Int.zero)))
+     SEP (`(md_relate (hABS key nil) r);
+          `(data_at Tsh t_struct_md_ctx_st r c);
           `(data_block Tsh key (Vptr b i));
           `(K_vector kv)
          ).
 
 Definition md_update_spec :=
   DECLARE _mbedtls_md_hmac_update
-   WITH key: list Z, c : val, d:val, data:list Z, data1:list Z, kv:val
+   WITH key: list Z, c : val, r:mdstate, d:val, data:list Z, data1:list Z, kv:val
    PRE [ _ctx OF tptr t_struct_md_ctx_st, 
-         _input OF tptr tvoid, 
+         _input OF tptr tuchar, 
          _ilen OF tuint]
          PROP (0 <= Zlength data1 <= Int.max_unsigned /\
                Zlength data1 + Zlength data + 64 < two_power_pos 61) 
          LOCAL (temp _ctx c; temp _input d; temp  _ilen (Vint (Int.repr (Zlength data1)));
                 gvar sha._K256 kv)
-         SEP(`(EX r: mdstate,
-                  (md_relate (hABS key data) r * data_at Tsh t_struct_md_ctx_st r c)
-           ); `(data_block Tsh data1 d); `(K_vector kv))
-  POST [ tvoid ] 
+         SEP(`(md_relate (hABS key data) r);
+             `(data_at Tsh t_struct_md_ctx_st r c);
+             `(data_block Tsh data1 d); `(K_vector kv))
+  POST [ tint ] 
           PROP () 
-          LOCAL ()
-          SEP(`(EX r: mdstate,
-                  (md_relate (hABS key (data ++ data1)) r * data_at Tsh t_struct_md_ctx_st r c)
-           ); 
+          LOCAL (temp ret_temp (Vint (Int.zero)))
+          SEP(`(md_relate (hABS key (data ++ data1)) r);
+              `(data_at Tsh t_struct_md_ctx_st r c); 
               `(data_block Tsh data1 d);`(K_vector kv)).
 
 Definition md_final_spec :=
   DECLARE _mbedtls_md_hmac_finish
-   WITH data:list Z, key:list Z, c : val, md:val, shmd: share, kv:val
+   WITH data:list Z, key:list Z, c : val, r:mdstate, md:val, shmd: share, kv:val
    PRE [ _ctx OF tptr t_struct_md_ctx_st,
          _output OF tptr tuchar ]
        PROP (writable_share shmd) 
        LOCAL (temp _output md; temp _ctx c;
               gvar sha._K256 kv)
-       SEP(`(EX r: mdstate,
-                  (md_relate (hABS key data) r * data_at Tsh t_struct_md_ctx_st r c)
-           ); `(K_vector kv);
+       SEP(`(md_relate (hABS key data) r);
+           `(data_at Tsh t_struct_md_ctx_st r c);
+           `(K_vector kv);
            `(memory_block shmd 32 md))
-  POST [ tvoid ] 
+  POST [ tint ] 
           PROP () 
-          LOCAL ()
+          LOCAL (temp ret_temp (Vint (Int.zero)))
           SEP(`(K_vector kv);
-              `(EX r: mdstate,
-        (UNDER_SPEC.FULL key (snd (snd r)) * data_at Tsh t_struct_md_ctx_st r c));
+              `(UNDER_SPEC.FULL key (snd (snd r)));
+              `(data_at Tsh t_struct_md_ctx_st r c);
               `(data_block shmd (HMAC256 data key) md)).
 (* end mocked_md *)
 

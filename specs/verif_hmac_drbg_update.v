@@ -319,9 +319,8 @@ Proof.
     unfold hmac256drbgstate_md_FULL.
     unfold_data_at 1%nat.
     rewrite (field_at_data_at _ _ [StructField _md_ctx]); simpl.
-    remember (hmac256drbgabs_key state_abs) as key.
-    remember (Zlength key) as l.
-    forward_call ((field_address t_struct_hmac256drbg_context_st [StructField _md_ctx] ctx), (fst state), l, key, kv) v.
+    rewrite (field_at_data_at _ _ [StructField _V]); simpl.
+    forward_call (field_address t_struct_hmac256drbg_context_st [StructField _md_ctx] ctx, fst state, Zlength (hmac256drbgabs_key state_abs), hmac256drbgabs_key state_abs, kv) v.
     {
       (* prove that ctx->md_ctx is at struct offset 0 *)
       admit (* TODO *).
@@ -331,8 +330,26 @@ Proof.
       admit (* TODO *).
     }
     subst v.
-    admit (* TODO *).
-    (*
+    destruct state_abs. destruct md_ctx.
+
+    forward_call (key, field_address t_struct_hmac256drbg_context_st [StructField _md_ctx] ctx, fst state, field_address t_struct_hmac256drbg_context_st [StructField _V] ctx, @nil Z, V, kv).
+    {
+      admit (* TODO *).
+      entailer!.
+      repeat split.
+      {
+        (* prove that V has length 32. need to modify pre-conditions *)
+        admit (* TODO *).
+      }
+      {
+        (* prove that ctx->V is at struct offset 12 *)
+        admit (* TODO *).
+      }
+      {
+        (* prove that ctx->md_ctx is at struct offset 0 *)
+        admit (* TODO *).
+      }
+    }
     (*
     gather_SEP 0 1 2 3 4 5 6 7.
     replace_SEP 0 `(data_at Tsh t_struct_hmac256drbg_context_st state ctx).
@@ -342,11 +359,12 @@ Proof.
 *)
     eapply semax_seq'.
     let Frame := fresh "Frame" in
- evar (Frame: list (mpred)).
+    evar (Frame: list (mpred)).
  match goal with |- @semax ?CS _ _ _ _ _ =>
- eapply (semax_call_id01_wow ((field_address t_struct_hmac256drbg_context_st [StructField _md_ctx] ctx), (fst state), l, key, kv) Frame);
+ eapply (semax_call_id01_wow (key, field_address t_struct_hmac256drbg_context_st [StructField _md_ctx] ctx, fst state, field_address t_struct_hmac256drbg_context_st [StructField _V] ctx, V, @nil Z, kv)
+ Frame);
  [ reflexivity | lookup_spec_and_change_compspecs CS
- | reflexivity | apply Coq.Init.Logic.I | reflexivity
+ | reflexivity | apply Coq.Init.Logic.I | .. (* reflexivity
  | prove_local2ptree | repeat constructor 
  | try apply local_True_right; entailer!
  | reflexivity
@@ -355,7 +373,7 @@ Proof.
  | Forall_pTree_from_elements
  | Forall_pTree_from_elements
  | unfold fold_right at 1 2; cancel
- | .. (* cbv beta; extensionality rho; 
+ | cbv beta; extensionality rho; 
    repeat rewrite exp_uncurry;
    try rewrite no_post_exists; repeat rewrite exp_unfold;
    apply exp_congr; intros ?vret; reflexivity
@@ -366,6 +384,7 @@ Proof.
  | unfold fold_right_and; repeat rewrite and_True; auto *)
  ] end.
 
+ 
  Focus 4.
  unify_postcondition_exps.
 
