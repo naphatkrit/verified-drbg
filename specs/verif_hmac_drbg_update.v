@@ -179,7 +179,7 @@ Proof.
       {
         simpl.
         destruct contents.
-        assert (contra: False) by (apply H1; reflexivity); inversion contra.
+        assert (contra: False) by (apply H3; reflexivity); inversion contra.
         clear.
         rewrite Zlength_map. rewrite Zlength_cons.
         assert (0 <= Zlength contents) by (apply Zlength_nonneg).
@@ -190,18 +190,19 @@ Proof.
       }
       apply denote_tc_comparable_split; auto 50 with valid_pointer.
       (* TODO regressoin, this should have solved it *)
+      (*
       apply sepcon_valid_pointer1.
       apply sepcon_valid_pointer1.
       apply sepcon_valid_pointer1.
       apply sepcon_valid_pointer1.
       apply sepcon_valid_pointer1.
       apply sepcon_valid_pointer2.
-      apply data_at_valid_ptr; auto.
+      apply data_at_valid_ptr; auto. *)
     }
     entailer!.
     rewrite Zlength_map in *.
     destruct (eq_dec (Zlength contents) 0) as [zlength_eq | zlength_neq].
-    assert (contra: False) by (apply H1; apply zlength_eq); inversion contra.
+    assert (contra: False) by (apply H3; apply zlength_eq); inversion contra.
     destruct additional'; try solve [inversion TC0]. 
     {
       inv TC0.
@@ -281,9 +282,14 @@ Proof.
          )
       SEP  (
         `(EX key: list Z, EX value: list Z, EX final_state_abs: hmac256drbgabs,
-           !!((key, value) = HMAC_DRBG_update_round HMAC256 (map Int.signed contents) initial_key initial_value 0 (Z.to_nat i) /\  key = hmac256drbgabs_key final_state_abs /\
-      value = hmac256drbgabs_value final_state_abs /\
-      hmac256drbgabs_metadata_same final_state_abs initial_state_abs) &&
+          !!(
+              (key, value) = HMAC_DRBG_update_round HMAC256 (map Int.signed contents) initial_key initial_value 0 (Z.to_nat i)
+              /\ key = hmac256drbgabs_key final_state_abs
+              /\ value = hmac256drbgabs_value final_state_abs
+              /\ hmac256drbgabs_metadata_same final_state_abs initial_state_abs
+              /\ Zlength value = Z.of_nat SHA256.DigestLength
+              /\ Forall general_lemmas.isbyteZ value
+            ) &&
            (update_relate_final_state ctx final_state_abs info_contents)
          );
         (* `(update_relate_final_state ctx final_state_abs); *)
@@ -320,10 +326,28 @@ Proof.
     unfold_data_at 1%nat.
     rewrite (field_at_data_at _ _ [StructField _md_ctx]); simpl.
     rewrite (field_at_data_at _ _ [StructField _V]); simpl.
+
+    assert (Hfield_md_ctx: forall ctx', isptr ctx' -> field_compatible t_struct_hmac256drbg_context_st [StructField _md_ctx] ctx' -> ctx' = field_address t_struct_hmac256drbg_context_st [StructField _md_ctx] ctx').
+    {
+      intros ctx'' Hisptr Hfc.
+      unfold field_address.
+      Check field_compatible_dec.
+      destruct (field_compatible_dec t_struct_hmac256drbg_context_st); [|contradiction].
+      simpl. change (Int.repr 0) with Int.zero. rewrite offset_val_force_ptr.
+      destruct ctx''; inversion Hisptr. reflexivity.
+    }
+    assert (Hfield_V: forall ctx', isptr ctx' -> field_compatible t_struct_hmac256drbg_context_st [StructField _V] ctx' -> offset_val (Int.repr 12) ctx' = field_address t_struct_hmac256drbg_context_st [StructField _V] ctx').
+    {
+      intros ctx'' Hisptr Hfc.
+      unfold field_address.
+      Check field_compatible_dec.
+      destruct (field_compatible_dec t_struct_hmac256drbg_context_st); [|contradiction].
+      simpl. reflexivity.
+    }
+    
     forward_call (field_address t_struct_hmac256drbg_context_st [StructField _md_ctx] ctx, fst state, Zlength (hmac256drbgabs_key state_abs), hmac256drbgabs_key state_abs, kv) v.
     {
-      (* prove that ctx->md_ctx is at struct offset 0 *)
-      admit (* TODO *).
+      entailer!.
     }
     {
       (* prove that the (existing) key has the right length *)
@@ -332,23 +356,24 @@ Proof.
     subst v.
     destruct state_abs. destruct md_ctx.
 
-    forward_call (key, field_address t_struct_hmac256drbg_context_st [StructField _md_ctx] ctx, fst state, field_address t_struct_hmac256drbg_context_st [StructField _V] ctx, @nil Z, V, kv).
+    simpl in H6.
+    assert (Hmdlen_V: md_len = Vint (Int.repr (Zlength V))) by (rewrite H6; assumption).
+
+    admit (* TODO *).
+    (*
+    forward_call (key, field_address t_struct_hmac256drbg_context_st [StructField _md_ctx] ctx, fst state, field_address t_struct_hmac256drbg_context_st [StructField _V] ctx, @nil Z, V, kv) v.
     {
-      admit (* TODO *).
       entailer!.
-      repeat split.
-      {
-        (* prove that V has length 32. need to modify pre-conditions *)
-        admit (* TODO *).
-      }
-      {
-        (* prove that ctx->V is at struct offset 12 *)
-        admit (* TODO *).
-      }
-      {
-        (* prove that ctx->md_ctx is at struct offset 0 *)
-        admit (* TODO *).
-      }
+    }
+    {
+      unfold data_block.
+      destruct state as [md_ctx [V' [reseed_counter' [entropy_len' [prediction_resistance' [reseed_interval' [f_entropy' p_entropy']]]]]]].
+      rewrite H6.
+      rewrite list_map_compose.
+      simpl.
+      entailer!.
+      unfold fold_right.
+      entailer.
     }
     (*
     gather_SEP 0 1 2 3 4 5 6 7.
@@ -361,16 +386,16 @@ Proof.
     let Frame := fresh "Frame" in
     evar (Frame: list (mpred)).
  match goal with |- @semax ?CS _ _ _ _ _ =>
- eapply (semax_call_id01_wow (key, field_address t_struct_hmac256drbg_context_st [StructField _md_ctx] ctx, fst state, field_address t_struct_hmac256drbg_context_st [StructField _V] ctx, V, @nil Z, kv)
+ eapply (semax_call_id01_wow (key, field_address t_struct_hmac256drbg_context_st [StructField _md_ctx] ctx, fst state, field_address t_struct_hmac256drbg_context_st [StructField _V] ctx, @nil Z, V, kv)
  Frame);
  [ reflexivity | lookup_spec_and_change_compspecs CS
- | reflexivity | apply Coq.Init.Logic.I | .. (* reflexivity
+ | reflexivity | apply Coq.Init.Logic.I | reflexivity
  | prove_local2ptree | repeat constructor 
  | try apply local_True_right; entailer!
  | reflexivity
  | prove_local2ptree | repeat constructor 
  | reflexivity | reflexivity
- | Forall_pTree_from_elements
+ | .. (*Forall_pTree_from_elements
  | Forall_pTree_from_elements
  | unfold fold_right at 1 2; cancel
  | cbv beta; extensionality rho; 
@@ -383,7 +408,13 @@ Proof.
  | unify_postcondition_exps
  | unfold fold_right_and; repeat rewrite and_True; auto *)
  ] end.
+ prove_local2ptree.
+ repeat constructor.
+ reflexivity.
+ reflexivity. 
+ Forall_pTree_from_elements.
 
+ Existential 2 := [].
  
  Focus 4.
  unify_postcondition_exps.
@@ -472,7 +503,7 @@ prove_local2ptree. repeat constructor.
   rewrite HMAC_DRBG_update_concrete_correct.
   entailer!.
   {
-    rewrite H2.
+    rewrite H4.
     destruct contents; unfold HMAC_DRBG_update_concrete.
     {
       (* contents = [] *)
@@ -483,7 +514,7 @@ prove_local2ptree. repeat constructor.
       destruct (eq_dec (Zlength (i :: contents)) 0) as [Zlength_eq | Zlength_neq].
       rewrite Zlength_cons, Zlength_correct in Zlength_eq; omega.
       destruct (eq_dec additional' nullval) as [additional_eq | additional_neq].
-      subst. inversion H6 as [isptr_null H']; inversion isptr_null.
+      subst. inversion H8 as [isptr_null H']; inversion isptr_null.
       reflexivity.
     }
   }

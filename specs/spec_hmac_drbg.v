@@ -6,6 +6,7 @@ Require Import hmac_drbg.
 Require Import HMAC256_DRBG_functional_prog.
 Require Import sha.spec_hmacNK.
 Require Import sha.funspec_hmacNK.
+Require Import sha.general_lemmas.
 
 (* mocked_md *)
 Require Import sha.HMAC256_functional_prog.
@@ -195,7 +196,9 @@ Definition hmac_drbg_update_spec :=
         kv: val, info_contents: md_info_state
     PRE [ _ctx OF (tptr t_struct_hmac256drbg_context_st), _additional OF (tptr tuchar), _add_len OF tuint ]
        PROP (
-         0 <= add_len <= Int.max_unsigned
+         0 <= add_len <= Int.max_unsigned;
+         Zlength (hmac256drbgabs_value initial_state_abs) = Z.of_nat SHA256.DigestLength;
+         Forall isbyteZ (hmac256drbgabs_value initial_state_abs)
        )
        LOCAL (temp _ctx ctx; temp _additional additional; temp _add_len (Vint (Int.repr add_len)); gvar sha._K256 kv)
        SEP (
@@ -212,7 +215,9 @@ Definition hmac_drbg_update_spec :=
            (key', value') = HMAC256_DRBG_update (map Int.signed contents) (hmac256drbgabs_key initial_state_abs) (hmac256drbgabs_value initial_state_abs);
            key' = hmac256drbgabs_key final_state_abs;
            value' = hmac256drbgabs_value final_state_abs;
-           hmac256drbgabs_metadata_same final_state_abs initial_state_abs
+           hmac256drbgabs_metadata_same final_state_abs initial_state_abs;
+           Zlength value' = Z.of_nat SHA256.DigestLength;
+           Forall isbyteZ value'
          )
        LOCAL ()
        SEP (
