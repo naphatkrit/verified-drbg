@@ -190,7 +190,7 @@ Definition hmac_drbg_update_post (final_state_abs: hmac256drbgabs) (ctx: val) (i
 
 Definition hmac_drbg_update_spec :=
   DECLARE _mbedtls_hmac_drbg_update
-   WITH contents: list int,
+   WITH contents: list Z,
         additional: val, add_len: Z,
         ctx: val, initial_state: hmac256drbgstate,
         initial_state_abs: hmac256drbgabs,
@@ -199,11 +199,12 @@ Definition hmac_drbg_update_spec :=
        PROP (
          0 <= add_len <= Int.max_unsigned;
          Zlength (hmac256drbgabs_value initial_state_abs) = Z.of_nat SHA256.DigestLength;
-         Forall isbyteZ (hmac256drbgabs_value initial_state_abs)
+         Forall isbyteZ (hmac256drbgabs_value initial_state_abs);
+         Forall isbyteZ contents
        )
        LOCAL (temp _ctx ctx; temp _additional additional; temp _add_len (Vint (Int.repr add_len)); gvar sha._K256 kv)
        SEP (
-         `(data_at Tsh (tarray tuchar add_len) (map Vint contents) additional);
+         `(data_at Tsh (tarray tuchar add_len) (map Vint (map Int.repr contents)) additional);
          `(data_at Tsh t_struct_hmac256drbg_context_st initial_state ctx);
          `(hmac256drbgstate_md_FULL (hmac256drbgabs_key initial_state_abs) initial_state);
          `(hmac256drbg_relate initial_state_abs initial_state);
@@ -213,17 +214,18 @@ Definition hmac_drbg_update_spec :=
     POST [ tvoid ]
        EX key': list Z, EX value': list Z, EX final_state_abs:_,
        PROP (
-           (key', value') = HMAC256_DRBG_update (map Int.signed contents) (hmac256drbgabs_key initial_state_abs) (hmac256drbgabs_value initial_state_abs);
+           (key', value') = HMAC256_DRBG_update contents (hmac256drbgabs_key initial_state_abs) (hmac256drbgabs_value initial_state_abs);
            key' = hmac256drbgabs_key final_state_abs;
            value' = hmac256drbgabs_value final_state_abs;
            hmac256drbgabs_metadata_same final_state_abs initial_state_abs;
            Zlength value' = Z.of_nat SHA256.DigestLength;
-           Forall isbyteZ value'
+           Forall isbyteZ value';
+           Forall isbyteZ contents
          )
        LOCAL ()
        SEP (
          `(hmac_drbg_update_post final_state_abs ctx info_contents);
-         `(data_at Tsh (tarray tuchar add_len) (map Vint contents) additional);
+         `(data_at Tsh (tarray tuchar add_len) (map Vint (map Int.repr contents)) additional);
          `(K_vector kv)
        ).
 (* TODO isbyte, data_block *)

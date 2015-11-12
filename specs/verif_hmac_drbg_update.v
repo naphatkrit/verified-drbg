@@ -160,7 +160,8 @@ Proof.
              )
       SEP  (`(data_at_ Tsh (tarray tuchar 32) K);
       `(data_at_ Tsh (tarray tuchar 1) sep);
-      `(data_at Tsh (tarray tuchar add_len) (map Vint contents) additional);
+      `(data_at Tsh (tarray tuchar add_len)
+          (map Vint (map Int.repr contents)) additional);
       `(data_at Tsh t_struct_hmac256drbg_context_st initial_state ctx);
       `(hmac256drbg_relate initial_state_abs initial_state);
       `(hmac256drbgstate_md_FULL (hmac256drbgabs_key initial_state_abs)
@@ -175,13 +176,13 @@ Proof.
     forward.
     {
       entailer!.
-      assert (sizeof cenv_cs (tarray tuchar (Zlength (map Vint contents))) > 0).
+      assert (sizeof cenv_cs (tarray tuchar (Zlength (map Vint (map Int.repr contents)))) > 0).
       {
         simpl.
         destruct contents.
-        assert (contra: False) by (apply H3; reflexivity); inversion contra.
+        assert (contra: False) by (apply H4; reflexivity); inversion contra.
         clear.
-        rewrite Zlength_map. rewrite Zlength_cons.
+        repeat rewrite Zlength_map. rewrite Zlength_cons.
         assert (0 <= Zlength contents) by (apply Zlength_nonneg).
         destruct (Zlength contents).
         simpl; omega.
@@ -200,9 +201,9 @@ Proof.
       apply data_at_valid_ptr; auto. *)
     }
     entailer!.
-    rewrite Zlength_map in *.
+    repeat rewrite Zlength_map in *.
     destruct (eq_dec (Zlength contents) 0) as [zlength_eq | zlength_neq].
-    assert (contra: False) by (apply H3; apply zlength_eq); inversion contra.
+    assert (contra: False) by (apply H4; apply zlength_eq); inversion contra.
     destruct additional'; try solve [inversion TC0]. 
     {
       inv TC0.
@@ -236,7 +237,8 @@ Proof.
              )
       SEP  (`(data_at_ Tsh (tarray tuchar 32) K);
       `(data_at_ Tsh (tarray tuchar 1) sep);
-      `(data_at Tsh (tarray tuchar add_len) (map Vint contents) additional);
+      `(data_at Tsh (tarray tuchar add_len)
+          (map Vint (map Int.repr contents)) additional);
       `(data_at Tsh t_struct_hmac256drbg_context_st initial_state ctx);
       `(hmac256drbg_relate initial_state_abs initial_state);
       `(hmac256drbgstate_md_FULL (hmac256drbgabs_key initial_state_abs)
@@ -283,7 +285,7 @@ Proof.
       SEP  (
         `(EX key: list Z, EX value: list Z, EX final_state_abs: hmac256drbgabs,
           !!(
-              (key, value) = HMAC_DRBG_update_round HMAC256 (map Int.signed contents) initial_key initial_value 0 (Z.to_nat i)
+              (key, value) = HMAC_DRBG_update_round HMAC256 contents initial_key initial_value 0 (Z.to_nat i)
               /\ key = hmac256drbgabs_key final_state_abs
               /\ value = hmac256drbgabs_value final_state_abs
               /\ hmac256drbgabs_metadata_same final_state_abs initial_state_abs
@@ -294,7 +296,7 @@ Proof.
          );
         (* `(update_relate_final_state ctx final_state_abs); *)
         `(data_at_ Tsh (tarray tuchar 32) K);
-        `(data_at Tsh (tarray tuchar add_len) (map Vint contents) additional);
+        `(data_at Tsh (tarray tuchar add_len) (map Vint (map Int.repr contents)) additional);
         `(data_at_ Tsh (tarray tuchar 1) sep );
         `(K_vector kv)
          )
@@ -356,28 +358,26 @@ Proof.
     subst v.
     destruct state_abs. destruct md_ctx.
 
-    simpl in H6.
-    assert (Hmdlen_V: md_len = Vint (Int.repr (Zlength V))) by (rewrite H6; assumption).
-    Print md_update_spec.
+    simpl in H7.
+    assert (Hmdlen_V: md_len = Vint (Int.repr (Zlength V))) by (rewrite H7; assumption).
     destruct state as [md_ctx [V' [reseed_counter' [entropy_len' [prediction_resistance' [reseed_interval' [f_entropy' p_entropy']]]]]]].
     simpl; normalize. rewrite <- list_map_compose.
-    rewrite <- H6.
+    rewrite <- H7.
     forward_call (key, field_address t_struct_hmac256drbg_context_st [StructField _md_ctx] ctx, md_ctx, field_address t_struct_hmac256drbg_context_st [StructField _V] ctx, @nil Z, V, kv) v.
     {
       entailer!.
     }
     {
-      rewrite H6.
+      rewrite H7.
       repeat split; try omega. hnf; auto.
       assumption.
     }
 
     subst v.
-    simpl.
     unfold upd_Znth_in_list.
     simpl.
     unfold sublist. simpl. assert (Int.zero_ext 8 (Int.repr i) = Int.repr i).
-    clear - H3. admit (* TODO *).
+    clear - H4 Heqrounds. admit (* TODO *).
     (*
     apply zero_ext_inrange. destruct non_empty_additional. subst. clear - H3.
     SearchAbout Int.unsigned Int.repr.
@@ -387,11 +387,11 @@ Proof.
       entailer!.
     }
     {
-      rewrite H9. simpl. change (Zlength [i]) with 1.
+      rewrite H10. simpl. change (Zlength [i]) with 1.
       cancel.
     }
     {
-      rewrite H6.
+      rewrite H7.
       change (Zlength [i]) with 1.
       repeat split; try omega. hnf; auto.
       unfold general_lemmas.isbyteZ.
@@ -461,18 +461,18 @@ Proof.
   rewrite HMAC_DRBG_update_concrete_correct.
   entailer!.
   {
-    rewrite H4.
+    rewrite H5.
     destruct contents; unfold HMAC_DRBG_update_concrete.
     {
       (* contents = [] *)
       reflexivity.
     }
     {
-      rewrite Zlength_map in *.
-      destruct (eq_dec (Zlength (i :: contents)) 0) as [Zlength_eq | Zlength_neq].
+      repeat rewrite Zlength_map in *.
+      destruct (eq_dec (Zlength (z :: contents)) 0) as [Zlength_eq | Zlength_neq].
       rewrite Zlength_cons, Zlength_correct in Zlength_eq; omega.
       destruct (eq_dec additional' nullval) as [additional_eq | additional_neq].
-      subst. inversion H8 as [isptr_null H']; inversion isptr_null.
+      subst. inversion H9 as [isptr_null H']; inversion isptr_null.
       reflexivity.
     }
   }
