@@ -176,11 +176,11 @@ Proof.
     forward.
     {
       entailer!.
-      assert (sizeof cenv_cs (tarray tuchar (Zlength (map Vint (map Int.repr contents)))) > 0).
+      assert (sizeof cenv_cs (tarray tuchar (Zlength contents)) > 0).
       {
         simpl.
         destruct contents.
-        assert (contra: False) by (apply H4; reflexivity); inversion contra.
+        assert (contra: False) by (apply H5; reflexivity); inversion contra.
         clear.
         repeat rewrite Zlength_map. rewrite Zlength_cons.
         assert (0 <= Zlength contents) by (apply Zlength_nonneg).
@@ -190,7 +190,7 @@ Proof.
         assert (contra: False) by (apply H; reflexivity); inversion contra.
       }
       apply denote_tc_comparable_split; auto 50 with valid_pointer.
-      (* TODO regressoin, this should have solved it *)
+      (* TODO regressoin, this should have solved it *) 
       (*
       apply sepcon_valid_pointer1.
       apply sepcon_valid_pointer1.
@@ -203,7 +203,7 @@ Proof.
     entailer!.
     repeat rewrite Zlength_map in *.
     destruct (eq_dec (Zlength contents) 0) as [zlength_eq | zlength_neq].
-    assert (contra: False) by (apply H4; apply zlength_eq); inversion contra.
+    assert (contra: False) by (apply H5; apply zlength_eq); inversion contra.
     destruct additional'; try solve [inversion TC0]. 
     {
       inv TC0.
@@ -221,7 +221,8 @@ Proof.
   {
     (* show that add_len = 0 implies the post condition *)
     forward.
-    entailer!.
+    entailer!. rewrite H5.
+    auto.
   }
 
   remember (update_rounds non_empty_additional) as rounds. unfold update_rounds in Heqrounds.
@@ -358,17 +359,17 @@ Proof.
     subst v.
     destruct state_abs. destruct md_ctx.
 
-    simpl in H7.
-    assert (Hmdlen_V: md_len = Vint (Int.repr (Zlength V))) by (rewrite H7; assumption).
+    simpl in H8.
+    assert (Hmdlen_V: md_len = Vint (Int.repr (Zlength V))) by (rewrite H8; assumption).
     destruct state as [md_ctx [V' [reseed_counter' [entropy_len' [prediction_resistance' [reseed_interval' [f_entropy' p_entropy']]]]]]].
     simpl; normalize. rewrite <- list_map_compose.
-    rewrite <- H7.
+    rewrite <- H8.
     forward_call (key, field_address t_struct_hmac256drbg_context_st [StructField _md_ctx] ctx, md_ctx, field_address t_struct_hmac256drbg_context_st [StructField _V] ctx, @nil Z, V, kv) v.
     {
       entailer!.
     }
     {
-      rewrite H7.
+      rewrite H8.
       repeat split; try omega. hnf; auto.
       assumption.
     }
@@ -377,7 +378,7 @@ Proof.
     unfold upd_Znth_in_list.
     simpl.
     unfold sublist. simpl. assert (Int.zero_ext 8 (Int.repr i) = Int.repr i).
-    clear - H4 Heqrounds. admit (* TODO *).
+    clear - H5 Heqrounds. admit (* TODO *).
     (*
     apply zero_ext_inrange. destruct non_empty_additional. subst. clear - H3.
     SearchAbout Int.unsigned Int.repr.
@@ -387,16 +388,98 @@ Proof.
       entailer!.
     }
     {
-      rewrite H10. simpl. change (Zlength [i]) with 1.
+      rewrite H11. simpl. change (Zlength [i]) with 1.
       cancel.
     }
     {
-      rewrite H7.
+      rewrite H8.
       change (Zlength [i]) with 1.
       repeat split; try omega. hnf; auto.
       unfold general_lemmas.isbyteZ.
       repeat constructor.
       omega. destruct non_empty_additional; subst; omega.
+    }
+    subst v.
+    normalize.
+    forward_if (
+      PROP  ()
+      LOCAL  (temp _sep_value (Vint (Int.repr i));
+      temp _rounds (Vint (Int.repr rounds)); temp _md_len md_len;
+      temp _ctx ctx; lvar _K (tarray tuchar (Zlength V)) K;
+      lvar _sep (tarray tuchar 1) sep; temp _additional additional;
+      temp _add_len (Vint (Int.repr add_len)); gvar sha._K256 kv)
+      SEP  (`(md_relate (hABS key (V ++ [i] ++ contents)) md_ctx);
+      `(data_at Tsh t_struct_md_ctx_st md_ctx
+          (field_address t_struct_hmac256drbg_context_st
+             [StructField _md_ctx] ctx));
+      `(data_at Tsh (tarray tuchar (Zlength [i])) [Vint (Int.repr i)] sep);
+      `(K_vector kv);
+      `(data_at Tsh (tarray tuchar (Zlength V)) (map Vint (map Int.repr V))
+          (field_address t_struct_hmac256drbg_context_st [StructField _V] ctx));
+      `(field_at Tsh t_struct_hmac256drbg_context_st
+          [StructField _reseed_counter] (Vint (Int.repr reseed_counter)) ctx);
+      `(field_at Tsh t_struct_hmac256drbg_context_st
+          [StructField _entropy_len] (Vint (Int.repr entropy_len)) ctx);
+      `(field_at Tsh t_struct_hmac256drbg_context_st
+          [StructField _prediction_resistance] prediction_resistance' ctx);
+      `(field_at Tsh t_struct_hmac256drbg_context_st
+          [StructField _reseed_interval] (Vint (Int.repr reseed_interval))
+          ctx);
+      `(field_at Tsh t_struct_hmac256drbg_context_st 
+          [StructField _f_entropy] f_entropy' ctx);
+      `(field_at Tsh t_struct_hmac256drbg_context_st 
+          [StructField _p_entropy] p_entropy' ctx);
+      `(data_at Tsh t_struct_mbedtls_md_info info_contents
+          (hmac256drbgstate_md_info_pointer
+             (md_ctx,
+             (map Vint (map Int.repr V),
+             (Vint (Int.repr reseed_counter),
+             (Vint (Int.repr entropy_len),
+             (prediction_resistance',
+             (Vint (Int.repr reseed_interval), (f_entropy', p_entropy')))))))));
+      `(md_relate (hABS key data) md_ctx);
+      `(data_at_ Tsh (tarray tuchar (Zlength V)) K);
+      `(data_at Tsh (tarray tuchar (Zlength contents))
+          (map Vint (map Int.repr contents)) additional))
+    ).
+    {
+      (* rounds = 2 case *)
+      forward_call (key, field_address t_struct_hmac256drbg_context_st [StructField _md_ctx] ctx, md_ctx, additional, V ++ [i], contents, kv) v.
+      {
+        (* prove the parameters match up *)
+        entailer!.
+      }
+      {
+        rewrite H1. cancel.
+      }
+      {
+        (* prove the PROP clause matches *)
+        rewrite H1 in *. repeat split; try omega.
+        rewrite Zlength_app; rewrite H8.
+        simpl. clear - H. admit (* TODO *).
+        assumption.
+      }
+      (* prove the post condition of the if statement *)
+      rewrite <- app_assoc.
+      entailer!.
+    }
+    {
+      (* rounds <> 2 case *)
+      forward.
+      entailer!.
+      destruct contents.
+      entailer!.
+
+      (* contents not empty, which is a contradiction *)
+      rewrite Zlength_cons in H13.
+      destruct (eq_dec (Z.succ (Zlength contents)) 0) as [Zlength_eq | Zlength_neq].
+      assert (0 <= Zlength contents) by (apply Zlength_nonneg).
+      destruct (Zlength contents); [inversion Zlength_eq| omega | omega].
+
+      assert (Hisptr: isptr additional') by auto.
+      destruct (eq_dec additional' nullval) as [additional_null | additional_not_null].
+      subst. inversion Hisptr.
+      assert (contra: False) by (apply H13; reflexivity); inversion contra.
     }
     admit (* TODO *).
       (*

@@ -199,6 +199,7 @@ Definition hmac_drbg_update_spec :=
        PROP (
          0 <= add_len <= Int.max_unsigned;
          Zlength (hmac256drbgabs_value initial_state_abs) = Z.of_nat SHA256.DigestLength;
+         add_len = Zlength contents;
          Forall isbyteZ (hmac256drbgabs_value initial_state_abs);
          Forall isbyteZ contents
        )
@@ -219,6 +220,7 @@ Definition hmac_drbg_update_spec :=
            value' = hmac256drbgabs_value final_state_abs;
            hmac256drbgabs_metadata_same final_state_abs initial_state_abs;
            Zlength value' = Z.of_nat SHA256.DigestLength;
+           add_len = Zlength contents;
            Forall isbyteZ value';
            Forall isbyteZ contents
          )
