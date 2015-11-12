@@ -358,23 +358,48 @@ Proof.
 
     simpl in H6.
     assert (Hmdlen_V: md_len = Vint (Int.repr (Zlength V))) by (rewrite H6; assumption).
-
-    admit (* TODO *).
-    (*
-    forward_call (key, field_address t_struct_hmac256drbg_context_st [StructField _md_ctx] ctx, fst state, field_address t_struct_hmac256drbg_context_st [StructField _V] ctx, @nil Z, V, kv) v.
+    Print md_update_spec.
+    destruct state as [md_ctx [V' [reseed_counter' [entropy_len' [prediction_resistance' [reseed_interval' [f_entropy' p_entropy']]]]]]].
+    simpl; normalize. rewrite <- list_map_compose.
+    rewrite <- H6.
+    forward_call (key, field_address t_struct_hmac256drbg_context_st [StructField _md_ctx] ctx, md_ctx, field_address t_struct_hmac256drbg_context_st [StructField _V] ctx, @nil Z, V, kv) v.
     {
       entailer!.
     }
     {
-      unfold data_block.
-      destruct state as [md_ctx [V' [reseed_counter' [entropy_len' [prediction_resistance' [reseed_interval' [f_entropy' p_entropy']]]]]]].
       rewrite H6.
-      rewrite list_map_compose.
-      simpl.
-      entailer!.
-      unfold fold_right.
-      entailer.
+      repeat split; try omega. hnf; auto.
+      assumption.
     }
+
+    subst v.
+    simpl.
+    unfold upd_Znth_in_list.
+    simpl.
+    unfold sublist. simpl. assert (Int.zero_ext 8 (Int.repr i) = Int.repr i).
+    clear - H3. admit (* TODO *).
+    (*
+    apply zero_ext_inrange. destruct non_empty_additional. subst. clear - H3.
+    SearchAbout Int.unsigned Int.repr.
+    rewrite Int.unsigned_repr. hnf; auto. *) 
+    forward_call (key, field_address t_struct_hmac256drbg_context_st [StructField _md_ctx] ctx, md_ctx, sep, V, [i], kv) v.
+    {
+      entailer!.
+    }
+    {
+      rewrite H9. simpl. change (Zlength [i]) with 1.
+      cancel.
+    }
+    {
+      rewrite H6.
+      change (Zlength [i]) with 1.
+      repeat split; try omega. hnf; auto.
+      unfold general_lemmas.isbyteZ.
+      repeat constructor.
+      omega. destruct non_empty_additional; subst; omega.
+    }
+    admit (* TODO *).
+      (*
     (*
     gather_SEP 0 1 2 3 4 5 6 7.
     replace_SEP 0 `(data_at Tsh t_struct_hmac256drbg_context_st state ctx).
@@ -385,17 +410,18 @@ Proof.
     eapply semax_seq'.
     let Frame := fresh "Frame" in
     evar (Frame: list (mpred)).
- match goal with |- @semax ?CS _ _ _ _ _ =>
- eapply (semax_call_id01_wow (key, field_address t_struct_hmac256drbg_context_st [StructField _md_ctx] ctx, fst state, field_address t_struct_hmac256drbg_context_st [StructField _V] ctx, @nil Z, V, kv)
- Frame);
- [ reflexivity | lookup_spec_and_change_compspecs CS
+ match goal with |- @semax ?CS _ _ _ _ _ => 
+ eapply (semax_call_id01_wow (key, field_address t_struct_hmac256drbg_context_st [StructField _md_ctx] ctx, md_ctx, sep, V, [ i))], kv)
+
+ Frame) ;
+ [ reflexivity | ..(* lookup_spec_and_change_compspecs CS
  | reflexivity | apply Coq.Init.Logic.I | reflexivity
  | prove_local2ptree | repeat constructor 
  | try apply local_True_right; entailer!
  | reflexivity
  | prove_local2ptree | repeat constructor 
  | reflexivity | reflexivity
- | .. (*Forall_pTree_from_elements
+ | Forall_pTree_from_elements
  | Forall_pTree_from_elements
  | unfold fold_right at 1 2; cancel
  | cbv beta; extensionality rho; 
@@ -408,82 +434,14 @@ Proof.
  | unify_postcondition_exps
  | unfold fold_right_and; repeat rewrite and_True; auto *)
  ] end.
- prove_local2ptree.
- repeat constructor.
- reflexivity.
- reflexivity. 
- Forall_pTree_from_elements.
-
- Existential 2 := [].
- 
- Focus 4.
- unify_postcondition_exps.
-
- Focus 4.
- unfold fold_right_and; repeat rewrite and_True; auto.
- 
- Focus 2.
-
- cbv beta. extensionality rho.
-   repeat rewrite exp_uncurry.
-   try rewrite no_post_exists. repeat rewrite exp_unfold.
-   apply exp_congr; intros ?vret; reflexivity.
-
-
- try apply local_True_right; entailer!
- .
-
- 
- 
- reflexivity.
-prove_local2ptree. repeat constructor.
- reflexivity. reflexivity.
- {
- Forall_pTree_from_elements.
+ Print md_update_spec.
+ lookup_spec_and_change_compspecs CS.
 
  Focus 2.
- Forall_pTree_from_elements.
- | unfold fold_right at 1 2; cancel
- | cbv beta; extensionality rho; 
-   repeat rewrite exp_uncurry;
-   try rewrite no_post_exists; repeat rewrite exp_unfold;
-   apply exp_congr; intros ?vret; reflexivity
- | intros; try match goal with  |- extract_trivial_liftx ?A _ =>
-        (has_evar A; fail 1) || (repeat constructor)
-     end
- | unify_postcondition_exps
- | unfold fold_right_and; repeat rewrite and_True; auto 
- 
- Forall_pTree_from_elements.
- prove_local2ptree.
-    
-    let Frame := fresh "Frame" in
- evar (Frame: list (mpred)).
- match goal with |- @semax ?CS _ _ _ _ _ =>
- eapply (semax_call_id00_wow ((field_address t_struct_hmac256drbg_context_st [StructField _md_ctx] ctx), (fst state), l, key, kv) Frame);
- [ ..(* reflexivity | lookup_spec_and_change_compspecs CS
- | reflexivity | reflexivity
- | prove_local2ptree | repeat constructor 
- | try apply local_True_right; entailer!
- | reflexivity
- | prove_local2ptree | repeat constructor 
- | reflexivity | reflexivity
- | Forall_pTree_from_elements
- | Forall_pTree_from_elements
- | unfold fold_right at 1 2; cancel
- | cbv beta iota; 
-    repeat rewrite exp_uncurry;
-    try rewrite no_post_exists0; 
-    first [reflexivity | extensionality; simpl; reflexivity]
- | intros; try match goal with  |- extract_trivial_liftx ?A _ =>
-        (has_evar A; fail 1) || (repeat constructor)
-     end
- | unify_postcondition_exps
- | unfold fold_right_and; repeat rewrite and_True; auto *)
- ]
- end.
-
-    
+ unfold data_block. normalize. unfold fold_right at 1 2; entailer!. cancel.
+ simpl. cancel.
+ idtac. rewrite H6.
+      rewrite list_map_compose. cancel. simpl.
     forward_call_id00_wow ((field_address t_struct_hmac256drbg_context_st [StructField _md_ctx] ctx), (fst state), l, key, kv).
     assert_PROP (spec_hmacNK.has_lengthK l key). admit (* TODO *).
     Print md_reset_spec.

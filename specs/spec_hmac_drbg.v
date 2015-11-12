@@ -86,19 +86,20 @@ Definition md_update_spec :=
    PRE [ _ctx OF tptr t_struct_md_ctx_st, 
          _input OF tptr tuchar, 
          _ilen OF tuint]
-         PROP (0 <= Zlength data1 <= Int.max_unsigned /\
-               Zlength data1 + Zlength data + 64 < two_power_pos 61) 
+         PROP (0 <= Zlength data1 <= Int.max_unsigned;
+               Zlength data1 + Zlength data + 64 < two_power_pos 61;
+               Forall isbyteZ data1)
          LOCAL (temp _ctx c; temp _input d; temp  _ilen (Vint (Int.repr (Zlength data1)));
                 gvar sha._K256 kv)
          SEP(`(md_relate (hABS key data) r);
              `(data_at Tsh t_struct_md_ctx_st r c);
-             `(data_block Tsh data1 d); `(K_vector kv))
+             `(data_at Tsh (tarray tuchar (Zlength data1)) (map Vint (map Int.repr data1)) d); `(K_vector kv))
   POST [ tint ] 
-          PROP () 
+          PROP (Forall isbyteZ data1) 
           LOCAL (temp ret_temp (Vint (Int.zero)))
           SEP(`(md_relate (hABS key (data ++ data1)) r);
               `(data_at Tsh t_struct_md_ctx_st r c); 
-              `(data_block Tsh data1 d);`(K_vector kv)).
+              `(data_at Tsh (tarray tuchar (Zlength data1)) (map Vint (map Int.repr data1)) d);`(K_vector kv)).
 
 Definition md_final_spec :=
   DECLARE _mbedtls_md_hmac_finish
