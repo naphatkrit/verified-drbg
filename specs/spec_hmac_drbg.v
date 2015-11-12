@@ -114,12 +114,12 @@ Definition md_final_spec :=
            `(K_vector kv);
            `(memory_block shmd 32 md))
   POST [ tint ] 
-          PROP () 
+          PROP (Forall isbyteZ (HMAC256 data key)) 
           LOCAL (temp ret_temp (Vint (Int.zero)))
           SEP(`(K_vector kv);
               `(UNDER_SPEC.FULL key (snd (snd r)));
               `(data_at Tsh t_struct_md_ctx_st r c);
-              `(data_block shmd (HMAC256 data key) md)).
+              `(data_at shmd (tarray tuchar (Zlength (HMAC256 data key))) (map Vint (map Int.repr (HMAC256 data key))) md)).
 (* end mocked_md *)
 
 Inductive hmac256drbgabs :=

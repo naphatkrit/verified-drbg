@@ -481,29 +481,41 @@ Proof.
       subst. inversion Hisptr.
       assert (contra: False) by (apply H13; reflexivity); inversion contra.
     }
+    rewrite H8.
+    forward_call ((V ++ [i] ++ contents), key, field_address t_struct_hmac256drbg_context_st [StructField _md_ctx] ctx, md_ctx, K, Tsh, kv) new_key.
+    {
+      (* prove the parameters match up *)
+      entailer!.
+    }
+    {
+      rewrite data_at__memory_block. normalize.
+      change (sizeof cenv_cs (tarray tuchar 32)) with 32.
+      cancel.
+    }
+    normalize.
     admit (* TODO *).
-      (*
+    (* (*  (*
     (*
     gather_SEP 0 1 2 3 4 5 6 7.
     replace_SEP 0 `(data_at Tsh t_struct_hmac256drbg_context_st state ctx).
 *)
     (*
     forward_call ((field_address t_struct_hmac256drbg_context_st [StructField _md_ctx] ctx), (fst state), l, key, kv).
-*)
+*) *) *)
     eapply semax_seq'.
     let Frame := fresh "Frame" in
     evar (Frame: list (mpred)).
  match goal with |- @semax ?CS _ _ _ _ _ => 
- eapply (semax_call_id01_wow (key, field_address t_struct_hmac256drbg_context_st [StructField _md_ctx] ctx, md_ctx, sep, V, [ i))], kv)
+ eapply (semax_call_id01_wow ((V ++ [i] ++ contents), key, field_address t_struct_hmac256drbg_context_st [StructField _md_ctx] ctx, md_ctx, K, Tsh, kv)
 
  Frame) ;
- [ reflexivity | ..(* lookup_spec_and_change_compspecs CS
+ [ reflexivity | lookup_spec_and_change_compspecs CS
  | reflexivity | apply Coq.Init.Logic.I | reflexivity
  | prove_local2ptree | repeat constructor 
  | try apply local_True_right; entailer!
  | reflexivity
  | prove_local2ptree | repeat constructor 
- | reflexivity | reflexivity
+ | .. (*reflexivity | reflexivity
  | Forall_pTree_from_elements
  | Forall_pTree_from_elements
  | unfold fold_right at 1 2; cancel
@@ -517,7 +529,7 @@ Proof.
  | unify_postcondition_exps
  | unfold fold_right_and; repeat rewrite and_True; auto *)
  ] end.
- Print md_update_spec.
+ simpl. reflexivity.
  lookup_spec_and_change_compspecs CS.
 
  Focus 2.
@@ -544,7 +556,7 @@ Proof.
   rewrite HMAC_DRBG_update_concrete_correct.
   entailer!.
   {
-    rewrite H5.
+    rewrite H1.
     destruct contents; unfold HMAC_DRBG_update_concrete.
     {
       (* contents = [] *)
@@ -555,7 +567,7 @@ Proof.
       destruct (eq_dec (Zlength (z :: contents)) 0) as [Zlength_eq | Zlength_neq].
       rewrite Zlength_cons, Zlength_correct in Zlength_eq; omega.
       destruct (eq_dec additional' nullval) as [additional_eq | additional_neq].
-      subst. inversion H9 as [isptr_null H']; inversion isptr_null.
+      subst. inversion H10 as [isptr_null H']; inversion isptr_null.
       reflexivity.
     }
   }
