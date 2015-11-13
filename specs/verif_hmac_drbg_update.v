@@ -485,10 +485,13 @@ Proof.
       }
       {
         (* prove the PROP clause matches *)
-        rewrite H1 in *. repeat split; try omega.
+        rewrite H1 in *. repeat split; [omega | omega | | assumption].
         rewrite Zlength_app; rewrite H8.
-        simpl. clear - H. destruct H. rewrite <- Zplus_assoc; simpl. admit (* TODO *).
-        assumption.
+        simpl. remember (Zlength contents) as n; clear - H.
+        destruct H. rewrite <- Zplus_assoc.
+        unfold Int.max_unsigned in H0.
+        rewrite hmac_pure_lemmas.IntModulus32 in H0; rewrite two_power_pos_equiv.
+        admit (* TODO *).
       }
       (* prove the post condition of the if statement *)
       rewrite <- app_assoc.
@@ -534,8 +537,17 @@ Proof.
       entailer!. rewrite hmac_common_lemmas.HMAC_Zlength. reflexivity.
     }
     {
-      rewrite hmac_common_lemmas.HMAC_Zlength.
-      admit (* TODO *).
+      split.
+      {
+        (* prove that output of HMAC can serve as its key *)
+        unfold spec_hmacNK.has_lengthK; simpl.
+        repeat split; try reflexivity; rewrite hmac_common_lemmas.HMAC_Zlength;
+        hnf; auto.
+      }
+      {
+        (* prove that the output of HMAC are bytes *)
+        admit (* TODO *).
+      }
     }
 
     subst v.
