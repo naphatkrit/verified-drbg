@@ -357,9 +357,6 @@ Proof.
     unfold update_relate_final_state.
     Intros key value state_abs state.
     forward.
-    (*
-    unfold hmac256drbgstate_md_FULL.
-*)
     unfold_data_at 1%nat.
     rewrite (field_at_data_at _ _ [StructField _md_ctx]); simpl.
     rewrite (field_at_data_at _ _ [StructField _V]); simpl.
@@ -368,7 +365,6 @@ Proof.
     {
       intros ctx'' Hisptr Hfc.
       unfold field_address.
-      Check field_compatible_dec.
       destruct (field_compatible_dec t_struct_hmac256drbg_context_st); [|contradiction].
       simpl. change (Int.repr 0) with Int.zero. rewrite offset_val_force_ptr.
       destruct ctx''; inversion Hisptr. reflexivity.
@@ -377,7 +373,6 @@ Proof.
     {
       intros ctx'' Hisptr Hfc.
       unfold field_address.
-      Check field_compatible_dec.
       destruct (field_compatible_dec t_struct_hmac256drbg_context_st); [|contradiction].
       simpl. reflexivity.
     }
@@ -491,7 +486,9 @@ Proof.
         destruct H. rewrite <- Zplus_assoc.
         unfold Int.max_unsigned in H0.
         rewrite hmac_pure_lemmas.IntModulus32 in H0; rewrite two_power_pos_equiv.
-        admit (* TODO *).
+        simpl. simpl in H0.
+        assert (Z.pow_pos 2 61 = 2305843009213693952) by reflexivity. rewrite H1; clear H1.
+        omega.
       }
       (* prove the post condition of the if statement *)
       rewrite <- app_assoc.
@@ -529,8 +526,8 @@ Proof.
     normalize.
     assert_PROP (isptr K) as HisptrK. entailer!. 
     destruct K; try solve [inversion HisptrK].
-    replace_SEP 1 `(UNDER_SPEC.EMPTY (snd (snd md_ctx))). normalize.
-    entailer!. apply UNDER_SPEC.FULL_EMPTY.
+    replace_SEP 1 `(UNDER_SPEC.EMPTY (snd (snd md_ctx))). 
+    clear. entailer!. apply UNDER_SPEC.FULL_EMPTY.
     forward_call (field_address t_struct_hmac256drbg_context_st [StructField _md_ctx] ctx, md_ctx, (Zlength (HMAC256 (V ++ [i] ++ contents) key)), HMAC256 (V ++ [i] ++ contents) key, kv, b, i0) v.
     {
       (* prove the function parameters match up *)
@@ -546,7 +543,8 @@ Proof.
       }
       {
         (* prove that the output of HMAC are bytes *)
-        admit (* TODO *).
+        clear.
+        apply hmac_common_lemmas.isbyte_hmac.
       }
     }
 
@@ -597,55 +595,6 @@ Proof.
     repeat rewrite hmac_common_lemmas.HMAC_Zlength.
     entailer!.
     symmetry; apply list_map_compose.
- (*     (*  (*
-    (*
-    gather_SEP 0 1 2 3 4 5 6 7.
-    replace_SEP 0 `(data_at Tsh t_struct_hmac256drbg_context_st state ctx).
-*)
-    (*
-    forward_call ((field_address t_struct_hmac256drbg_context_st [StructField _md_ctx] ctx), (fst state), l, key, kv).
-*) *) *)
-    eapply semax_seq'.
-    let Frame := fresh "Frame" in
-    evar (Frame: list (mpred)).
- match goal with |- @semax ?CS _ _ _ _ _ => 
- eapply (semax_call_id01_wow (field_address t_struct_hmac256drbg_context_st [StructField _md_ctx] ctx, md_ctx, (Zlength (HMAC256 (V ++ [i] ++ contents) key)), HMAC256 (V ++ [i] ++ contents) key, kv, b, i0)
- Frame) ;
- [ reflexivity | lookup_spec_and_change_compspecs CS
- | reflexivity | ..(* apply Coq.Init.Logic.I | reflexivity
- | *prove_local2ptree | repeat constructor 
- | try apply local_True_right; entailer!
- | reflexivity
- | prove_local2ptree | repeat constructor 
- | reflexivity | reflexivity
- | Forall_pTree_from_elements
- | Forall_pTree_from_elements
- | unfold fold_right at 1 2; cancel
- | cbv beta; extensionality rho; 
-   repeat rewrite exp_uncurry;
-   try rewrite no_post_exists; repeat rewrite exp_unfold;
-   apply exp_congr; intros ?vret; reflexivity
- | intros; try match goal with  |- extract_trivial_liftx ?A _ =>
-        (has_evar A; fail 1) || (repeat constructor)
-     end
- | unify_postcondition_exps
- | unfold fold_right_and; repeat rewrite and_True; auto *)
- ] end.
- apply Coq.Init.Logic.I.
- reflexivity.
- lookup_spec_and_change_compspecs CS.
-
- Focus 2.
- unfold data_block. normalize. unfold fold_right at 1 2; entailer!. cancel.
- simpl. cancel.
- idtac. rewrite H6.
-      rewrite list_map_compose. cancel. simpl.
-    forward_call_id00_wow ((field_address t_struct_hmac256drbg_context_st [StructField _md_ctx] ctx), (fst state), l, key, kv).
-    assert_PROP (spec_hmacNK.has_lengthK l key). admit (* TODO *).
-    Print md_reset_spec.
-    
-    forward_call ((field_address t_struct_hmac256drbg_context_st [StructField _md_ctx] ctx), (fst state), l, key, kv).
-    (* TODO *) admit. *)
   }
   unfold update_relate_final_state.
   (* return *)
@@ -677,96 +626,4 @@ Proof.
   unfold hmac_drbg_update_post.
   Exists final_state.
   entailer!.
-  (*
-  (* sep_value = 0 *)
-  forward.
-
-  (* for( ; sep_value < rounds; sep_value++ ) *)
-  remember (hmac256drbgabs_key initial_state_abs) as initial_key.
-  remember (hmac256drbgabs_value initial_state_abs) as initial_value.
-  (* use forward_for_simple_bound num_iterations *)
-  forward_for
-    (update_loop_invariant non_empty_additional add_len ctx additional sep K md_len info contents initial_key initial_value initial_state_abs initial_state)
-    (update_loop_pre_incr_invariant non_empty_additional add_len ctx additional sep K md_len contents initial_key initial_value initial_state_abs initial_state)
-    (update_loop_post non_empty_additional add_len ctx additional sep K md_len contents initial_key initial_value initial_state_abs initial_state).
-  {
-    (* show that pre-condition implies the invariant *)
-    unfold update_loop_invariant.
-    apply exp_right with 0%nat.
-    apply exp_right with initial_key.
-    apply exp_right with initial_value.
-    apply exp_right with initial_state_abs.
-    unfold update_loop_invariant_SEP.
-    entailer!.
-    destruct initial_state_abs; unfold hmac256drbgabs_metadata_same; auto.
-    apply exp_right with initial_state.
-    entailer!.
-  }
-  {
-    (* show that the loop check type-checks *)
-    entailer!.
-  }
-  {
-    (* prove the loop invariant + loop condition being false the post condition *)
-    remember (HMAC_DRBG_update_round HMAC256 (map Int.signed contents) initial_key initial_value 0 (if non_empty_additional then 2%nat else 1%nat)) as key_value_pair.
-    unfold update_loop_invariant.
-    unfold update_loop_post.
-    Exists (fst key_value_pair) (snd key_value_pair).
-    Intros i key value f.
-    unfold update_loop_invariant_SEP.
-    unfold hmac256drbg_relate.
-    normalize.
-    (*
-    entailer.
-    (* must intro the existential variables, then prove i = _rounds *)
-    entailer.
-    assert ((x >= update_rounds
-          (if eq_dec (Zlength (map Vint contents)) 0%Z
-           then false
-           else
-            if eq_dec (eval_id _additional rho) nullval then false else true))%nat). admit.
-    assert (x = update_rounds
-          (if eq_dec (Zlength (map Vint contents)) 0%Z
-           then false
-           else
-            if eq_dec (eval_id _additional rho) nullval then false else true)). admit.
-    subst. *)
-    admit (* TODO *).
-    (*
-    entailer.
-    {
-      repeat split.
-      {
-        symmetry; apply surjective_pairing.
-      }
-      {
-        destruct (eq_dec add_len 0).
-      }
-    }
-    {
-      entailer!.
-    }
-*)
-  }
-  {
-    (* prove the loop body + loop condition being true implies the loop pre-incr invariant *)
-    unfold update_loop_invariant.
-    unfold update_loop_invariant_SEP.
-
-    Intros i key value f.
-    rewrite insert_local.
-    normalize.
-    intros.
-    forward.
-
-    (* sep[0] = sep_value; *)
-    admit (* TODO *).
-  }
-  {
-    (* prove the pre-incr invariant preserves the invariant *)
-    unfold update_loop_pre_incr_invariant.
-    unfold update_loop_invariant_SEP.
-    admit (* TODO *).    
-  }
-*)
 Qed.
