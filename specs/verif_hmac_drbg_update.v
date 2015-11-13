@@ -37,8 +37,6 @@ Definition update_rounds (non_empty_additional: bool): Z :=
 Definition update_relate_final_state (ctx: val) (final_state_abs: hmac256drbgabs) (info_contents: md_info_state) :mpred :=
   EX final_state: hmac256drbgstate,
   (data_at Tsh t_struct_hmac256drbg_context_st final_state ctx) *
-  (hmac256drbgstate_md_FULL (hmac256drbgabs_key final_state_abs)
-          final_state) *
   (data_at Tsh t_struct_mbedtls_md_info info_contents
            (hmac256drbgstate_md_info_pointer final_state)) *
   (hmac256drbg_relate final_state_abs final_state).
@@ -164,8 +162,6 @@ Proof.
           (map Vint (map Int.repr contents)) additional);
       `(data_at Tsh t_struct_hmac256drbg_context_st initial_state ctx);
       `(hmac256drbg_relate initial_state_abs initial_state);
-      `(hmac256drbgstate_md_FULL (hmac256drbgabs_key initial_state_abs)
-          initial_state);
       `(data_at Tsh t_struct_mbedtls_md_info info_contents
           (hmac256drbgstate_md_info_pointer initial_state));
       `(K_vector kv)
@@ -242,8 +238,6 @@ Proof.
           (map Vint (map Int.repr contents)) additional);
       `(data_at Tsh t_struct_hmac256drbg_context_st initial_state ctx);
       `(hmac256drbg_relate initial_state_abs initial_state);
-      `(hmac256drbgstate_md_FULL (hmac256drbgabs_key initial_state_abs)
-                                 initial_state);
       `(data_at Tsh t_struct_mbedtls_md_info info_contents
                 (hmac256drbgstate_md_info_pointer initial_state)); 
       `(K_vector kv)
@@ -325,7 +319,9 @@ Proof.
     unfold update_relate_final_state.
     Intros key value state_abs state.
     forward.
+    (*
     unfold hmac256drbgstate_md_FULL.
+*)
     unfold_data_at 1%nat.
     rewrite (field_at_data_at _ _ [StructField _md_ctx]); simpl.
     rewrite (field_at_data_at _ _ [StructField _V]); simpl.
@@ -347,8 +343,14 @@ Proof.
       destruct (field_compatible_dec t_struct_hmac256drbg_context_st); [|contradiction].
       simpl. reflexivity.
     }
+    destruct state_abs. destruct md_ctx.
+    destruct state as [md_ctx [V' [reseed_counter' [entropy_len' [prediction_resistance' [reseed_interval' [f_entropy' p_entropy']]]]]]].
+    simpl in H8.
+    assert (Hmdlen_V: md_len = Vint (Int.repr (Zlength V))) by (rewrite H8; assumption).
+    simpl; normalize. rewrite <- list_map_compose.
+    rewrite <- H8.
     
-    forward_call (field_address t_struct_hmac256drbg_context_st [StructField _md_ctx] ctx, fst state, Zlength (hmac256drbgabs_key state_abs), hmac256drbgabs_key state_abs, kv) v.
+    forward_call (field_address t_struct_hmac256drbg_context_st [StructField _md_ctx] ctx, md_ctx, Zlength key, key, kv) v.
     {
       entailer!.
     }
@@ -357,13 +359,7 @@ Proof.
       admit (* TODO *).
     }
     subst v.
-    destruct state_abs. destruct md_ctx.
 
-    simpl in H8.
-    assert (Hmdlen_V: md_len = Vint (Int.repr (Zlength V))) by (rewrite H8; assumption).
-    destruct state as [md_ctx [V' [reseed_counter' [entropy_len' [prediction_resistance' [reseed_interval' [f_entropy' p_entropy']]]]]]].
-    simpl; normalize. rewrite <- list_map_compose.
-    rewrite <- H8.
     forward_call (key, field_address t_struct_hmac256drbg_context_st [StructField _md_ctx] ctx, md_ctx, field_address t_struct_hmac256drbg_context_st [StructField _V] ctx, @nil Z, V, kv) v.
     {
       entailer!.
@@ -437,7 +433,6 @@ Proof.
              (Vint (Int.repr entropy_len),
              (prediction_resistance',
              (Vint (Int.repr reseed_interval), (f_entropy', p_entropy')))))))));
-      `(md_relate (hABS key data) md_ctx);
       `(data_at_ Tsh (tarray tuchar (Zlength V)) K);
       `(data_at Tsh (tarray tuchar (Zlength contents))
           (map Vint (map Int.repr contents)) additional))
@@ -493,8 +488,66 @@ Proof.
       cancel.
     }
     normalize.
-    admit (* TODO *).
-    (* (*  (*
+    assert (HisptrK: isptr K). admit (* TODO *).
+    destruct K; try solve [inversion HisptrK].
+    assert (forall data key, Zlength (HMAC256 data key) = 32). admit (* TODO *).
+    replace_SEP 1 `(UNDER_SPEC.EMPTY (snd (snd md_ctx))). normalize.
+    entailer!. apply UNDER_SPEC.FULL_EMPTY.
+    forward_call (field_address t_struct_hmac256drbg_context_st [StructField _md_ctx] ctx, md_ctx, (Zlength (HMAC256 (V ++ [i] ++ contents) key)), HMAC256 (V ++ [i] ++ contents) key, kv, b, i0) v.
+    {
+      (* prove the function parameters match up *)
+      entailer!. rewrite H16. reflexivity.
+    }
+    {
+      rewrite H16.
+      admit (* TODO *).
+    }
+
+    subst v.
+    forward_call (HMAC256 (V ++ [i] ++ contents) key, field_address t_struct_hmac256drbg_context_st [StructField _md_ctx] ctx, md_ctx, field_address t_struct_hmac256drbg_context_st [StructField _V] ctx, @nil Z, V, kv) v.
+    {
+      (* prove the function parameters match up *)
+      entailer!.
+    }
+    {
+      (* prove the function SEP clauses match up *)
+      rewrite H8; cancel.
+    }
+    {
+      (* prove the PROP clauses *)
+      rewrite H8.
+      repeat split; try omega. hnf; auto.
+      assumption.
+    }
+    rewrite H8.
+    normalize.
+    replace_SEP 2 `(memory_block Tsh (sizeof cenv_cs (tarray tuchar 32)) (field_address t_struct_hmac256drbg_context_st [StructField _V] ctx)); [entailer!; apply data_at_memory_block| ].
+    forward_call (V, HMAC256 (V ++ [i] ++ contents) key, field_address t_struct_hmac256drbg_context_st [StructField _md_ctx] ctx, md_ctx, field_address t_struct_hmac256drbg_context_st [StructField _V] ctx, Tsh, kv) new_V.
+    {
+      (* prove the function parameters match up *)
+      entailer!.
+    }
+    {
+      simpl; cancel.
+    }
+    Exists (HMAC256 (V ++ [i] ++ contents) key) (HMAC256 V (HMAC256 (V ++ [i] ++ contents) key))    (HMAC256DRBGabs (hABS (HMAC256 (V ++ [i] ++ contents) key) []) (HMAC256 V (HMAC256 (V ++ [i] ++ contents) key)) reseed_counter entropy_len prediction_resistance reseed_interval).
+    entailer!.
+    {
+      (* prove that the new key and value is what we expect *)
+      admit (* TODO *).
+    }
+    unfold update_relate_final_state.
+    Exists (md_ctx, (map Vint (map Int.repr (HMAC256 V (HMAC256 (V ++ [i] ++ contents) key))), (Vint (Int.repr reseed_counter), (Vint (Int.repr entropy_len), (prediction_resistance', (Vint (Int.repr reseed_interval), (f_entropy', p_entropy'))))))).
+    entailer!.
+    unfold hmac256drbgstate_md_FULL.
+    unfold_data_at 4%nat.
+    unfold hmac256drbg_relate;
+    rewrite (field_at_data_at _ _ [StructField _md_ctx]);
+    rewrite (field_at_data_at _ _ [StructField _V]); simpl.
+    repeat rewrite H16.
+    entailer!.
+    symmetry; apply list_map_compose.
+ (*     (*  (*
     (*
     gather_SEP 0 1 2 3 4 5 6 7.
     replace_SEP 0 `(data_at Tsh t_struct_hmac256drbg_context_st state ctx).
@@ -506,16 +559,15 @@ Proof.
     let Frame := fresh "Frame" in
     evar (Frame: list (mpred)).
  match goal with |- @semax ?CS _ _ _ _ _ => 
- eapply (semax_call_id01_wow ((V ++ [i] ++ contents), key, field_address t_struct_hmac256drbg_context_st [StructField _md_ctx] ctx, md_ctx, K, Tsh, kv)
-
+ eapply (semax_call_id01_wow (field_address t_struct_hmac256drbg_context_st [StructField _md_ctx] ctx, md_ctx, (Zlength (HMAC256 (V ++ [i] ++ contents) key)), HMAC256 (V ++ [i] ++ contents) key, kv, b, i0)
  Frame) ;
  [ reflexivity | lookup_spec_and_change_compspecs CS
- | reflexivity | apply Coq.Init.Logic.I | reflexivity
- | prove_local2ptree | repeat constructor 
+ | reflexivity | ..(* apply Coq.Init.Logic.I | reflexivity
+ | *prove_local2ptree | repeat constructor 
  | try apply local_True_right; entailer!
  | reflexivity
  | prove_local2ptree | repeat constructor 
- | .. (*reflexivity | reflexivity
+ | reflexivity | reflexivity
  | Forall_pTree_from_elements
  | Forall_pTree_from_elements
  | unfold fold_right at 1 2; cancel
@@ -529,7 +581,8 @@ Proof.
  | unify_postcondition_exps
  | unfold fold_right_and; repeat rewrite and_True; auto *)
  ] end.
- simpl. reflexivity.
+ apply Coq.Init.Logic.I.
+ reflexivity.
  lookup_spec_and_change_compspecs CS.
 
  Focus 2.

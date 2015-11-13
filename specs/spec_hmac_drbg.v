@@ -30,6 +30,9 @@ Definition convert_abs (h: HABS): UNDER_SPEC.HABS :=
 Definition md_relate (h: HABS) (r:mdstate) :=
   UNDER_SPEC.REP (convert_abs h) (snd (snd r)).
 
+Definition md_full (h: HABS) (r:mdstate) :=
+  match h with hABS key _ => UNDER_SPEC.FULL key (snd (snd r)) end.
+
 Definition md_get_size_spec :=
   DECLARE _mbedtls_md_get_size
    WITH u:unit
@@ -64,19 +67,19 @@ Definition md_starts_spec :=
    WITH c : val, r: mdstate, l:Z, key:list Z, kv:val, b:block, i:Int.int
    PRE [ _ctx OF tptr t_struct_md_ctx_st,
          _key OF tptr tuchar,
-         _keylen OF tint ]
-         PROP (has_lengthK l key)
+         _keylen OF tuint ]
+         PROP (has_lengthK l key; Forall isbyteZ key)
          LOCAL (temp _ctx c; temp _key (Vptr b i); temp _keylen (Vint (Int.repr l));
                 gvar sha._K256 kv)
          SEP (`(UNDER_SPEC.EMPTY (snd (snd r)));
               `(data_at Tsh t_struct_md_ctx_st r c);
-              `(data_block Tsh key (Vptr b i)); `(K_vector kv))
+              `(data_at Tsh (tarray tuchar (Zlength key)) (map Vint (map Int.repr key)) (Vptr b i)); `(K_vector kv))
   POST [ tint ] 
-     PROP ()
+     PROP (Forall isbyteZ key)
      LOCAL (temp ret_temp (Vint (Int.zero)))
      SEP (`(md_relate (hABS key nil) r);
           `(data_at Tsh t_struct_md_ctx_st r c);
-          `(data_block Tsh key (Vptr b i));
+          `(data_at Tsh (tarray tuchar (Zlength key)) (map Vint (map Int.repr key)) (Vptr b i));
           `(K_vector kv)
          ).
 
@@ -130,7 +133,7 @@ Definition hmac256drbgstate: Type := (mdstate * (list val * (val * (val * (val *
 Definition hmac256drbg_relate (a: hmac256drbgabs) (r: hmac256drbgstate) : mpred :=
   match a with HMAC256DRBGabs md_ctx V reseed_counter entropy_len prediction_resistance reseed_interval =>
                match r with (md_ctx', (V', (reseed_counter', (entropy_len', (prediction_resistance', (reseed_interval', (f_entropy', p_entropy'))))))) =>
-                            md_relate md_ctx md_ctx'
+                            md_full md_ctx md_ctx'
                                       && !! (
                                         map (fun x => Vint (Int.repr x)) V = V'
                                         /\ Vint (Int.repr reseed_counter) = reseed_counter'
@@ -184,7 +187,6 @@ Definition t_struct_hmac256drbg_context_st := Tstruct _mbedtls_hmac_drbg_context
 Definition hmac_drbg_update_post (final_state_abs: hmac256drbgabs) (ctx: val) (info_contents: reptype t_struct_mbedtls_md_info): mpred :=
   EX final_state: hmac256drbgstate,
                   (data_at Tsh t_struct_hmac256drbg_context_st final_state ctx) *
-                  (hmac256drbgstate_md_FULL (hmac256drbgabs_key final_state_abs) final_state) *
                   (data_at Tsh t_struct_mbedtls_md_info info_contents (hmac256drbgstate_md_info_pointer final_state)) *
                   (hmac256drbg_relate final_state_abs final_state).
 
@@ -207,7 +209,6 @@ Definition hmac_drbg_update_spec :=
        SEP (
          `(data_at Tsh (tarray tuchar add_len) (map Vint (map Int.repr contents)) additional);
          `(data_at Tsh t_struct_hmac256drbg_context_st initial_state ctx);
-         `(hmac256drbgstate_md_FULL (hmac256drbgabs_key initial_state_abs) initial_state);
          `(hmac256drbg_relate initial_state_abs initial_state);
          `(data_at Tsh t_struct_mbedtls_md_info info_contents (hmac256drbgstate_md_info_pointer initial_state));
          `(K_vector kv)
