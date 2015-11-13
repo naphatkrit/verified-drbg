@@ -489,7 +489,7 @@ Proof.
         (* prove the PROP clause matches *)
         rewrite H1 in *. repeat split; try omega.
         rewrite Zlength_app; rewrite H8.
-        simpl. clear - H. admit (* TODO *).
+        simpl. clear - H. destruct H. rewrite <- Zplus_assoc; simpl. admit (* TODO *).
         assumption.
       }
       (* prove the post condition of the if statement *)
@@ -526,18 +526,17 @@ Proof.
       cancel.
     }
     normalize.
-    assert (HisptrK: isptr K). admit (* TODO *).
+    assert_PROP (isptr K) as HisptrK. entailer!. 
     destruct K; try solve [inversion HisptrK].
-    assert (forall data key, Zlength (HMAC256 data key) = 32). admit (* TODO *).
     replace_SEP 1 `(UNDER_SPEC.EMPTY (snd (snd md_ctx))). normalize.
     entailer!. apply UNDER_SPEC.FULL_EMPTY.
     forward_call (field_address t_struct_hmac256drbg_context_st [StructField _md_ctx] ctx, md_ctx, (Zlength (HMAC256 (V ++ [i] ++ contents) key)), HMAC256 (V ++ [i] ++ contents) key, kv, b, i0) v.
     {
       (* prove the function parameters match up *)
-      entailer!. rewrite H16. reflexivity.
+      entailer!. rewrite hmac_common_lemmas.HMAC_Zlength. reflexivity.
     }
     {
-      rewrite H16.
+      rewrite hmac_common_lemmas.HMAC_Zlength.
       admit (* TODO *).
     }
 
@@ -571,8 +570,10 @@ Proof.
     Exists (HMAC256 (V ++ [i] ++ contents) key) (HMAC256 V (HMAC256 (V ++ [i] ++ contents) key))    (HMAC256DRBGabs (hABS (HMAC256 (V ++ [i] ++ contents) key) []) (HMAC256 V (HMAC256 (V ++ [i] ++ contents) key)) reseed_counter entropy_len prediction_resistance reseed_interval).
     entailer!.
     {
+      split; [| apply hmac_common_lemmas.HMAC_Zlength].
       (* prove that the new key and value is what we expect *)
       clear - H5 H6; destruct H5; simpl in H6.
+      idtac.
       apply HMAC_DRBG_update_round_incremental_Z; assumption.
     }
     unfold update_relate_final_state.
@@ -583,7 +584,7 @@ Proof.
     unfold hmac256drbg_relate;
     rewrite (field_at_data_at _ _ [StructField _md_ctx]);
     rewrite (field_at_data_at _ _ [StructField _V]); simpl.
-    repeat rewrite H16.
+    repeat rewrite hmac_common_lemmas.HMAC_Zlength.
     entailer!.
     symmetry; apply list_map_compose.
  (*     (*  (*
