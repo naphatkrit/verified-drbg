@@ -47,9 +47,9 @@ Definition md_get_size_spec :=
  
 Definition md_reset_spec :=
   DECLARE _mbedtls_md_hmac_reset
-   WITH c : val, r: mdstate, l:Z, key:list Z, kv:val
+   WITH c : val, r: mdstate, key:list Z, kv:val
    PRE [ _ctx OF tptr (Tstruct _mbedtls_md_context_t noattr)]
-         PROP (has_lengthK l key)
+         PROP ()
          LOCAL (temp _ctx c; gvar sha._K256 kv)
          SEP (
         `(UNDER_SPEC.FULL key (snd (snd r))); `(data_at Tsh (Tstruct _mbedtls_md_context_t noattr) r c); `(K_vector kv))
@@ -135,7 +135,7 @@ Definition hmac256drbg_relate (a: hmac256drbgabs) (r: hmac256drbgstate) : mpred 
                match r with (md_ctx', (V', (reseed_counter', (entropy_len', (prediction_resistance', (reseed_interval', (f_entropy', p_entropy'))))))) =>
                             md_full md_ctx md_ctx'
                                       && !! (
-                                        map (fun x => Vint (Int.repr x)) V = V'
+                                        map Vint (map Int.repr V) = V'
                                         /\ Vint (Int.repr reseed_counter) = reseed_counter'
                                         /\ Vint (Int.repr entropy_len) = entropy_len'
                                         /\ Vint (Int.repr reseed_interval) = reseed_interval'
