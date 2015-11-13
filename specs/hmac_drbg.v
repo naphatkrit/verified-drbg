@@ -308,7 +308,7 @@ Definition f_mbedtls_hmac_drbg_update := {|
                 (_additional, (tptr tuchar)) :: (_add_len, tuint) :: nil);
   fn_vars := ((_sep, (tarray tuchar 1)) :: (_K, (tarray tuchar 32)) :: nil);
   fn_temps := ((_info, (tptr (Tstruct _mbedtls_md_info_t noattr))) ::
-               (_md_len, tuint) :: (_rounds, tint) :: (_sep_value, tint) ::
+               (_md_len, tuint) :: (_rounds, tuchar) :: (_sep_value, tint) ::
                (127%positive, tint) :: (126%positive, tint) ::
                (125%positive, tuchar) :: nil);
   fn_body :=
@@ -333,24 +333,24 @@ Definition f_mbedtls_hmac_drbg_update := {|
     (Ssequence
       (Ssequence
         (Ssequence
-          (Sifthenelse (Ebinop One (Etempvar _add_len tuint)
-                         (Econst_int (Int.repr 0) tint) tint)
+          (Sifthenelse (Ebinop One (Etempvar _additional (tptr tuchar))
+                         (Ecast (Econst_int (Int.repr 0) tint) (tptr tvoid))
+                         tint)
             (Sset 126%positive
               (Ecast
-                (Ebinop One (Etempvar _additional (tptr tuchar))
-                  (Ecast (Econst_int (Int.repr 0) tint) (tptr tvoid)) tint)
-                tbool))
+                (Ebinop One (Etempvar _add_len tuint)
+                  (Econst_int (Int.repr 0) tint) tint) tbool))
             (Sset 126%positive (Econst_int (Int.repr 0) tint)))
           (Sifthenelse (Etempvar 126%positive tint)
             (Sset 127%positive (Ecast (Econst_int (Int.repr 2) tint) tint))
             (Sset 127%positive (Ecast (Econst_int (Int.repr 1) tint) tint))))
-        (Sset _rounds (Etempvar 127%positive tint)))
+        (Sset _rounds (Ecast (Etempvar 127%positive tint) tuchar)))
       (Ssequence
         (Sset _sep_value (Econst_int (Int.repr 0) tint))
         (Sloop
           (Ssequence
             (Sifthenelse (Ebinop Olt (Etempvar _sep_value tint)
-                           (Etempvar _rounds tint) tint)
+                           (Etempvar _rounds tuchar) tint)
               Sskip
               Sbreak)
             (Ssequence
@@ -411,7 +411,7 @@ Definition f_mbedtls_hmac_drbg_update := {|
                        (Evar _sep (tarray tuchar 1)) ::
                        (Econst_int (Int.repr 1) tint) :: nil))
                     (Ssequence
-                      (Sifthenelse (Ebinop Oeq (Etempvar _rounds tint)
+                      (Sifthenelse (Ebinop Oeq (Etempvar _rounds tuchar)
                                      (Econst_int (Int.repr 2) tint) tint)
                         (Scall None
                           (Evar _mbedtls_md_hmac_update (Tfunction
