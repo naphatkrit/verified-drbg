@@ -8,13 +8,14 @@ Require Import HMAC_DRBG_update.
 Require Import sha.HMAC256_functional_prog.
 Require Import sha.spec_sha.
 
-Fixpoint HMAC_DRBG_update_round (HMAC: list Z -> list Z -> list Z) (provided_data K V: list Z) (sep: Z) (round: nat): (list Z * list Z) :=
+Fixpoint HMAC_DRBG_update_round (HMAC: list Z -> list Z -> list Z) (provided_data K V: list Z) (round: nat): (list Z * list Z) :=
   match round with
     | O => (K, V)
     | S round' =>
-      let K := HMAC (V ++ [sep] ++ provided_data) K in
+      let (K, V) := HMAC_DRBG_update_round HMAC provided_data K V round' in
+      let K := HMAC (V ++ [Z.of_nat round'] ++ provided_data) K in
       let V := HMAC V K in
-      HMAC_DRBG_update_round HMAC provided_data K V (sep + 1) round'
+      (K, V)
   end.
 
 Definition HMAC_DRBG_update_concrete (HMAC: list Z -> list Z -> list Z) (provided_data K V: list Z): (list Z * list Z) :=
@@ -22,7 +23,7 @@ Definition HMAC_DRBG_update_concrete (HMAC: list Z -> list Z -> list Z) (provide
                   | [] => 1%nat
                   | _ => 2%nat
                 end in
-  HMAC_DRBG_update_round HMAC provided_data K V 0 rounds.
+  HMAC_DRBG_update_round HMAC provided_data K V rounds.
 
 Theorem HMAC_DRBG_update_concrete_correct:
   forall HMAC provided_data K V, HMAC_DRBG_update HMAC provided_data K V = HMAC_DRBG_update_concrete HMAC provided_data K V.
@@ -40,6 +41,43 @@ Definition update_relate_final_state (ctx: val) (final_state_abs: hmac256drbgabs
   (data_at Tsh t_struct_mbedtls_md_info info_contents
            (hmac256drbgstate_md_info_pointer final_state)) *
   (hmac256drbg_relate final_state_abs final_state).
+
+Lemma HMAC_DRBG_update_round_incremental:
+  forall key V initial_state_abs contents n,
+    (key, V) = HMAC_DRBG_update_round HMAC256 contents
+                           (hmac256drbgabs_key initial_state_abs)
+                           (hmac256drbgabs_value initial_state_abs) n ->
+    (HMAC256 (V ++ (Z.of_nat n) :: contents) key,
+     HMAC256 V (HMAC256 (V ++ (Z.of_nat n) :: contents) key)) =
+    HMAC_DRBG_update_round HMAC256 contents
+                           (hmac256drbgabs_key initial_state_abs)
+                           (hmac256drbgabs_value initial_state_abs) (n + 1).
+Proof.
+  intros.
+  rewrite plus_comm.
+  simpl.
+  rewrite <- H.
+  reflexivity.
+Qed.
+
+Lemma HMAC_DRBG_update_round_incremental_Z:
+  forall key V initial_state_abs contents i,
+    0 <= i ->
+    (key, V) = HMAC_DRBG_update_round HMAC256 contents
+                           (hmac256drbgabs_key initial_state_abs)
+                           (hmac256drbgabs_value initial_state_abs) (Z.to_nat i) ->
+    (HMAC256 (V ++ i :: contents) key,
+     HMAC256 V (HMAC256 (V ++ i :: contents) key)) =
+    HMAC_DRBG_update_round HMAC256 contents
+                           (hmac256drbgabs_key initial_state_abs)
+                           (hmac256drbgabs_value initial_state_abs) (Z.to_nat (i + 1)).
+Proof.
+  intros.
+  rewrite <- (Z2Nat.id i) at 1 2 by assumption.
+  rewrite Z2Nat.inj_add by (try assumption; try omega).
+  simpl.
+  apply HMAC_DRBG_update_round_incremental; assumption.
+Qed.
 
 (*
 
@@ -280,7 +318,7 @@ Proof.
       SEP  (
         `(EX key: list Z, EX value: list Z, EX final_state_abs: hmac256drbgabs,
           !!(
-              (key, value) = HMAC_DRBG_update_round HMAC256 contents initial_key initial_value 0 (Z.to_nat i)
+              (key, value) = HMAC_DRBG_update_round HMAC256 contents initial_key initial_value (Z.to_nat i)
               /\ key = hmac256drbgabs_key final_state_abs
               /\ value = hmac256drbgabs_value final_state_abs
               /\ hmac256drbgabs_metadata_same final_state_abs initial_state_abs
@@ -534,7 +572,8 @@ Proof.
     entailer!.
     {
       (* prove that the new key and value is what we expect *)
-      admit (* TODO *).
+      clear - H5 H6; destruct H5; simpl in H6.
+      apply HMAC_DRBG_update_round_incremental_Z; assumption.
     }
     unfold update_relate_final_state.
     Exists (md_ctx, (map Vint (map Int.repr (HMAC256 V (HMAC256 (V ++ [i] ++ contents) key))), (Vint (Int.repr reseed_counter), (Vint (Int.repr entropy_len), (prediction_resistance', (Vint (Int.repr reseed_interval), (f_entropy', p_entropy'))))))).
