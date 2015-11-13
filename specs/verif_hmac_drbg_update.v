@@ -412,11 +412,9 @@ Proof.
     unfold upd_Znth_in_list.
     simpl.
     unfold sublist. simpl. assert (Int.zero_ext 8 (Int.repr i) = Int.repr i).
-    clear - H5 Heqrounds. admit (* TODO *).
-    (*
-    apply zero_ext_inrange. destruct non_empty_additional. subst. clear - H3.
-    SearchAbout Int.unsigned Int.repr.
-    rewrite Int.unsigned_repr. hnf; auto. *) 
+    clear - H5 Heqrounds. destruct non_empty_additional; subst;
+    apply zero_ext_inrange;
+    rewrite hmac_pure_lemmas.unsigned_repr_isbyte by (hnf; omega); simpl; omega.
     forward_call (key, field_address t_struct_hmac256drbg_context_st [StructField _md_ctx] ctx, md_ctx, sep, V, [i], kv) v.
     {
       entailer!.
