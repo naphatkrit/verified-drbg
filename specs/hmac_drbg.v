@@ -333,13 +333,13 @@ Definition f_mbedtls_hmac_drbg_update := {|
     (Ssequence
       (Ssequence
         (Ssequence
-          (Sifthenelse (Ebinop One (Etempvar _add_len tuint)
-                         (Econst_int (Int.repr 0) tint) tint)
+          (Sifthenelse (Ebinop One (Etempvar _additional (tptr tuchar))
+                         (Ecast (Econst_int (Int.repr 0) tint) (tptr tvoid))
+                         tint)
             (Sset 126%positive
               (Ecast
-                (Ebinop One (Etempvar _additional (tptr tuchar))
-                  (Ecast (Econst_int (Int.repr 0) tint) (tptr tvoid)) tint)
-                tbool))
+                (Ebinop One (Etempvar _add_len tuint)
+                  (Econst_int (Int.repr 0) tint) tint) tbool))
             (Sset 126%positive (Econst_int (Int.repr 0) tint)))
           (Sifthenelse (Etempvar 126%positive tint)
             (Sset 127%positive (Ecast (Econst_int (Int.repr 2) tint) tint))
