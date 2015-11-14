@@ -58,7 +58,7 @@ const mbedtls_md_info_t *mbedtls_md_info_from_type( mbedtls_md_type_t md_type ) 
 }
 
 unsigned char mbedtls_md_get_size( const mbedtls_md_info_t *md_info ) {
-    return 32;
+    return SHA256_DIGEST_LENGTH;
 }
 
 void test_md_get_size() {
@@ -82,7 +82,7 @@ int mbedtls_md_hmac_starts( mbedtls_md_context_t *ctx, const unsigned char *key,
 }
 
 int mbedtls_md_hmac_reset( mbedtls_md_context_t *ctx ) {
-    HMAC_Init(ctx->hmac_ctx, NULL, 0);
+    HMAC_Init(ctx->hmac_ctx, NULL, SHA256_DIGEST_LENGTH);
     return 0;
 }
 

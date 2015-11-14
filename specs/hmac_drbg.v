@@ -271,7 +271,7 @@ Definition f_mbedtls_md_hmac_reset := {|
        (Ederef (Etempvar _ctx (tptr (Tstruct _mbedtls_md_context_t noattr)))
          (Tstruct _mbedtls_md_context_t noattr)) _hmac_ctx (tptr tvoid)) ::
      (Ecast (Econst_int (Int.repr 0) tint) (tptr tvoid)) ::
-     (Econst_int (Int.repr 0) tint) :: nil))
+     (Econst_int (Int.repr 32) tint) :: nil))
   (Sreturn (Some (Econst_int (Int.repr 0) tint))))
 |}.
 
