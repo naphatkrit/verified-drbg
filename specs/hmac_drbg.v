@@ -2,127 +2,141 @@ Require Import Clightdefs.
 
 Local Open Scope Z_scope.
 
-Definition _v : ident := 85%positive.
-Definition _mbedtls_md_info_from_string : ident := 65%positive.
-Definition ___i64_sdiv : ident := 40%positive.
-Definition _mbedtls_hmac_drbg_set_reseed_interval : ident := 112%positive.
-Definition _mbedtls_hmac_drbg_set_entropy_len : ident := 110%positive.
-Definition _reseed_interval : ident := 16%positive.
-Definition ___i64_stof : ident := 38%positive.
-Definition ___i64_sar : ident := 46%positive.
-Definition _info : ident := 69%positive.
-Definition _memset : ident := 62%positive.
-Definition ___builtin_fmin : ident := 54%positive.
-Definition _interval : ident := 111%positive.
-Definition ___builtin_memcpy_aligned : ident := 22%positive.
+Definition _test_md_get_size : ident := 85%positive.
+Definition _K : ident := 110%positive.
+Definition _out : ident := 130%positive.
+Definition _sep_value : ident := 111%positive.
+Definition _Nh : ident := 22%positive.
 Definition _V : ident := 12%positive.
-Definition _md_len : ident := 92%positive.
-Definition _resistance : ident := 108%positive.
-Definition _mbedtls_hmac_drbg_reseed : ident := 104%positive.
-Definition _mocked_sha256_info : ident := 63%positive.
+Definition _out_len : ident := 128%positive.
+Definition _rounds : ident := 108%positive.
+Definition ___builtin_fmin : ident := 63%positive.
 Definition _hmac_ctx : ident := 10%positive.
-Definition ___i64_shl : ident := 44%positive.
+Definition ___i64_dtou : ident := 44%positive.
 Definition ___builtin_negl : ident := 3%positive.
-Definition ___builtin_write32_reversed : ident := 2%positive.
 Definition ___builtin_write16_reversed : ident := 1%positive.
-Definition _main : ident := 121%positive.
-Definition ___compcert_va_int64 : ident := 31%positive.
-Definition _mbedtls_zeroize : ident := 88%positive.
-Definition _mbedtls_hmac_drbg_random : ident := 119%positive.
-Definition _input : ident := 79%positive.
-Definition _ctx : ident := 72%positive.
-Definition ___builtin_bswap16 : ident := 49%positive.
-Definition _md_type : ident := 66%positive.
-Definition ___builtin_read16_reversed : ident := 59%positive.
-Definition ___builtin_addl : ident := 4%positive.
-Definition _mbedtls_hmac_drbg_set_prediction_resistance : ident := 109%positive.
-Definition _mbedtls_md_hmac_reset : ident := 78%positive.
-Definition _sep : ident := 94%positive.
-Definition _mbedtls_md_get_size : ident := 68%positive.
-Definition ___builtin_fnmsub : ident := 58%positive.
-Definition ___builtin_va_copy : ident := 28%positive.
-Definition _p_rng : ident := 113%positive.
-Definition _seed : ident := 102%positive.
+Definition _mbedtls_hmac_drbg_set_entropy_len : ident := 124%positive.
+Definition _sha_ctx : ident := 88%positive.
+Definition _custom : ident := 119%positive.
+Definition _mbedtls_md_info_from_string : ident := 79%positive.
+Definition _memcpy : ident := 72%positive.
+Definition _sep : ident := 109%positive.
+Definition _md_name : ident := 78%positive.
+Definition ___builtin_read16_reversed : ident := 68%positive.
+Definition _hmac_ctx_st : ident := 28%positive.
+Definition _data_len : ident := 113%positive.
+Definition _p : ident := 102%positive.
 Definition _mbedtls_md_info_t : ident := 7%positive.
-Definition _seedlen : ident := 103%positive.
-Definition _data_len : ident := 99%positive.
-Definition ___builtin_fabs : ident := 21%positive.
-Definition _p_entropy : ident := 18%positive.
-Definition _len : ident := 101%positive.
-Definition _mbedtls_hmac_drbg_init : ident := 89%positive.
-Definition ___i64_shr : ident := 45%positive.
-Definition _md_size : ident := 106%positive.
-Definition _ilen : ident := 80%positive.
-Definition _reseed_counter : ident := 13%positive.
-Definition ___builtin_va_arg : ident := 27%positive.
-Definition _mbedtls_md_free : ident := 84%positive.
-Definition _output : ident := 82%positive.
-Definition ___compcert_va_composite : ident := 33%positive.
-Definition ___builtin_fmsub : ident := 56%positive.
-Definition ___builtin_membar : ident := 25%positive.
+Definition _mbedtls_zeroize : ident := 103%positive.
+Definition _main : ident := 135%positive.
+Definition _n : ident := 101%positive.
+Definition _mbedtls_md_setup : ident := 89%positive.
+Definition ___i64_stod : ident := 45%positive.
+Definition _o_ctx : ident := 27%positive.
+Definition _ret : ident := 84%positive.
+Definition _mbedtls_md_get_size : ident := 82%positive.
+Definition _SHA256state_st : ident := 25%positive.
 Definition _prediction_resistance : ident := 15%positive.
-Definition ___builtin_read32_reversed : ident := 60%positive.
-Definition _left : ident := 115%positive.
-Definition _mbedtls_hmac_drbg_seed_buf : ident := 100%positive.
-Definition _out_len : ident := 114%positive.
-Definition _dummy : ident := 20%positive.
-Definition ___compcert_va_float64 : ident := 32%positive.
-Definition _rounds : ident := 93%positive.
-Definition _use_len : ident := 117%positive.
-Definition _custom : ident := 105%positive.
-Definition _ret : ident := 70%positive.
-Definition ___builtin_annot_intval : ident := 24%positive.
-Definition _sep_value : ident := 96%positive.
-Definition _mbedtls_md_info_from_type : ident := 67%positive.
+Definition ___builtin_ctz : ident := 60%positive.
+Definition _left : ident := 129%positive.
+Definition _mbedtls_hmac_drbg_seed_buf : ident := 114%positive.
+Definition ___builtin_annot : ident := 32%positive.
+Definition _seedlen : ident := 117%positive.
+Definition _malloc : ident := 70%positive.
+Definition _mbedtls_md_hmac_update : ident := 96%positive.
 Definition _f_entropy : ident := 17%positive.
 Definition _md_info : ident := 8%positive.
+Definition _p_rng : ident := 127%positive.
+Definition ___i64_dtos : ident := 43%positive.
+Definition ___i64_shl : ident := 53%positive.
+Definition ___i64_stof : ident := 47%positive.
+Definition _keylen : ident := 91%positive.
+Definition ___builtin_va_arg : ident := 36%positive.
+Definition _mbedtls_md_hmac_finish : ident := 98%positive.
+Definition _mbedtls_hmac_drbg_context : ident := 19%positive.
+Definition ___builtin_fsqrt : ident := 61%positive.
+Definition _output : ident := 97%positive.
+Definition _resistance : ident := 122%positive.
+Definition ___builtin_va_copy : ident := 37%positive.
+Definition _mbedtls_hmac_drbg_random : ident := 133%positive.
+Definition ___compcert_va_composite : ident := 42%positive.
+Definition _mbedtls_hmac_drbg_random_with_add : ident := 132%positive.
+Definition _free : ident := 71%positive.
+Definition _HMAC_Update : ident := 75%positive.
+Definition ___builtin_membar : ident := 34%positive.
+Definition _dummy : ident := 29%positive.
+Definition _ilen : ident := 95%positive.
+Definition ___i64_sar : ident := 55%positive.
+Definition ___i64_smod : ident := 51%positive.
+Definition ___i64_utof : ident := 48%positive.
+Definition ___builtin_fmsub : ident := 65%positive.
+Definition ___compcert_va_int64 : ident := 40%positive.
+Definition _mbedtls_hmac_drbg_update : ident := 112%positive.
+Definition _reseed_interval : ident := 16%positive.
+Definition ___builtin_va_end : ident := 38%positive.
+Definition ___i64_utod : ident := 46%positive.
+Definition ___builtin_read32_reversed : ident := 69%positive.
+Definition ___builtin_fmax : ident := 62%positive.
+Definition ___i64_shr : ident := 54%positive.
+Definition _mbedtls_md_hmac_starts : ident := 92%positive.
+Definition _mbedtls_hmac_drbg_init : ident := 104%positive.
+Definition ___builtin_write32_reversed : ident := 2%positive.
+Definition _mbedtls_hmac_drbg_seed : ident := 121%positive.
+Definition ___builtin_memcpy_aligned : ident := 31%positive.
+Definition ___i64_sdiv : ident := 49%positive.
+Definition ___builtin_fnmadd : ident := 66%positive.
+Definition ___builtin_clz : ident := 59%positive.
+Definition ___builtin_addl : ident := 4%positive.
+Definition _input : ident := 94%positive.
+Definition ___builtin_bswap16 : ident := 58%positive.
+Definition _interval : ident := 125%positive.
+Definition _mbedtls_md_free : ident := 99%positive.
+Definition _Nl : ident := 21%positive.
+Definition _p_entropy : ident := 18%positive.
+Definition _add_len : ident := 106%positive.
+Definition _md_type : ident := 80%positive.
+Definition _reseed_counter : ident := 13%positive.
+Definition ___builtin_annot_intval : ident := 33%positive.
+Definition _mbedtls_hmac_drbg_set_prediction_resistance : ident := 123%positive.
+Definition ___builtin_bswap : ident := 56%positive.
+Definition _len : ident := 115%positive.
+Definition _v : ident := 100%positive.
+Definition _h : ident := 20%positive.
+Definition _mbedtls_md_hmac_reset : ident := 93%positive.
+Definition _additional : ident := 105%positive.
+Definition _mbedtls_hmac_drbg_set_reseed_interval : ident := 126%positive.
+Definition _num : ident := 24%positive.
+Definition ___builtin_fnmsub : ident := 67%positive.
 Definition ___builtin_subl : ident := 5%positive.
-Definition _hmac : ident := 73%positive.
-Definition ___builtin_clz : ident := 50%positive.
-Definition ___i64_umod : ident := 43%positive.
-Definition _mbedtls_md_setup : ident := 74%positive.
-Definition ___builtin_fmax : ident := 53%positive.
-Definition ___builtin_bswap : ident := 47%positive.
-Definition _mbedtls_hmac_drbg_seed : ident := 107%positive.
-Definition ___builtin_fnmadd : ident := 57%positive.
-Definition _add_len : ident := 91%positive.
-Definition ___i64_stod : ident := 36%positive.
+Definition _memset : ident := 73%positive.
+Definition ___i64_udiv : ident := 50%positive.
+Definition _HMAC_Init : ident := 74%positive.
+Definition _md_len : ident := 107%positive.
+Definition ___builtin_bswap32 : ident := 57%positive.
 Definition _entropy_len : ident := 14%positive.
 Definition ___builtin_mull : ident := 6%positive.
-Definition _mbedtls_hmac_drbg_random_with_add : ident := 118%positive.
-Definition _data : ident := 98%positive.
-Definition ___builtin_va_start : ident := 26%positive.
-Definition _mbedtls_hmac_drbg_context : ident := 19%positive.
-Definition ___i64_utof : ident := 39%positive.
-Definition _additional : ident := 90%positive.
-Definition _mbedtls_md_hmac_finish : ident := 83%positive.
-Definition _memcpy : ident := 61%positive.
+Definition _mbedtls_hmac_drbg_reseed : ident := 118%positive.
+Definition _i_ctx : ident := 26%positive.
+Definition _mbedtls_hmac_drbg_free : ident := 134%positive.
+Definition ___compcert_va_int32 : ident := 39%positive.
+Definition _key : ident := 90%positive.
+Definition _info : ident := 83%positive.
 Definition _mbedtls_md_context_t : ident := 11%positive.
-Definition _out : ident := 116%positive.
-Definition _mbedtls_hmac_drbg_update : ident := 97%positive.
-Definition ___i64_utod : ident := 37%positive.
-Definition _mbedtls_md_hmac_update : ident := 81%positive.
-Definition _keylen : ident := 76%positive.
-Definition _n : ident := 86%positive.
-Definition ___i64_smod : ident := 42%positive.
+Definition _seed : ident := 116%positive.
+Definition _mbedtls_md_info_from_type : ident := 81%positive.
+Definition _HMAC_Final : ident := 76%positive.
+Definition _ctx : ident := 86%positive.
 Definition _md_ctx : ident := 9%positive.
-Definition _md_name : ident := 64%positive.
-Definition ___builtin_fsqrt : ident := 52%positive.
-Definition ___i64_udiv : ident := 41%positive.
-Definition _p : ident := 87%positive.
-Definition _mbedtls_md_hmac_starts : ident := 77%positive.
-Definition _test_md_get_size : ident := 71%positive.
-Definition _mbedtls_hmac_drbg_free : ident := 120%positive.
-Definition _key : ident := 75%positive.
-Definition ___i64_dtos : ident := 34%positive.
-Definition ___builtin_va_end : ident := 29%positive.
-Definition _K : ident := 95%positive.
-Definition ___builtin_fmadd : ident := 55%positive.
-Definition ___i64_dtou : ident := 35%positive.
-Definition ___compcert_va_int32 : ident := 30%positive.
-Definition ___builtin_annot : ident := 23%positive.
-Definition ___builtin_ctz : ident := 51%positive.
-Definition ___builtin_bswap32 : ident := 48%positive.
+Definition _use_len : ident := 131%positive.
+Definition ___builtin_fmadd : ident := 64%positive.
+Definition ___i64_umod : ident := 52%positive.
+Definition ___compcert_va_float64 : ident := 41%positive.
+Definition _hmac : ident := 87%positive.
+Definition _mocked_sha256_info : ident := 77%positive.
+Definition _md_size : ident := 120%positive.
+Definition ___builtin_va_start : ident := 35%positive.
+Definition ___builtin_fabs : ident := 30%positive.
+Definition _data : ident := 23%positive.
 
 Definition v_mocked_sha256_info := {|
   gvar_info := (Tstruct _mbedtls_md_info_t noattr);
@@ -171,17 +185,17 @@ Definition f_test_md_get_size := {|
   fn_callconv := cc_default;
   fn_params := nil;
   fn_vars := ((_info, (Tstruct _mbedtls_md_info_t noattr)) :: nil);
-  fn_temps := ((_ret, tuchar) :: (122%positive, tuchar) :: nil);
+  fn_temps := ((_ret, tuchar) :: (136%positive, tuchar) :: nil);
   fn_body :=
 (Ssequence
-  (Scall (Some 122%positive)
+  (Scall (Some 136%positive)
     (Evar _mbedtls_md_get_size (Tfunction
                                  (Tcons
                                    (tptr (Tstruct _mbedtls_md_info_t noattr))
                                    Tnil) tuchar cc_default))
     ((Eaddrof (Evar _info (Tstruct _mbedtls_md_info_t noattr))
        (tptr (Tstruct _mbedtls_md_info_t noattr))) :: nil))
-  (Sset _ret (Ecast (Etempvar 122%positive tuchar) tuchar)))
+  (Sset _ret (Ecast (Etempvar 136%positive tuchar) tuchar)))
 |}.
 
 Definition f_mbedtls_md_setup := {|
@@ -191,9 +205,31 @@ Definition f_mbedtls_md_setup := {|
                 (_md_info, (tptr (Tstruct _mbedtls_md_info_t noattr))) ::
                 (_hmac, tint) :: nil);
   fn_vars := nil;
-  fn_temps := nil;
+  fn_temps := ((_sha_ctx, (tptr (Tstruct _hmac_ctx_st noattr))) ::
+               (137%positive, (tptr tvoid)) :: nil);
   fn_body :=
-(Sreturn (Some (Econst_int (Int.repr 0) tint)))
+(Ssequence
+  (Ssequence
+    (Scall (Some 137%positive)
+      (Evar _malloc (Tfunction (Tcons tuint Tnil) (tptr tvoid) cc_default))
+      ((Esizeof (Tstruct _hmac_ctx_st noattr) tuint) :: nil))
+    (Sset _sha_ctx
+      (Ecast (Etempvar 137%positive (tptr tvoid))
+        (tptr (Tstruct _hmac_ctx_st noattr)))))
+  (Ssequence
+    (Sifthenelse (Ebinop Oeq
+                   (Etempvar _sha_ctx (tptr (Tstruct _hmac_ctx_st noattr)))
+                   (Ecast (Econst_int (Int.repr 0) tint) (tptr tvoid)) tint)
+      (Sreturn (Some (Eunop Oneg (Econst_int (Int.repr 20864) tint) tint)))
+      Sskip)
+    (Ssequence
+      (Sassign
+        (Efield
+          (Ederef
+            (Etempvar _ctx (tptr (Tstruct _mbedtls_md_context_t noattr)))
+            (Tstruct _mbedtls_md_context_t noattr)) _hmac_ctx (tptr tvoid))
+        (Etempvar _sha_ctx (tptr (Tstruct _hmac_ctx_st noattr))))
+      (Sreturn (Some (Econst_int (Int.repr 0) tint))))))
 |}.
 
 Definition f_mbedtls_md_hmac_starts := {|
@@ -204,7 +240,18 @@ Definition f_mbedtls_md_hmac_starts := {|
   fn_vars := nil;
   fn_temps := nil;
   fn_body :=
-(Sreturn (Some (Econst_int (Int.repr 0) tint)))
+(Ssequence
+  (Scall None
+    (Evar _HMAC_Init (Tfunction
+                       (Tcons (tptr (Tstruct _hmac_ctx_st noattr))
+                         (Tcons (tptr tuchar) (Tcons tint Tnil))) tvoid
+                       cc_default))
+    ((Efield
+       (Ederef (Etempvar _ctx (tptr (Tstruct _mbedtls_md_context_t noattr)))
+         (Tstruct _mbedtls_md_context_t noattr)) _hmac_ctx (tptr tvoid)) ::
+     (Ecast (Etempvar _key (tptr tuchar)) (tptr tuchar)) ::
+     (Etempvar _keylen tuint) :: nil))
+  (Sreturn (Some (Econst_int (Int.repr 0) tint))))
 |}.
 
 Definition f_mbedtls_md_hmac_reset := {|
@@ -214,7 +261,18 @@ Definition f_mbedtls_md_hmac_reset := {|
   fn_vars := nil;
   fn_temps := nil;
   fn_body :=
-(Sreturn (Some (Econst_int (Int.repr 0) tint)))
+(Ssequence
+  (Scall None
+    (Evar _HMAC_Init (Tfunction
+                       (Tcons (tptr (Tstruct _hmac_ctx_st noattr))
+                         (Tcons (tptr tuchar) (Tcons tint Tnil))) tvoid
+                       cc_default))
+    ((Efield
+       (Ederef (Etempvar _ctx (tptr (Tstruct _mbedtls_md_context_t noattr)))
+         (Tstruct _mbedtls_md_context_t noattr)) _hmac_ctx (tptr tvoid)) ::
+     (Ecast (Econst_int (Int.repr 0) tint) (tptr tvoid)) ::
+     (Econst_int (Int.repr 0) tint) :: nil))
+  (Sreturn (Some (Econst_int (Int.repr 0) tint))))
 |}.
 
 Definition f_mbedtls_md_hmac_update := {|
@@ -225,7 +283,17 @@ Definition f_mbedtls_md_hmac_update := {|
   fn_vars := nil;
   fn_temps := nil;
   fn_body :=
-(Sreturn (Some (Econst_int (Int.repr 0) tint)))
+(Ssequence
+  (Scall None
+    (Evar _HMAC_Update (Tfunction
+                         (Tcons (tptr (Tstruct _hmac_ctx_st noattr))
+                           (Tcons (tptr tvoid) (Tcons tuint Tnil))) tvoid
+                         cc_default))
+    ((Efield
+       (Ederef (Etempvar _ctx (tptr (Tstruct _mbedtls_md_context_t noattr)))
+         (Tstruct _mbedtls_md_context_t noattr)) _hmac_ctx (tptr tvoid)) ::
+     (Etempvar _input (tptr tuchar)) :: (Etempvar _ilen tuint) :: nil))
+  (Sreturn (Some (Econst_int (Int.repr 0) tint))))
 |}.
 
 Definition f_mbedtls_md_hmac_finish := {|
@@ -236,7 +304,16 @@ Definition f_mbedtls_md_hmac_finish := {|
   fn_vars := nil;
   fn_temps := nil;
   fn_body :=
-(Sreturn (Some (Econst_int (Int.repr 0) tint)))
+(Ssequence
+  (Scall None
+    (Evar _HMAC_Final (Tfunction
+                        (Tcons (tptr (Tstruct _hmac_ctx_st noattr))
+                          (Tcons (tptr tuchar) Tnil)) tvoid cc_default))
+    ((Efield
+       (Ederef (Etempvar _ctx (tptr (Tstruct _mbedtls_md_context_t noattr)))
+         (Tstruct _mbedtls_md_context_t noattr)) _hmac_ctx (tptr tvoid)) ::
+     (Etempvar _output (tptr tuchar)) :: nil))
+  (Sreturn (Some (Econst_int (Int.repr 0) tint))))
 |}.
 
 Definition f_mbedtls_md_free := {|
@@ -246,7 +323,12 @@ Definition f_mbedtls_md_free := {|
   fn_vars := nil;
   fn_temps := nil;
   fn_body :=
-Sskip
+(Scall None
+  (Evar _free (Tfunction (Tcons (tptr tvoid) Tnil) tvoid cc_default))
+  ((Efield
+     (Ederef (Etempvar _ctx (tptr (Tstruct _mbedtls_md_context_t noattr)))
+       (Tstruct _mbedtls_md_context_t noattr)) _hmac_ctx (tptr tvoid)) ::
+   nil))
 |}.
 
 Definition f_mbedtls_zeroize := {|
@@ -255,8 +337,8 @@ Definition f_mbedtls_zeroize := {|
   fn_params := ((_v, (tptr tvoid)) :: (_n, tuint) :: nil);
   fn_vars := nil;
   fn_temps := ((_p, (tptr (tvolatile tuchar))) ::
-               (124%positive, (tptr (tvolatile tuchar))) ::
-               (123%positive, tuint) :: nil);
+               (139%positive, (tptr (tvolatile tuchar))) ::
+               (138%positive, tuint) :: nil);
   fn_body :=
 (Ssequence
   (Sset _p (Etempvar _v (tptr tvoid)))
@@ -264,21 +346,21 @@ Definition f_mbedtls_zeroize := {|
     (Ssequence
       (Ssequence
         (Ssequence
-          (Sset 123%positive (Etempvar _n tuint))
+          (Sset 138%positive (Etempvar _n tuint))
           (Sset _n
-            (Ebinop Osub (Etempvar 123%positive tuint)
+            (Ebinop Osub (Etempvar 138%positive tuint)
               (Econst_int (Int.repr 1) tint) tuint)))
-        (Sifthenelse (Etempvar 123%positive tuint) Sskip Sbreak))
+        (Sifthenelse (Etempvar 138%positive tuint) Sskip Sbreak))
       (Ssequence
         (Ssequence
-          (Sset 124%positive (Etempvar _p (tptr (tvolatile tuchar))))
+          (Sset 139%positive (Etempvar _p (tptr (tvolatile tuchar))))
           (Sset _p
-            (Ebinop Oadd (Etempvar 124%positive (tptr (tvolatile tuchar)))
+            (Ebinop Oadd (Etempvar 139%positive (tptr (tvolatile tuchar)))
               (Econst_int (Int.repr 1) tint) (tptr (tvolatile tuchar)))))
         (Sbuiltin None (EF_vstore Mint8unsigned)
           (Tcons (tptr (tvolatile tuchar)) (Tcons (tvolatile tuchar) Tnil))
           ((Eaddrof
-             (Ederef (Etempvar 124%positive (tptr (tvolatile tuchar)))
+             (Ederef (Etempvar 139%positive (tptr (tvolatile tuchar)))
                (tvolatile tuchar)) (tptr (tvolatile tuchar))) ::
            (Econst_int (Int.repr 0) tint) :: nil))))
     Sskip))
@@ -309,8 +391,8 @@ Definition f_mbedtls_hmac_drbg_update := {|
   fn_vars := ((_sep, (tarray tuchar 1)) :: (_K, (tarray tuchar 32)) :: nil);
   fn_temps := ((_info, (tptr (Tstruct _mbedtls_md_info_t noattr))) ::
                (_md_len, tuint) :: (_rounds, tint) :: (_sep_value, tint) ::
-               (127%positive, tint) :: (126%positive, tint) ::
-               (125%positive, tuchar) :: nil);
+               (142%positive, tint) :: (141%positive, tint) ::
+               (140%positive, tuchar) :: nil);
   fn_body :=
 (Ssequence
   (Sset _info
@@ -323,28 +405,28 @@ Definition f_mbedtls_hmac_drbg_update := {|
       (tptr (Tstruct _mbedtls_md_info_t noattr))))
   (Ssequence
     (Ssequence
-      (Scall (Some 125%positive)
+      (Scall (Some 140%positive)
         (Evar _mbedtls_md_get_size (Tfunction
                                      (Tcons
                                        (tptr (Tstruct _mbedtls_md_info_t noattr))
                                        Tnil) tuchar cc_default))
         ((Etempvar _info (tptr (Tstruct _mbedtls_md_info_t noattr))) :: nil))
-      (Sset _md_len (Etempvar 125%positive tuchar)))
+      (Sset _md_len (Etempvar 140%positive tuchar)))
     (Ssequence
       (Ssequence
         (Ssequence
           (Sifthenelse (Ebinop One (Etempvar _add_len tuint)
                          (Econst_int (Int.repr 0) tint) tint)
-            (Sset 126%positive
+            (Sset 141%positive
               (Ecast
                 (Ebinop One (Etempvar _additional (tptr tuchar))
                   (Ecast (Econst_int (Int.repr 0) tint) (tptr tvoid)) tint)
                 tbool))
-            (Sset 126%positive (Econst_int (Int.repr 0) tint)))
-          (Sifthenelse (Etempvar 126%positive tint)
-            (Sset 127%positive (Ecast (Econst_int (Int.repr 2) tint) tint))
-            (Sset 127%positive (Ecast (Econst_int (Int.repr 1) tint) tint))))
-        (Sset _rounds (Etempvar 127%positive tint)))
+            (Sset 141%positive (Econst_int (Int.repr 0) tint)))
+          (Sifthenelse (Etempvar 141%positive tint)
+            (Sset 142%positive (Ecast (Econst_int (Int.repr 2) tint) tint))
+            (Sset 142%positive (Ecast (Econst_int (Int.repr 1) tint) tint))))
+        (Sset _rounds (Etempvar 142%positive tint)))
       (Ssequence
         (Sset _sep_value (Econst_int (Int.repr 0) tint))
         (Sloop
@@ -530,15 +612,15 @@ Definition f_mbedtls_hmac_drbg_seed_buf := {|
                 (_md_info, (tptr (Tstruct _mbedtls_md_info_t noattr))) ::
                 (_data, (tptr tuchar)) :: (_data_len, tuint) :: nil);
   fn_vars := nil;
-  fn_temps := ((_ret, tint) :: (131%positive, tuchar) ::
-               (130%positive, tuchar) :: (129%positive, tint) ::
-               (128%positive, tint) :: nil);
+  fn_temps := ((_ret, tint) :: (146%positive, tuchar) ::
+               (145%positive, tuchar) :: (144%positive, tint) ::
+               (143%positive, tint) :: nil);
   fn_body :=
 (Ssequence
   (Ssequence
     (Ssequence
       (Ssequence
-        (Scall (Some 128%positive)
+        (Scall (Some 143%positive)
           (Evar _mbedtls_md_setup (Tfunction
                                     (Tcons
                                       (tptr (Tstruct _mbedtls_md_context_t noattr))
@@ -554,15 +636,15 @@ Definition f_mbedtls_hmac_drbg_seed_buf := {|
              (tptr (Tstruct _mbedtls_md_context_t noattr))) ::
            (Etempvar _md_info (tptr (Tstruct _mbedtls_md_info_t noattr))) ::
            (Econst_int (Int.repr 1) tint) :: nil))
-        (Sset 129%positive (Etempvar 128%positive tint)))
-      (Sset _ret (Etempvar 129%positive tint)))
-    (Sifthenelse (Ebinop One (Ecast (Etempvar 129%positive tint) tint)
+        (Sset 144%positive (Etempvar 143%positive tint)))
+      (Sset _ret (Etempvar 144%positive tint)))
+    (Sifthenelse (Ebinop One (Ecast (Etempvar 144%positive tint) tint)
                    (Econst_int (Int.repr 0) tint) tint)
       (Sreturn (Some (Etempvar _ret tint)))
       Sskip))
   (Ssequence
     (Ssequence
-      (Scall (Some 130%positive)
+      (Scall (Some 145%positive)
         (Evar _mbedtls_md_get_size (Tfunction
                                      (Tcons
                                        (tptr (Tstruct _mbedtls_md_info_t noattr))
@@ -587,10 +669,10 @@ Definition f_mbedtls_hmac_drbg_seed_buf := {|
            (Ederef
              (Etempvar _ctx (tptr (Tstruct _mbedtls_hmac_drbg_context noattr)))
              (Tstruct _mbedtls_hmac_drbg_context noattr)) _V
-           (tarray tuchar 32)) :: (Etempvar 130%positive tuchar) :: nil)))
+           (tarray tuchar 32)) :: (Etempvar 145%positive tuchar) :: nil)))
     (Ssequence
       (Ssequence
-        (Scall (Some 131%positive)
+        (Scall (Some 146%positive)
           (Evar _mbedtls_md_get_size (Tfunction
                                        (Tcons
                                          (tptr (Tstruct _mbedtls_md_info_t noattr))
@@ -607,7 +689,7 @@ Definition f_mbedtls_hmac_drbg_seed_buf := {|
                (Etempvar _ctx (tptr (Tstruct _mbedtls_hmac_drbg_context noattr)))
                (Tstruct _mbedtls_hmac_drbg_context noattr)) _V
              (tarray tuchar 32)) :: (Econst_int (Int.repr 1) tint) ::
-           (Etempvar 131%positive tuchar) :: nil)))
+           (Etempvar 146%positive tuchar) :: nil)))
       (Ssequence
         (Scall None
           (Evar _mbedtls_hmac_drbg_update (Tfunction
@@ -628,15 +710,15 @@ Definition f_mbedtls_hmac_drbg_reseed := {|
   fn_params := ((_ctx, (tptr (Tstruct _mbedtls_hmac_drbg_context noattr))) ::
                 (_additional, (tptr tuchar)) :: (_len, tuint) :: nil);
   fn_vars := ((_seed, (tarray tuchar 384)) :: nil);
-  fn_temps := ((_seedlen, tuint) :: (134%positive, tint) ::
-               (133%positive, tint) :: (132%positive, tint) :: nil);
+  fn_temps := ((_seedlen, tuint) :: (149%positive, tint) ::
+               (148%positive, tint) :: (147%positive, tint) :: nil);
   fn_body :=
 (Ssequence
   (Ssequence
     (Sifthenelse (Ebinop Ogt (Etempvar _len tuint)
                    (Econst_int (Int.repr 256) tint) tint)
-      (Sset 132%positive (Econst_int (Int.repr 1) tint))
-      (Sset 132%positive
+      (Sset 147%positive (Econst_int (Int.repr 1) tint))
+      (Sset 147%positive
         (Ecast
           (Ebinop Ogt
             (Ebinop Oadd
@@ -646,7 +728,7 @@ Definition f_mbedtls_hmac_drbg_reseed := {|
                   (Tstruct _mbedtls_hmac_drbg_context noattr)) _entropy_len
                 tuint) (Etempvar _len tuint) tuint)
             (Econst_int (Int.repr 384) tint) tint) tbool)))
-    (Sifthenelse (Etempvar 132%positive tint)
+    (Sifthenelse (Etempvar 147%positive tint)
       (Sreturn (Some (Eunop Oneg (Econst_int (Int.repr 5) tint) tint)))
       Sskip))
   (Ssequence
@@ -658,7 +740,7 @@ Definition f_mbedtls_hmac_drbg_reseed := {|
        (Econst_int (Int.repr 384) tint) :: nil))
     (Ssequence
       (Ssequence
-        (Scall (Some 133%positive)
+        (Scall (Some 148%positive)
           (Efield
             (Ederef
               (Etempvar _ctx (tptr (Tstruct _mbedtls_hmac_drbg_context noattr)))
@@ -677,7 +759,7 @@ Definition f_mbedtls_hmac_drbg_reseed := {|
                (Etempvar _ctx (tptr (Tstruct _mbedtls_hmac_drbg_context noattr)))
                (Tstruct _mbedtls_hmac_drbg_context noattr)) _entropy_len
              tuint) :: nil))
-        (Sifthenelse (Ebinop One (Etempvar 133%positive tint)
+        (Sifthenelse (Ebinop One (Etempvar 148%positive tint)
                        (Econst_int (Int.repr 0) tint) tint)
           (Sreturn (Some (Eunop Oneg (Econst_int (Int.repr 9) tint) tint)))
           Sskip))
@@ -693,12 +775,12 @@ Definition f_mbedtls_hmac_drbg_reseed := {|
             (Sifthenelse (Ebinop One (Etempvar _additional (tptr tuchar))
                            (Ecast (Econst_int (Int.repr 0) tint)
                              (tptr tvoid)) tint)
-              (Sset 134%positive
+              (Sset 149%positive
                 (Ecast
                   (Ebinop One (Etempvar _len tuint)
                     (Econst_int (Int.repr 0) tint) tint) tbool))
-              (Sset 134%positive (Econst_int (Int.repr 0) tint)))
-            (Sifthenelse (Etempvar 134%positive tint)
+              (Sset 149%positive (Econst_int (Int.repr 0) tint)))
+            (Sifthenelse (Etempvar 149%positive tint)
               (Ssequence
                 (Scall None
                   (Evar _memcpy (Tfunction
@@ -747,16 +829,16 @@ Definition f_mbedtls_hmac_drbg_seed := {|
                 (_custom, (tptr tuchar)) :: (_len, tuint) :: nil);
   fn_vars := nil;
   fn_temps := ((_ret, tint) :: (_entropy_len, tuint) :: (_md_size, tuint) ::
-               (141%positive, tint) :: (140%positive, tint) ::
-               (139%positive, tint) :: (138%positive, tint) ::
-               (137%positive, tuchar) :: (136%positive, tint) ::
-               (135%positive, tint) :: nil);
+               (156%positive, tint) :: (155%positive, tint) ::
+               (154%positive, tint) :: (153%positive, tint) ::
+               (152%positive, tuchar) :: (151%positive, tint) ::
+               (150%positive, tint) :: nil);
   fn_body :=
 (Ssequence
   (Ssequence
     (Ssequence
       (Ssequence
-        (Scall (Some 135%positive)
+        (Scall (Some 150%positive)
           (Evar _mbedtls_md_setup (Tfunction
                                     (Tcons
                                       (tptr (Tstruct _mbedtls_md_context_t noattr))
@@ -772,22 +854,22 @@ Definition f_mbedtls_hmac_drbg_seed := {|
              (tptr (Tstruct _mbedtls_md_context_t noattr))) ::
            (Etempvar _md_info (tptr (Tstruct _mbedtls_md_info_t noattr))) ::
            (Econst_int (Int.repr 1) tint) :: nil))
-        (Sset 136%positive (Etempvar 135%positive tint)))
-      (Sset _ret (Etempvar 136%positive tint)))
-    (Sifthenelse (Ebinop One (Ecast (Etempvar 136%positive tint) tint)
+        (Sset 151%positive (Etempvar 150%positive tint)))
+      (Sset _ret (Etempvar 151%positive tint)))
+    (Sifthenelse (Ebinop One (Ecast (Etempvar 151%positive tint) tint)
                    (Econst_int (Int.repr 0) tint) tint)
       (Sreturn (Some (Etempvar _ret tint)))
       Sskip))
   (Ssequence
     (Ssequence
-      (Scall (Some 137%positive)
+      (Scall (Some 152%positive)
         (Evar _mbedtls_md_get_size (Tfunction
                                      (Tcons
                                        (tptr (Tstruct _mbedtls_md_info_t noattr))
                                        Tnil) tuchar cc_default))
         ((Etempvar _md_info (tptr (Tstruct _mbedtls_md_info_t noattr))) ::
          nil))
-      (Sset _md_size (Etempvar 137%positive tuchar)))
+      (Sset _md_size (Etempvar 152%positive tuchar)))
     (Ssequence
       (Scall None
         (Evar _mbedtls_md_hmac_starts (Tfunction
@@ -853,21 +935,21 @@ Definition f_mbedtls_hmac_drbg_seed := {|
                 (Ssequence
                   (Sifthenelse (Ebinop Ole (Etempvar _md_size tuint)
                                  (Econst_int (Int.repr 20) tint) tint)
-                    (Sset 138%positive
+                    (Sset 153%positive
                       (Ecast (Econst_int (Int.repr 16) tint) tint))
                     (Sifthenelse (Ebinop Ole (Etempvar _md_size tuint)
                                    (Econst_int (Int.repr 28) tint) tint)
                       (Ssequence
-                        (Sset 139%positive
+                        (Sset 154%positive
                           (Ecast (Econst_int (Int.repr 24) tint) tint))
-                        (Sset 138%positive
-                          (Ecast (Etempvar 139%positive tint) tint)))
+                        (Sset 153%positive
+                          (Ecast (Etempvar 154%positive tint) tint)))
                       (Ssequence
-                        (Sset 139%positive
+                        (Sset 154%positive
                           (Ecast (Econst_int (Int.repr 32) tint) tint))
-                        (Sset 138%positive
-                          (Ecast (Etempvar 139%positive tint) tint)))))
-                  (Sset _entropy_len (Etempvar 138%positive tint)))
+                        (Sset 153%positive
+                          (Ecast (Etempvar 154%positive tint) tint)))))
+                  (Sset _entropy_len (Etempvar 153%positive tint)))
                 (Ssequence
                   (Sassign
                     (Efield
@@ -883,7 +965,7 @@ Definition f_mbedtls_hmac_drbg_seed := {|
                     (Ssequence
                       (Ssequence
                         (Ssequence
-                          (Scall (Some 140%positive)
+                          (Scall (Some 155%positive)
                             (Evar _mbedtls_hmac_drbg_reseed (Tfunction
                                                               (Tcons
                                                                 (tptr (Tstruct _mbedtls_hmac_drbg_context noattr))
@@ -897,10 +979,10 @@ Definition f_mbedtls_hmac_drbg_seed := {|
                             ((Etempvar _ctx (tptr (Tstruct _mbedtls_hmac_drbg_context noattr))) ::
                              (Etempvar _custom (tptr tuchar)) ::
                              (Etempvar _len tuint) :: nil))
-                          (Sset 141%positive (Etempvar 140%positive tint)))
-                        (Sset _ret (Etempvar 141%positive tint)))
+                          (Sset 156%positive (Etempvar 155%positive tint)))
+                        (Sset _ret (Etempvar 156%positive tint)))
                       (Sifthenelse (Ebinop One
-                                     (Ecast (Etempvar 141%positive tint)
+                                     (Ecast (Etempvar 156%positive tint)
                                        tint) (Econst_int (Int.repr 0) tint)
                                      tint)
                         (Sreturn (Some (Etempvar _ret tint)))
@@ -973,10 +1055,10 @@ Definition f_mbedtls_hmac_drbg_random_with_add := {|
   fn_temps := ((_ret, tint) ::
                (_ctx, (tptr (Tstruct _mbedtls_hmac_drbg_context noattr))) ::
                (_md_len, tuint) :: (_left, tuint) :: (_out, (tptr tuchar)) ::
-               (_use_len, tuint) :: (147%positive, tuint) ::
-               (146%positive, tint) :: (145%positive, tint) ::
-               (144%positive, tint) :: (143%positive, tint) ::
-               (142%positive, tuchar) :: nil);
+               (_use_len, tuint) :: (162%positive, tuint) ::
+               (161%positive, tint) :: (160%positive, tint) ::
+               (159%positive, tint) :: (158%positive, tint) ::
+               (157%positive, tuchar) :: nil);
   fn_body :=
 (Ssequence
   (Sset _ctx
@@ -984,7 +1066,7 @@ Definition f_mbedtls_hmac_drbg_random_with_add := {|
       (tptr (Tstruct _mbedtls_hmac_drbg_context noattr))))
   (Ssequence
     (Ssequence
-      (Scall (Some 142%positive)
+      (Scall (Some 157%positive)
         (Evar _mbedtls_md_get_size (Tfunction
                                      (Tcons
                                        (tptr (Tstruct _mbedtls_md_info_t noattr))
@@ -996,7 +1078,7 @@ Definition f_mbedtls_hmac_drbg_random_with_add := {|
                (Tstruct _mbedtls_hmac_drbg_context noattr)) _md_ctx
              (Tstruct _mbedtls_md_context_t noattr)) _md_info
            (tptr (Tstruct _mbedtls_md_info_t noattr))) :: nil))
-      (Sset _md_len (Etempvar 142%positive tuchar)))
+      (Sset _md_len (Etempvar 157%positive tuchar)))
     (Ssequence
       (Sset _left (Etempvar _out_len tuint))
       (Ssequence
@@ -1033,10 +1115,10 @@ Definition f_mbedtls_hmac_drbg_random_with_add := {|
                                      (Tstruct _mbedtls_hmac_drbg_context noattr))
                                    _prediction_resistance tint)
                                  (Econst_int (Int.repr 1) tint) tint)
-                    (Sset 145%positive
+                    (Sset 160%positive
                       (Ecast (Econst_int (Int.repr 1) tint) tbool))
                     (Ssequence
-                      (Sset 145%positive
+                      (Sset 160%positive
                         (Ecast
                           (Ebinop Ogt
                             (Efield
@@ -1049,15 +1131,15 @@ Definition f_mbedtls_hmac_drbg_random_with_add := {|
                                 (Etempvar _ctx (tptr (Tstruct _mbedtls_hmac_drbg_context noattr)))
                                 (Tstruct _mbedtls_hmac_drbg_context noattr))
                               _reseed_interval tint) tint) tbool))
-                      (Sset 145%positive
-                        (Ecast (Etempvar 145%positive tint) tbool))))
-                  (Sset 145%positive (Econst_int (Int.repr 0) tint)))
-                (Sifthenelse (Etempvar 145%positive tint)
+                      (Sset 160%positive
+                        (Ecast (Etempvar 160%positive tint) tbool))))
+                  (Sset 160%positive (Econst_int (Int.repr 0) tint)))
+                (Sifthenelse (Etempvar 160%positive tint)
                   (Ssequence
                     (Ssequence
                       (Ssequence
                         (Ssequence
-                          (Scall (Some 143%positive)
+                          (Scall (Some 158%positive)
                             (Evar _mbedtls_hmac_drbg_reseed (Tfunction
                                                               (Tcons
                                                                 (tptr (Tstruct _mbedtls_hmac_drbg_context noattr))
@@ -1071,10 +1153,10 @@ Definition f_mbedtls_hmac_drbg_random_with_add := {|
                             ((Etempvar _ctx (tptr (Tstruct _mbedtls_hmac_drbg_context noattr))) ::
                              (Etempvar _additional (tptr tuchar)) ::
                              (Etempvar _add_len tuint) :: nil))
-                          (Sset 144%positive (Etempvar 143%positive tint)))
-                        (Sset _ret (Etempvar 144%positive tint)))
+                          (Sset 159%positive (Etempvar 158%positive tint)))
+                        (Sset _ret (Etempvar 159%positive tint)))
                       (Sifthenelse (Ebinop One
-                                     (Ecast (Etempvar 144%positive tint)
+                                     (Ecast (Etempvar 159%positive tint)
                                        tint) (Econst_int (Int.repr 0) tint)
                                      tint)
                         (Sreturn (Some (Etempvar _ret tint)))
@@ -1087,12 +1169,12 @@ Definition f_mbedtls_hmac_drbg_random_with_add := {|
                                  (Etempvar _additional (tptr tuchar))
                                  (Ecast (Econst_int (Int.repr 0) tint)
                                    (tptr tvoid)) tint)
-                    (Sset 146%positive
+                    (Sset 161%positive
                       (Ecast
                         (Ebinop One (Etempvar _add_len tuint)
                           (Econst_int (Int.repr 0) tint) tint) tbool))
-                    (Sset 146%positive (Econst_int (Int.repr 0) tint)))
-                  (Sifthenelse (Etempvar 146%positive tint)
+                    (Sset 161%positive (Econst_int (Int.repr 0) tint)))
+                  (Sifthenelse (Etempvar 161%positive tint)
                     (Scall None
                       (Evar _mbedtls_hmac_drbg_update (Tfunction
                                                         (Tcons
@@ -1114,11 +1196,11 @@ Definition f_mbedtls_hmac_drbg_random_with_add := {|
                       (Ssequence
                         (Sifthenelse (Ebinop Ogt (Etempvar _left tuint)
                                        (Etempvar _md_len tuint) tint)
-                          (Sset 147%positive
+                          (Sset 162%positive
                             (Ecast (Etempvar _md_len tuint) tuint))
-                          (Sset 147%positive
+                          (Sset 162%positive
                             (Ecast (Etempvar _left tuint) tuint)))
-                        (Sset _use_len (Etempvar 147%positive tuint)))
+                        (Sset _use_len (Etempvar 162%positive tuint)))
                       (Ssequence
                         (Scall None
                           (Evar _mbedtls_md_hmac_reset (Tfunction
@@ -1240,7 +1322,7 @@ Definition f_mbedtls_hmac_drbg_random := {|
   fn_vars := nil;
   fn_temps := ((_ret, tint) ::
                (_ctx, (tptr (Tstruct _mbedtls_hmac_drbg_context noattr))) ::
-               (148%positive, tint) :: nil);
+               (163%positive, tint) :: nil);
   fn_body :=
 (Ssequence
   (Sset _ctx
@@ -1248,7 +1330,7 @@ Definition f_mbedtls_hmac_drbg_random := {|
       (tptr (Tstruct _mbedtls_hmac_drbg_context noattr))))
   (Ssequence
     (Ssequence
-      (Scall (Some 148%positive)
+      (Scall (Some 163%positive)
         (Evar _mbedtls_hmac_drbg_random_with_add (Tfunction
                                                    (Tcons (tptr tvoid)
                                                      (Tcons (tptr tuchar)
@@ -1260,7 +1342,7 @@ Definition f_mbedtls_hmac_drbg_random := {|
          (Etempvar _output (tptr tuchar)) :: (Etempvar _out_len tuint) ::
          (Ecast (Econst_int (Int.repr 0) tint) (tptr tvoid)) ::
          (Econst_int (Int.repr 0) tint) :: nil))
-      (Sset _ret (Etempvar 148%positive tint)))
+      (Sset _ret (Etempvar 163%positive tint)))
     (Sreturn (Some (Etempvar _ret tint)))))
 |}.
 
@@ -1323,6 +1405,15 @@ Definition composites : list composite_definition :=
      (tptr (Tfunction
              (Tcons (tptr tvoid) (Tcons (tptr tuchar) (Tcons tuint Tnil)))
              tint cc_default))) :: (_p_entropy, (tptr tvoid)) :: nil)
+   noattr ::
+ Composite _SHA256state_st Struct
+   ((_h, (tarray tuint 8)) :: (_Nl, tuint) :: (_Nh, tuint) ::
+    (_data, (tarray tuchar 64)) :: (_num, tuint) :: nil)
+   noattr ::
+ Composite _hmac_ctx_st Struct
+   ((_md_ctx, (Tstruct _SHA256state_st noattr)) ::
+    (_i_ctx, (Tstruct _SHA256state_st noattr)) ::
+    (_o_ctx, (Tstruct _SHA256state_st noattr)) :: nil)
    noattr ::
  Composite _mbedtls_md_info_t Struct ((_dummy, tint) :: nil) noattr :: nil).
 
@@ -1530,6 +1621,9 @@ prog_defs :=
                    (mksignature (AST.Tint :: AST.Tint :: nil) None
                      cc_default)) (Tcons (tptr tuint) (Tcons tuint Tnil))
      tvoid cc_default)) ::
+ (_malloc,
+   Gfun(External EF_malloc (Tcons tuint Tnil) (tptr tvoid) cc_default)) ::
+ (_free, Gfun(External EF_free (Tcons (tptr tvoid) Tnil) tvoid cc_default)) ::
  (_memcpy,
    Gfun(External (EF_external _memcpy
                    (mksignature (AST.Tint :: AST.Tint :: AST.Tint :: nil)
@@ -1541,7 +1635,26 @@ prog_defs :=
                    (mksignature (AST.Tint :: AST.Tint :: AST.Tint :: nil)
                      (Some AST.Tint) cc_default))
      (Tcons (tptr tvoid) (Tcons tint (Tcons tuint Tnil))) (tptr tvoid)
-     cc_default)) :: (_mocked_sha256_info, Gvar v_mocked_sha256_info) ::
+     cc_default)) ::
+ (_HMAC_Init,
+   Gfun(External (EF_external _HMAC_Init
+                   (mksignature (AST.Tint :: AST.Tint :: AST.Tint :: nil)
+                     None cc_default))
+     (Tcons (tptr (Tstruct _hmac_ctx_st noattr))
+       (Tcons (tptr tuchar) (Tcons tint Tnil))) tvoid cc_default)) ::
+ (_HMAC_Update,
+   Gfun(External (EF_external _HMAC_Update
+                   (mksignature (AST.Tint :: AST.Tint :: AST.Tint :: nil)
+                     None cc_default))
+     (Tcons (tptr (Tstruct _hmac_ctx_st noattr))
+       (Tcons (tptr tvoid) (Tcons tuint Tnil))) tvoid cc_default)) ::
+ (_HMAC_Final,
+   Gfun(External (EF_external _HMAC_Final
+                   (mksignature (AST.Tint :: AST.Tint :: nil) None
+                     cc_default))
+     (Tcons (tptr (Tstruct _hmac_ctx_st noattr)) (Tcons (tptr tuchar) Tnil))
+     tvoid cc_default)) ::
+ (_mocked_sha256_info, Gvar v_mocked_sha256_info) ::
  (_mbedtls_md_info_from_string, Gfun(Internal f_mbedtls_md_info_from_string)) ::
  (_mbedtls_md_info_from_type, Gfun(Internal f_mbedtls_md_info_from_type)) ::
  (_mbedtls_md_get_size, Gfun(Internal f_mbedtls_md_get_size)) ::
@@ -1576,12 +1689,12 @@ prog_public :=
  _mbedtls_md_hmac_finish :: _mbedtls_md_hmac_update ::
  _mbedtls_md_hmac_reset :: _mbedtls_md_hmac_starts :: _mbedtls_md_setup ::
  _test_md_get_size :: _mbedtls_md_get_size :: _mbedtls_md_info_from_type ::
- _mbedtls_md_info_from_string :: _memset :: _memcpy ::
- ___builtin_write32_reversed :: ___builtin_write16_reversed ::
- ___builtin_read32_reversed :: ___builtin_read16_reversed ::
- ___builtin_fnmsub :: ___builtin_fnmadd :: ___builtin_fmsub ::
- ___builtin_fmadd :: ___builtin_fmin :: ___builtin_fmax ::
- ___builtin_fsqrt :: ___builtin_ctz :: ___builtin_clz ::
+ _mbedtls_md_info_from_string :: _HMAC_Final :: _HMAC_Update :: _HMAC_Init ::
+ _memset :: _memcpy :: _free :: _malloc :: ___builtin_write32_reversed ::
+ ___builtin_write16_reversed :: ___builtin_read32_reversed ::
+ ___builtin_read16_reversed :: ___builtin_fnmsub :: ___builtin_fnmadd ::
+ ___builtin_fmsub :: ___builtin_fmadd :: ___builtin_fmin ::
+ ___builtin_fmax :: ___builtin_fsqrt :: ___builtin_ctz :: ___builtin_clz ::
  ___builtin_bswap16 :: ___builtin_bswap32 :: ___builtin_bswap ::
  ___i64_sar :: ___i64_shr :: ___i64_shl :: ___i64_umod :: ___i64_smod ::
  ___i64_udiv :: ___i64_sdiv :: ___i64_utof :: ___i64_stof :: ___i64_utod ::

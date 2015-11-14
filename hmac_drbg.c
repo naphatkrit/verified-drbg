@@ -41,6 +41,7 @@
 #endif /* MBEDTLS_PLATFORM_C */
 
 #include <stdlib.h>
+#include "hmac.h"
 
 struct mbedtls_md_info_t {
 	int dummy;
@@ -67,53 +68,36 @@ void test_md_get_size() {
 }
 
 int mbedtls_md_setup( mbedtls_md_context_t *ctx, const mbedtls_md_info_t *md_info, int hmac ) {
-/*
     HMAC_CTX * sha_ctx = (HMAC_CTX *) malloc(sizeof(HMAC_CTX));
     if (sha_ctx == NULL) {
         return MBEDTLS_ERR_MD_ALLOC_FAILED;
     }
     ctx->hmac_ctx = sha_ctx;
-*/
     return 0;
 }
 
 int mbedtls_md_hmac_starts( mbedtls_md_context_t *ctx, const unsigned char *key, size_t keylen ) {
-/*
     HMAC_Init(ctx->hmac_ctx, (unsigned char*) key, keylen);
-*/
     return 0;
 }
 
 int mbedtls_md_hmac_reset( mbedtls_md_context_t *ctx ) {
-    // TODO call init with key=NULL
-/*
-    unsigned char buf[SHA256_DIGEST_LENGTH]; //ie 32
-    HMAC_Final(ctx->hmac_ctx, buf);
-*/
+    HMAC_Init(ctx->hmac_ctx, NULL, 0);
     return 0;
 }
 
 int mbedtls_md_hmac_update( mbedtls_md_context_t *ctx, const unsigned char *input, size_t ilen ) {
-/*
     HMAC_Update(ctx->hmac_ctx, input, ilen);
-*/
     return 0;
 }
 
 int mbedtls_md_hmac_finish( mbedtls_md_context_t *ctx, unsigned char *output) {
-/*
     HMAC_Final(ctx->hmac_ctx, output);
-*/
     return 0;
 }
 
 void mbedtls_md_free( mbedtls_md_context_t *ctx ) {
-/*
-    HMAC_cleanup(ctx->hmac_ctx);
-*/
-/*
     free(ctx->hmac_ctx);
-*/
 }
 
 
