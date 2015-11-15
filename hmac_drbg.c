@@ -77,27 +77,27 @@ int mbedtls_md_setup( mbedtls_md_context_t *ctx, const mbedtls_md_info_t *md_inf
 }
 
 int mbedtls_md_hmac_starts( mbedtls_md_context_t *ctx, const unsigned char *key, size_t keylen ) {
-    HMAC_Init(ctx->hmac_ctx, (unsigned char*) key, keylen);
+    HMAC_Init((HMAC_CTX *)ctx->hmac_ctx, (unsigned char*) key, keylen);
     return 0;
 }
 
 int mbedtls_md_hmac_reset( mbedtls_md_context_t *ctx ) {
-    HMAC_Init(ctx->hmac_ctx, NULL, SHA256_DIGEST_LENGTH);
+    HMAC_Init((HMAC_CTX *)ctx->hmac_ctx, NULL, SHA256_DIGEST_LENGTH);
     return 0;
 }
 
 int mbedtls_md_hmac_update( mbedtls_md_context_t *ctx, const unsigned char *input, size_t ilen ) {
-    HMAC_Update(ctx->hmac_ctx, input, ilen);
+    HMAC_Update((HMAC_CTX *)ctx->hmac_ctx, input, ilen);
     return 0;
 }
 
 int mbedtls_md_hmac_finish( mbedtls_md_context_t *ctx, unsigned char *output) {
-    HMAC_Final(ctx->hmac_ctx, output);
+    HMAC_Final((HMAC_CTX *)ctx->hmac_ctx, output);
     return 0;
 }
 
 void mbedtls_md_free( mbedtls_md_context_t *ctx ) {
-    free(ctx->hmac_ctx);
+    free((HMAC_CTX *)ctx->hmac_ctx);
 }
 
 
