@@ -36,7 +36,7 @@ DRBG_generate_function.vo: DRBG_generate_algorithm_result.vo DRBG_working_state.
 
 DRBG_generate_algorithm_result.vo: DRBG_working_state.vo
 
-DRBG_state_handle.vo: DRBG_state_handle.v
+DRBG_state_handle.vo: DRBG_working_state.vo
 
 DRBG_instantiate_function.vo: DRBG_state_handle.vo DRBG_working_state.vo DRBG_entropy_result.vo
 
