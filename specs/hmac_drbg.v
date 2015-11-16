@@ -301,7 +301,8 @@ Definition f_mbedtls_md_hmac_update := {|
            (Etempvar _ctx (tptr (Tstruct _mbedtls_md_context_t noattr)))
            (Tstruct _mbedtls_md_context_t noattr)) _hmac_ctx (tptr tvoid))
        (tptr (Tstruct _hmac_ctx_st noattr))) ::
-     (Etempvar _input (tptr tuchar)) :: (Etempvar _ilen tuint) :: nil))
+     (Ecast (Etempvar _input (tptr tuchar)) (tptr tvoid)) ::
+     (Etempvar _ilen tuint) :: nil))
   (Sreturn (Some (Econst_int (Int.repr 0) tint))))
 |}.
 

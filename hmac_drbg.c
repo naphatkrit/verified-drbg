@@ -87,7 +87,7 @@ int mbedtls_md_hmac_reset( mbedtls_md_context_t *ctx ) {
 }
 
 int mbedtls_md_hmac_update( mbedtls_md_context_t *ctx, const unsigned char *input, size_t ilen ) {
-    HMAC_Update((HMAC_CTX *)ctx->hmac_ctx, input, ilen);
+    HMAC_Update((HMAC_CTX *)ctx->hmac_ctx, (const void *) input, ilen);
     return 0;
 }
 
