@@ -15,7 +15,7 @@ shafiles:
 
 tests: HMAC256_DRBG_tests_pr_false.vo HMAC256_DRBG_tests_pr_true.vo HMAC256_DRBG_tests_no_reseed.vo
 
-verifications: verif_hmac_drbg_update.vo
+verifications: verif_hmac_drbg_update.vo verif_mocked_md.vo
 
 %.vo : %.v
 	$(COQC) $<
