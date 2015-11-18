@@ -106,15 +106,15 @@ Proof.
       temp 141%positive (Val.of_bool non_empty_additional);
       gvar sha._K256 kv
              )
-      SEP  (`(data_at_ Tsh (tarray tuchar 32) K);
-      `(data_at_ Tsh (tarray tuchar 1) sep);
-      `(data_at Tsh (tarray tuchar add_len)
+      SEP  ((data_at_ Tsh (tarray tuchar 32) K);
+      (data_at_ Tsh (tarray tuchar 1) sep);
+      (data_at Tsh (tarray tuchar add_len)
           (map Vint (map Int.repr contents)) additional);
-      `(data_at Tsh t_struct_hmac256drbg_context_st initial_state ctx);
-      `(hmac256drbg_relate initial_state_abs initial_state);
-      `(data_at Tsh t_struct_mbedtls_md_info info_contents
+      (data_at Tsh t_struct_hmac256drbg_context_st initial_state ctx);
+      (hmac256drbg_relate initial_state_abs initial_state);
+      (data_at Tsh t_struct_mbedtls_md_info info_contents
           (hmac256drbgstate_md_info_pointer initial_state));
-      `(K_vector kv)
+      (K_vector kv)
        )
     ).
   {
@@ -182,15 +182,15 @@ Proof.
       temp 142%positive (Vint (Int.repr rounds));
       gvar sha._K256 kv
              )
-      SEP  (`(data_at_ Tsh (tarray tuchar 32) K);
-      `(data_at_ Tsh (tarray tuchar 1) sep);
-      `(data_at Tsh (tarray tuchar add_len)
+      SEP  ((data_at_ Tsh (tarray tuchar 32) K);
+      (data_at_ Tsh (tarray tuchar 1) sep);
+      (data_at Tsh (tarray tuchar add_len)
           (map Vint (map Int.repr contents)) additional);
-      `(data_at Tsh t_struct_hmac256drbg_context_st initial_state ctx);
-      `(hmac256drbg_relate initial_state_abs initial_state);
-      `(data_at Tsh t_struct_mbedtls_md_info info_contents
+      (data_at Tsh t_struct_hmac256drbg_context_st initial_state ctx);
+      (hmac256drbg_relate initial_state_abs initial_state);
+      (data_at Tsh t_struct_mbedtls_md_info info_contents
                 (hmac256drbgstate_md_info_pointer initial_state)); 
-      `(K_vector kv)
+      (K_vector kv)
       )
   ).
   {
@@ -228,7 +228,7 @@ Proof.
        gvar sha._K256 kv
          )
       SEP  (
-        `(EX key: list Z, EX value: list Z, EX final_state_abs: hmac256drbgabs,
+        (EX key: list Z, EX value: list Z, EX final_state_abs: hmac256drbgabs,
           !!(
               (key, value) = HMAC_DRBG_update_round HMAC256 contents initial_key initial_value (Z.to_nat i)
               /\ key = hmac256drbgabs_key final_state_abs
@@ -240,10 +240,10 @@ Proof.
            (update_relate_final_state ctx final_state_abs info_contents)
          );
         (* `(update_relate_final_state ctx final_state_abs); *)
-        `(data_at_ Tsh (tarray tuchar 32) K);
-        `(data_at Tsh (tarray tuchar add_len) (map Vint (map Int.repr contents)) additional);
-        `(data_at_ Tsh (tarray tuchar 1) sep );
-        `(K_vector kv)
+        (data_at_ Tsh (tarray tuchar 32) K);
+        (data_at Tsh (tarray tuchar add_len) (map Vint (map Int.repr contents)) additional);
+        (data_at_ Tsh (tarray tuchar 1) sep );
+        (K_vector kv)
          )
   ). (* 2 *)
   {
@@ -313,7 +313,7 @@ Proof.
     }
     subst v.
       
-    unfold upd_Znth_in_list.
+    unfold upd_Znth.
     unfold sublist. simpl.
     assert (Hiuchar: Int.zero_ext 8 (Int.repr i) = Int.repr i).
     {
@@ -321,16 +321,12 @@ Proof.
       apply zero_ext_inrange;
       rewrite hmac_pure_lemmas.unsigned_repr_isbyte by (hnf; omega); simpl; omega.
     }
+    rewrite Hiuchar.
 
     (* mbedtls_md_hmac_update( &ctx->md_ctx, sep, 1 ); *)
     Time forward_call (key, field_address t_struct_hmac256drbg_context_st [StructField _md_ctx] ctx, md_ctx, sep, V, [i], kv) v. (* 62 *)
     {
       entailer!.
-    }
-    {
-      (* match up the SEP clauses with the pre-condition *)
-      rewrite Hiuchar. simpl. change (Zlength [i]) with 1.
-      cancel.
     }
     {
       (* prove the PROP clauses *)
@@ -352,28 +348,28 @@ Proof.
       temp _ctx ctx; lvar _K (tarray tuchar (Zlength V)) K;
       lvar _sep (tarray tuchar 1) sep; temp _additional additional;
       temp _add_len (Vint (Int.repr add_len)); gvar sha._K256 kv)
-      SEP  (`(md_relate (hABS key (V ++ [i] ++ contents)) md_ctx);
-      `(data_at Tsh t_struct_md_ctx_st md_ctx
+      SEP  ((md_relate (hABS key (V ++ [i] ++ contents)) md_ctx);
+      (data_at Tsh t_struct_md_ctx_st md_ctx
           (field_address t_struct_hmac256drbg_context_st
              [StructField _md_ctx] ctx));
-      `(data_at Tsh (tarray tuchar (Zlength [i])) [Vint (Int.repr i)] sep);
-      `(K_vector kv);
-      `(data_at Tsh (tarray tuchar (Zlength V)) (map Vint (map Int.repr V))
+      (data_at Tsh (tarray tuchar (Zlength [i])) [Vint (Int.repr i)] sep);
+      (K_vector kv);
+      (data_at Tsh (tarray tuchar (Zlength V)) (map Vint (map Int.repr V))
           (field_address t_struct_hmac256drbg_context_st [StructField _V] ctx));
-      `(field_at Tsh t_struct_hmac256drbg_context_st
+      (field_at Tsh t_struct_hmac256drbg_context_st
           [StructField _reseed_counter] (Vint (Int.repr reseed_counter)) ctx);
-      `(field_at Tsh t_struct_hmac256drbg_context_st
+      (field_at Tsh t_struct_hmac256drbg_context_st
           [StructField _entropy_len] (Vint (Int.repr entropy_len)) ctx);
-      `(field_at Tsh t_struct_hmac256drbg_context_st
+      (field_at Tsh t_struct_hmac256drbg_context_st
           [StructField _prediction_resistance] prediction_resistance' ctx);
-      `(field_at Tsh t_struct_hmac256drbg_context_st
+      (field_at Tsh t_struct_hmac256drbg_context_st
           [StructField _reseed_interval] (Vint (Int.repr reseed_interval))
           ctx);
-      `(field_at Tsh t_struct_hmac256drbg_context_st 
+      (field_at Tsh t_struct_hmac256drbg_context_st 
           [StructField _f_entropy] f_entropy' ctx);
-      `(field_at Tsh t_struct_hmac256drbg_context_st 
+      (field_at Tsh t_struct_hmac256drbg_context_st 
           [StructField _p_entropy] p_entropy' ctx);
-      `(data_at Tsh t_struct_mbedtls_md_info info_contents
+      (data_at Tsh t_struct_mbedtls_md_info info_contents
           (hmac256drbgstate_md_info_pointer
              (md_ctx,
              (map Vint (map Int.repr V),
@@ -381,8 +377,8 @@ Proof.
              (Vint (Int.repr entropy_len),
              (prediction_resistance',
              (Vint (Int.repr reseed_interval), (f_entropy', p_entropy')))))))));
-      `(data_at_ Tsh (tarray tuchar (Zlength V)) K);
-      `(data_at Tsh (tarray tuchar (Zlength contents))
+      (data_at_ Tsh (tarray tuchar (Zlength V)) K);
+      (data_at Tsh (tarray tuchar (Zlength contents))
           (map Vint (map Int.repr contents)) additional)) 
     ). (* 42 *)
     {
@@ -441,7 +437,7 @@ Proof.
     }
     assert_PROP (isptr K) as HisptrK by entailer!. 
     destruct K; try solve [inversion HisptrK].
-    replace_SEP 1 `(UNDER_SPEC.EMPTY (snd (snd md_ctx))) by (entailer!; apply UNDER_SPEC.FULL_EMPTY).
+    replace_SEP 1 (UNDER_SPEC.EMPTY (snd (snd md_ctx))) by (entailer!; apply UNDER_SPEC.FULL_EMPTY).
 
     (* mbedtls_md_hmac_starts( &ctx->md_ctx, K, md_len ); *)
     Time forward_call (field_address t_struct_hmac256drbg_context_st [StructField _md_ctx] ctx, md_ctx, (Zlength (HMAC256 (V ++ [i] ++ contents) key)), HMAC256 (V ++ [i] ++ contents) key, kv, b, i0) v. (* 75 *)
@@ -481,7 +477,7 @@ Proof.
     }
     rewrite H8.
     normalize.
-    replace_SEP 2 `(memory_block Tsh (sizeof cenv_cs (tarray tuchar 32)) (field_address t_struct_hmac256drbg_context_st [StructField _V] ctx)) by (entailer!; apply data_at_memory_block).
+    replace_SEP 2 (memory_block Tsh (sizeof cenv_cs (tarray tuchar 32)) (field_address t_struct_hmac256drbg_context_st [StructField _V] ctx)) by (entailer!; apply data_at_memory_block).
     simpl.
     (* mbedtls_md_hmac_finish( &ctx->md_ctx, ctx->V ); *)
     Time forward_call (V, HMAC256 (V ++ i::contents) key, field_address t_struct_hmac256drbg_context_st [StructField _md_ctx] ctx, md_ctx, field_address t_struct_hmac256drbg_context_st [StructField _V] ctx, Tsh, kv) new_V. (* 75 *)
