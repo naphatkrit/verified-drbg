@@ -13,6 +13,16 @@ Proof.
   forward.
 Qed.
 
+Lemma derive_helper4: forall A B C D P, A  |-- !!P -> (A * B * C * D) |-- !!P.
+Proof.
+  intros.
+  specialize (saturate_aux20 A (B * C * D) P True).
+  intros.
+  eapply derives_trans with (Q:=!!(P /\ True)).
+  do 2 rewrite <- sepcon_assoc in H0.
+  apply H0. assumption. entailer!. entailer.
+Qed.
+
 Lemma body_md_update: semax_body HmacDrbgVarSpecs HmacDrbgFunSpecs
        f_mbedtls_md_hmac_update md_update_spec.
 Proof.
@@ -22,18 +32,18 @@ Proof.
   name input' _input.
   name ilen' _ilen.
   
-  unfold md_relate; unfold convert_abs; unfold UNDER_SPEC.REP.
-  Intros internal_state_abs.
+  unfold md_relate; unfold convert_abs.
   destruct r as [r1 [r2 internal_r]].
+  simpl.
+  assert_PROP (isptr internal_r) as Hisptr_r.
+  {
+    entailer.
+    apply derive_helper4.
+    apply UNDER_SPEC.REP_isptr.
+  }
+
   (* HMAC_CTX * hmac_ctx = ctx->hmac_ctx; *)
   forward.
-  {
-    (* prove typechecking *)
-    assert_PROP (isptr internal_r) as Hisptr_r.
-    entailer!.
-    unfold field_compatible in H5; destruct H5; assumption.
-    entailer!.
-  }
 
   (* HMAC_Update(hmac_ctx, input, ilen); *)
   forward_call (key, internal_r, d, data, data1, kv).
@@ -42,9 +52,7 @@ Proof.
     destruct input'; try solve [inversion TC0]; reflexivity.
   }
   {
-    unfold funspec_hmacNK.OPENSSL_HMAC_ABSTRACT_SPEC.REP.
     unfold spec_sha.data_block.
-    Exists internal_state_abs.
     entailer!.
     (* TODO this should not be needed *)
     change
@@ -57,18 +65,11 @@ Proof.
 
   (* return 0 *)
   forward.
-  unfold funspec_hmacNK.OPENSSL_HMAC_ABSTRACT_SPEC.REP.
+
+  (* prove the post condition *)
   unfold spec_sha.data_block.
-  unfold md_relate; unfold convert_abs; unfold UNDER_SPEC.REP.
-  Intros final_internal_state_abs; Exists final_internal_state_abs.
+  unfold md_relate; unfold convert_abs.
   entailer!.
-  (* TODO this should not be needed *)
-  change
-      (@data_at spec_hmacNK.CompSpecs Tsh (tarray tuchar (@Zlength Z data1))
-                (@map int val Vint (@map Z int Int.repr data1)) input') with
-    (@data_at hmac_drbg_compspecs.CompSpecs Tsh (tarray tuchar (@Zlength Z data1))
-         (@map int val Vint (@map Z int Int.repr data1)) input').
-  cancel.
 Qed.
 
 Lemma body_md_final: semax_body HmacDrbgVarSpecs HmacDrbgFunSpecs
@@ -79,32 +80,24 @@ Proof.
   name ctx' _ctx.
   name output' _output.
   
-  unfold md_relate; unfold convert_abs; unfold UNDER_SPEC.REP.
-  Intros internal_state_abs.
+  unfold md_relate; unfold convert_abs.
   destruct r as [r1 [r2 internal_r]].
+  simpl.
+  assert_PROP (isptr internal_r) as Hisptr_r.
+  {
+    entailer.
+    apply derive_helper4.
+    apply UNDER_SPEC.REP_isptr.
+  }
   (* HMAC_CTX * hmac_ctx = ctx->hmac_ctx; *)
   forward.
-  {
-    (* prove typechecking *)
-    assert_PROP (isptr internal_r) as Hisptr_r.
-    entailer!.
-    unfold field_compatible in H2; destruct H2; assumption.
-    entailer!.
-  }
 
   (* HMAC_Final(hmac_ctx, output); *)
   forward_call (data, key, internal_r, md, shmd, kv).
-  {
-     unfold funspec_hmacNK.OPENSSL_HMAC_ABSTRACT_SPEC.REP.
-    unfold spec_sha.data_block.
-    Exists internal_state_abs.
-    entailer!.
-  }
 
   (* return 0 *)
-  forward.
   unfold spec_sha.data_block.
-  entailer!.
+  forward.
 Qed.
 
 Lemma body_md_reset: semax_body HmacDrbgVarSpecs HmacDrbgFunSpecs
@@ -114,30 +107,20 @@ Proof.
 
   name ctx' _ctx.
 
-  unfold UNDER_SPEC.FULL.
-  Intros internal_state_abs.
-  unfold spec_hmacNK.hmacstate_PreInitNull.
-  Intros internal_state v.
   destruct r as [r1 [r2 internal_r]].
   simpl.
+  assert_PROP (isptr internal_r) as Hisptr_r.
+  {
+    entailer.
+    replace (spec_sha.K_vector kv) with (emp * (spec_sha.K_vector kv)) by (apply emp_sepcon).
+    rewrite <- sepcon_assoc.
+    apply derive_helper4.
+    apply UNDER_SPEC.FULL_isptr.
+  }
   (* HMAC_CTX * hmac_ctx = ctx->hmac_ctx; *)
   forward.
-  {
-    (* prove typechecking *)
-    assert_PROP (isptr internal_r) as Hisptr_r.
-    entailer!.
-    unfold field_compatible in H2; destruct H2; assumption.
-    entailer!.
-  }
 
   forward_call (internal_r, 32, key, kv).
-  {
-    unfold funspec_hmacNK.OPENSSL_HMAC_ABSTRACT_SPEC.FULL.
-    Exists internal_state_abs.
-    unfold spec_hmacNK.hmacstate_PreInitNull.
-    Exists internal_state v.
-    entailer!.
-  }
   forward.
   unfold md_relate.
   unfold convert_abs.
