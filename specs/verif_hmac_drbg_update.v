@@ -150,9 +150,9 @@ Proof.
     repeat rewrite Zlength_map in *.
     destruct (eq_dec (Zlength contents) 0) as [zlength_eq | zlength_neq].
     assert (contra: False) by (apply H5; apply zlength_eq); inversion contra.
-    destruct additional'; try solve [inversion TC0]. 
+    destruct additional'; try solve [inversion TC1]. 
     {
-      inv TC0.
+      inv TC1.
       destruct (eq_dec (Vint Int.zero) nullval) as [additional_eq | additional_neq].
       auto.
       assert (contra: False) by (apply additional_neq; reflexivity); inversion contra.
