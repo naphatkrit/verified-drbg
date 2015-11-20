@@ -1,7 +1,6 @@
 Require Import Coqlib.
 Require Import List. Import ListNotations.
 Require Import Coq.Logic.FunctionalExtensionality.
-Require Import DRBG_entropy_result.
 
 Definition stream: Type := nat -> Z.
 
@@ -138,4 +137,4 @@ Inductive entropy_result :=
 | entropy_error: entropy_result
 | entropy_success: (list Z * stream) -> entropy_result.
 
-Definition get_bytes_entropy_result k s := entropy_success (get_bytes k s).
+Definition get_entropy (security_strength min_length max_length: Z) (prediction_resistance: bool) s := entropy_success (get_bytes (Z.to_nat min_length) s).
