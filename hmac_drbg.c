@@ -105,6 +105,8 @@ void mbedtls_md_free( mbedtls_md_context_t *ctx ) {
     free(hmac_ctx);
 }
 
+/* dummy entropy function */
+int get_entropy(unsigned char*, size_t);
 
 /* Implementation that should never be optimized out by the compiler */
 static void mbedtls_zeroize( void *v, size_t n ) {
@@ -203,7 +205,8 @@ int mbedtls_hmac_drbg_reseed( mbedtls_hmac_drbg_context *ctx,
     memset( seed, 0, MBEDTLS_HMAC_DRBG_MAX_SEED_INPUT );
 
     /* IV. Gather entropy_len bytes of entropy for the seed */
-    if( ctx->f_entropy( ctx->p_entropy, seed, ctx->entropy_len ) != 0 )
+    //if( ctx->f_entropy( ctx->p_entropy, seed, ctx->entropy_len ) != 0 )
+    if( get_entropy(seed, ctx->entropy_len ) != 0 )
         return( MBEDTLS_ERR_HMAC_DRBG_ENTROPY_SOURCE_FAILED );
 
     seedlen = ctx->entropy_len;
@@ -230,8 +233,8 @@ int mbedtls_hmac_drbg_reseed( mbedtls_hmac_drbg_context *ctx,
  */
 int mbedtls_hmac_drbg_seed( mbedtls_hmac_drbg_context *ctx,
                     const mbedtls_md_info_t * md_info,
-                    int (*f_entropy)(void *, unsigned char *, size_t),
-                    void *p_entropy,
+                    // int (*f_entropy)(void *, unsigned char *, size_t),
+                    // void *p_entropy,
                     const unsigned char *custom,
                     size_t len )
 {
@@ -251,8 +254,8 @@ int mbedtls_hmac_drbg_seed( mbedtls_hmac_drbg_context *ctx,
     mbedtls_md_hmac_starts( &ctx->md_ctx, ctx->V, md_size );
     memset( ctx->V, 0x01, md_size );
 
-    ctx->f_entropy = f_entropy;
-    ctx->p_entropy = p_entropy;
+    // ctx->f_entropy = f_entropy;
+    // ctx->p_entropy = p_entropy;
 
     ctx->reseed_interval = MBEDTLS_HMAC_DRBG_RESEED_INTERVAL;
 
@@ -329,7 +332,7 @@ int mbedtls_hmac_drbg_random_with_add( void *p_rng,
         return( MBEDTLS_ERR_HMAC_DRBG_INPUT_TOO_BIG );
 
     /* 1. (aka VII and IX) Check reseed counter and PR */
-    if( ctx->f_entropy != NULL && /* For no-reseeding instances */
+    if( /* ctx->f_entropy != NULL && */ /* For no-reseeding instances */
         ( ctx->prediction_resistance == MBEDTLS_HMAC_DRBG_PR_ON ||
           ctx->reseed_counter > ctx->reseed_interval ) )
     {

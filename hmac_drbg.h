@@ -88,8 +88,8 @@ typedef struct mbedtls_hmac_drbg_context
     int reseed_interval;        /*!< reseed interval   */
 
     /* Callbacks */
-    int (*f_entropy)(void *, unsigned char *, size_t); /*!< entropy function */
-    void *p_entropy;            /*!< context for the entropy function        */
+    // int (*f_entropy)(void *, unsigned char *, size_t); /*!< entropy function */
+    // void *p_entropy;            /*!< context for the entropy function        */
 
 #if defined(MBEDTLS_THREADING_C)
     mbedtls_threading_mutex_t mutex;
@@ -132,8 +132,8 @@ void mbedtls_hmac_drbg_init( mbedtls_hmac_drbg_context *ctx );
  */
 int mbedtls_hmac_drbg_seed( mbedtls_hmac_drbg_context *ctx,
                     const mbedtls_md_info_t * md_info,
-                    int (*f_entropy)(void *, unsigned char *, size_t),
-                    void *p_entropy,
+                    // int (*f_entropy)(void *, unsigned char *, size_t),
+                    // void *p_entropy,
                     const unsigned char *custom,
                     size_t len );
 
