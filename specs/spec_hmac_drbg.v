@@ -214,15 +214,14 @@ Definition hmac_drbg_update_spec :=
          (K_vector kv)
            )
     POST [ tvoid ]
-       EX key': list Z, EX value': list Z, EX final_state_abs:_,
+       EX final_state_abs:_,
        PROP (
-           (key', value') = HMAC256_DRBG_update contents (hmac256drbgabs_key initial_state_abs) (hmac256drbgabs_value initial_state_abs);
-           key' = hmac256drbgabs_key final_state_abs;
-           value' = hmac256drbgabs_value final_state_abs;
+           fst (HMAC256_DRBG_update contents (hmac256drbgabs_key initial_state_abs) (hmac256drbgabs_value initial_state_abs)) = hmac256drbgabs_key final_state_abs;
+           snd (HMAC256_DRBG_update contents (hmac256drbgabs_key initial_state_abs) (hmac256drbgabs_value initial_state_abs)) = hmac256drbgabs_value final_state_abs;
            hmac256drbgabs_metadata_same final_state_abs initial_state_abs;
-           Zlength value' = Z.of_nat SHA256.DigestLength;
+           Zlength (snd (HMAC256_DRBG_update contents (hmac256drbgabs_key initial_state_abs) (hmac256drbgabs_value initial_state_abs))) = Z.of_nat SHA256.DigestLength;
            add_len = Zlength contents;
-           Forall isbyteZ value';
+           Forall isbyteZ (snd (HMAC256_DRBG_update contents (hmac256drbgabs_key initial_state_abs) (hmac256drbgabs_value initial_state_abs)));
            Forall isbyteZ contents
          )
        LOCAL ()
@@ -231,7 +230,6 @@ Definition hmac_drbg_update_spec :=
          (data_at Tsh (tarray tuchar add_len) (map Vint (map Int.repr contents)) additional);
          (K_vector kv)
        ).
-(* TODO isbyte, data_block *)
 
 Definition HmacDrbgVarSpecs : varspecs := (sha._K256, tarray tuint 64)::nil.
 

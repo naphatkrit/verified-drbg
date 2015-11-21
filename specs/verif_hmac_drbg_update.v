@@ -91,7 +91,7 @@ Proof.
 
   (* info = md_ctx.md_info *)
   forward.
-  
+
   (* md_len = mbedtls_md_get_size( info ); *)
   forward_call tt md_len.
 
@@ -506,19 +506,23 @@ Proof.
   (* return *)
   forward.
 
-  remember (hmac256drbgabs_key final_state_abs) as key.
-  remember (hmac256drbgabs_value final_state_abs) as value.
   (* prove function post condition *)
-  Exists K sep key value final_state_abs.
+  Exists K sep final_state_abs.
   unfold HMAC256_DRBG_functional_prog.HMAC256_DRBG_update.
   rewrite HMAC_DRBG_update_concrete_correct.
   Time entailer!. (* 29 *)
   {
+    remember (hmac256drbgabs_key final_state_abs, hmac256drbgabs_value final_state_abs) as final_key_value_pair.
+    replace (hmac256drbgabs_key final_state_abs) with (fst final_key_value_pair) by (subst final_key_value_pair; reflexivity).
+    replace (hmac256drbgabs_value final_state_abs) with (snd final_key_value_pair) by (subst final_key_value_pair; reflexivity).
     rewrite H1.
     destruct contents; unfold HMAC_DRBG_update_concrete.
     {
       (* contents = [] *)
-      reflexivity.
+      simpl.
+      repeat split; try reflexivity.
+      apply hmac_common_lemmas.HMAC_Zlength.
+      apply hmac_common_lemmas.isbyte_hmac.
     }
     {
       repeat rewrite Zlength_map in *.
@@ -526,7 +530,10 @@ Proof.
       rewrite Zlength_cons, Zlength_correct in Zlength_eq; omega.
       destruct (eq_dec additional' nullval) as [additional_eq | additional_neq].
       subst. inversion H10 as [isptr_null H']; inversion isptr_null.
-      reflexivity.
+      simpl.
+      repeat split; try reflexivity.
+      apply hmac_common_lemmas.HMAC_Zlength.
+      apply hmac_common_lemmas.isbyte_hmac.
     }
   }
   unfold hmac_drbg_update_post.
