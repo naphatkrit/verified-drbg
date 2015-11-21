@@ -194,10 +194,13 @@ int mbedtls_hmac_drbg_reseed( mbedtls_hmac_drbg_context *ctx,
 {
     unsigned char seed[MBEDTLS_HMAC_DRBG_MAX_SEED_INPUT];
     size_t seedlen;
+	size_t entropy_len;
 
     /* III. Check input length */
+	entropy_len = ctx->entropy_len;
     if( len > MBEDTLS_HMAC_DRBG_MAX_INPUT ||
-        ctx->entropy_len + len > MBEDTLS_HMAC_DRBG_MAX_SEED_INPUT )
+        entropy_len + len > MBEDTLS_HMAC_DRBG_MAX_SEED_INPUT )
+        //ctx->entropy_len + len > MBEDTLS_HMAC_DRBG_MAX_SEED_INPUT )
     {
         return( MBEDTLS_ERR_HMAC_DRBG_INPUT_TOO_BIG );
     }
@@ -206,10 +209,10 @@ int mbedtls_hmac_drbg_reseed( mbedtls_hmac_drbg_context *ctx,
 
     /* IV. Gather entropy_len bytes of entropy for the seed */
     //if( ctx->f_entropy( ctx->p_entropy, seed, ctx->entropy_len ) != 0 )
-    if( get_entropy(seed, ctx->entropy_len ) != 0 )
+    if( get_entropy(seed, entropy_len ) != 0 )
         return( MBEDTLS_ERR_HMAC_DRBG_ENTROPY_SOURCE_FAILED );
 
-    seedlen = ctx->entropy_len;
+    seedlen = entropy_len;
 
     /* 1. Concatenate entropy and additional data if any */
     if( additional != NULL && len != 0 )
