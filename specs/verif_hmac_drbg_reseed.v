@@ -24,6 +24,25 @@ Proof.
   rewrite sublist_same; auto; omega.
 Qed.
 
+Lemma isbyteZ_app: forall A B, Forall general_lemmas.isbyteZ A -> Forall general_lemmas.isbyteZ B -> Forall general_lemmas.isbyteZ (A ++ B).
+Proof.
+  intros A B HA HB.
+  induction A as [|hdA tlA].
+  simpl; assumption.
+  simpl. inversion HA. constructor.
+  assumption.
+  apply IHtlA.
+  assumption.
+Qed.
+
+Check data_at_valid_ptr.
+Lemma data_at_weak_valid_ptr: forall (sh : Share.t) (t : type) (v : reptype t) (p : val),
+       sepalg.nonidentity sh ->
+       sizeof cenv_cs t >= 0 -> data_at sh t v p |-- weak_valid_pointer p.
+Proof.
+Admitted.
+Hint Resolve data_at_weak_valid_ptr: valid_pointer.
+
 Lemma data_at_complete_split:
   forall A B p sh,
     field_compatible (tarray tuchar (Zlength A + Zlength B)) [] p ->
@@ -369,7 +388,6 @@ Proof.
     (* TODO this should be easy with weakly valid pointer *)
     unfold denote_tc_comparable.
     assert_PROP (isptr additional) as Hisptr by entailer!. destruct additional; try solve [inversion Hisptr]; clear Hisptr.
-    unfold weak_valid_pointer.
     entailer!.
     admit.
   }
@@ -683,7 +701,9 @@ Proof.
       simpl; assumption.
     }
     {
-      admit (* TODO *). (* isbyteZ for entropy *)
+      apply isbyteZ_app.
+      apply entropy.get_bytes_helper_isbyteZ. assumption.
+      assumption.
     }
   }
   unfold hmac_drbg_update_post; normalize.
