@@ -134,7 +134,7 @@ Proof.
     rewrite zlt_false in Heqadd_len_too_high by assumption.
     forward.
     entailer!.
-    rewrite <- H8.
+    rewrite <- H9.
     simpl in H2. subst entropy_len.
     unfold Int.ltu.
     destruct (zlt (Int.unsigned (Int.repr 384))
@@ -197,7 +197,7 @@ Proof.
   }
   assert_PROP (0 <= Zlength contents <= 256) as HZlength.
   {
-    entailer!. destruct (zlt 256 (Zlength contents)); inv H7. omega.
+    entailer!. destruct (zlt 256 (Zlength contents)); inv H8. omega.
   }
 
   (* memset( seed, 0, MBEDTLS_HMAC_DRBG_MAX_SEED_INPUT ); *)
@@ -314,10 +314,10 @@ Proof.
   ).
   {
     (* != 0 case *)
-    clear - H7 H8.
-    unfold return_value_relate_entropy_result in H7.
-    unfold entropy.get_entropy in H7. rewrite H7 in H8.
-    inversion H8.
+    clear - H8 H9.
+    unfold return_value_relate_entropy_result in H8.
+    unfold entropy.get_entropy in H8. rewrite H8 in H9.
+    inversion H9.
     (* TODO this is a dummy case, since our entropy function never fails *)
   }
   {
@@ -376,9 +376,9 @@ Proof.
   {
     forward.
     entailer!.
-    rewrite <- H10.
+    rewrite <- H11.
     destruct (eq_dec additional' nullval) as [additional_pos | additional_neg].
-    subst additional'; assert (contra: False) by (apply H8; reflexivity); inversion contra.
+    subst additional'; assert (contra: False) by (apply H9; reflexivity); inversion contra.
     destruct (eq_dec (Zlength contents) 0) as [Zlength_pos | Zlength_neg].
     rewrite Zlength_pos. reflexivity.
     rewrite Int.eq_false. reflexivity.
@@ -509,11 +509,11 @@ Proof.
     forward_call ((Tsh, Tsh), (Vptr b (Int.add i (Int.repr entropy_len))), additional, Zlength contents, map Int.repr contents).
     {
       (* type checking *)
-      unfold lvar in H11.
+      unfold lvar in H12.
       unfold eval_var.
-      destruct (Map.get (ve_of rho) _seed); [|inversion H11].
+      destruct (Map.get (ve_of rho) _seed); [|inversion H12].
       destruct p.
-      destruct (eqb_type (tarray tuchar 384)); [|inversion H11].
+      destruct (eqb_type (tarray tuchar 384)); [|inversion H12].
       simpl. constructor.
     }
     {
@@ -562,7 +562,7 @@ Proof.
       apply data_at_complete_split_reverse.
       rewrite HlengthA, HlengthB.
       replace (Zlength contents + (352 - Zlength A)) with 352 by omega.
-      replace (384 - 32) with 352 in H9 by omega.
+      replace (384 - 32) with 352 in H10 by omega.
       assumption.
     }
     change (Vptr b (Int.add i (Int.repr entropy_len))) with (offset_val (Int.repr entropy_len) (Vptr b i)). remember (Vptr b i) as seed; clear Heqseed.
@@ -598,14 +598,184 @@ Proof.
     forward.
     assert_PROP (contents = []).
     {
-      destruct (eq_dec additional nullval). entailer!. destruct H16 as [contra H16']; inversion contra.
+      destruct (eq_dec additional nullval). entailer!. destruct H17 as [contra H17']; inversion contra.
       destruct (eq_dec add_len 0). entailer!. destruct contents; [reflexivity|]. rewrite Zlength_correct in e; simpl in e. inversion e.
-      rewrite H8 in Heqnon_empty_additional. inversion Heqnon_empty_additional.
+      rewrite H9 in Heqnon_empty_additional. inversion Heqnon_empty_additional.
     }
     subst contents.
     change (Zlength []) with 0.
     replace (384 - entropy_len - 0) with (384 - entropy_len) by omega.
     entailer!.
   }
-  admit (* TODO *).
+
+  replace_SEP 0 (
+    (data_at Tsh (tarray tuchar (entropy_len + Zlength contents)) (map Vint
+            (map Int.repr
+               (entropy.get_bytes_helper (Z.to_nat entropy_len) s
+                  (Z.to_nat entropy_len))) ++
+            map Vint (map Int.repr contents)) seed) *
+    (data_at Tsh (tarray tuchar (384 - (entropy_len + Zlength contents))) (list_repeat (Z.to_nat (384 - entropy_len - Zlength contents))
+            (Vint Int.zero)) (offset_val (Int.repr (entropy_len + Zlength contents)) seed))
+      ).
+  {
+    simpl in H2; subst entropy_len.
+    replace (384 - (32 + Zlength contents)) with (352 - Zlength contents) by omega.
+    replace (384 - 32) with 352 by omega.
+    rewrite app_assoc.
+    remember (map Vint
+            (map Int.repr
+               (entropy.get_bytes_helper (Z.to_nat 32) s
+                  (Z.to_nat 32))) ++
+            map Vint (map Int.repr contents)) as A.
+    remember (list_repeat (Z.to_nat (352 - Zlength contents)) (Vint Int.zero)) as B.
+    assert (HlengthA: Zlength A = 32 + Zlength contents).
+    {
+      subst A.
+      clear.
+      rewrite Zlength_app.
+      repeat rewrite Zlength_map.
+      rewrite entropy.get_bytes_helper_Zlength.
+      change (Z.of_nat (Z.to_nat 32)) with 32.
+      reflexivity.
+    }
+    assert (HlengthB: Zlength B = 352 - Zlength contents).
+    {
+      subst B.
+      rewrite Zlength_list_repeat by omega.
+      reflexivity.
+    }
+    clear HeqA HeqB.
+    replace 384 with ((32 + Zlength contents) + (352 - Zlength contents)) in * by omega.
+    rewrite <- HlengthA, <- HlengthB in *.
+    entailer!.
+    apply data_at_complete_split.
+    assumption.
+  }
+  normalize.
+
+  do 2 rewrite map_map.
+  rewrite <- map_app.
+  rewrite <- map_map.
+
+  forward_call ((entropy.get_bytes_helper (Z.to_nat entropy_len) s
+                  (Z.to_nat entropy_len) ++ contents), seed, (entropy_len + Zlength contents), ctx, (md_ctx',
+        (map Vint (map Int.repr V),
+        (Vint (Int.repr reseed_counter),
+        (Vint (Int.repr entropy_len),
+        (prediction_resistance', Vint (Int.repr reseed_interval)))))), (HMAC256DRBGabs md_ctx V reseed_counter entropy_len prediction_resistance reseed_interval), kv, info_contents).
+  {
+    (* prove the SEP clauses match up *)
+    unfold hmac256drbg_relate.
+    entailer!.
+  }
+  {
+    (* prove the PROP clauses *)
+    simpl in H2; subst entropy_len.
+    rewrite int_max_unsigned_eq.
+    repeat split; try omega.
+    {
+      rewrite Zlength_app.
+      rewrite entropy.get_bytes_helper_Zlength.
+      change (Z.of_nat (Z.to_nat 32)) with 32.
+      reflexivity.
+    }
+    {
+      simpl; assumption.
+    }
+    {
+      admit (* TODO *). (* isbyteZ for entropy *)
+    }
+  }
+  unfold hmac_drbg_update_post; normalize.
+  Intros final_state_abs final_state.
+
+  gather_SEP 3 5.
+  replace_SEP 0 (data_at Tsh (tarray tuchar 384) ((map Vint
+         (map Int.repr
+            (entropy.get_bytes_helper (Z.to_nat entropy_len) s
+               (Z.to_nat entropy_len)))) ++ (map Vint (map Int.repr contents) ++
+       list_repeat (Z.to_nat (384 - entropy_len - Zlength contents))
+         (Vint Int.zero))) seed).
+  {
+    simpl in H2;
+    subst entropy_len.
+    replace (384 - 32) with 352 by omega.
+    replace (384 - (32 + Zlength contents)) with (352 - Zlength contents) by omega.
+    rewrite app_assoc.
+    rewrite map_map.
+    rewrite map_app.
+    rewrite <- map_map.
+    replace (map (fun x : Z => Vint (Int.repr x)) contents) with (map Vint (map Int.repr contents)) by (rewrite map_map; auto).
+    remember (map Vint
+            (map Int.repr
+               (entropy.get_bytes_helper (Z.to_nat 32) s
+                  (Z.to_nat 32))) ++
+            map Vint (map Int.repr contents)) as A.
+    remember (list_repeat (Z.to_nat (352 - Zlength contents)) (Vint Int.zero)) as B.
+    assert (HlengthA: Zlength A = 32 + Zlength contents).
+    {
+      subst A.
+      clear.
+      rewrite Zlength_app.
+      repeat rewrite Zlength_map.
+      rewrite entropy.get_bytes_helper_Zlength.
+      change (Z.of_nat (Z.to_nat 32)) with 32.
+      reflexivity.
+    }
+    assert (HlengthB: Zlength B = 352 - Zlength contents).
+    {
+      subst B.
+      rewrite Zlength_list_repeat by omega.
+      reflexivity.
+    }
+    clear HeqA HeqB.
+    replace 384 with ((32 + Zlength contents) + (352 - Zlength contents)) in * by omega.
+    rewrite <- HlengthA, <- HlengthB in *.
+    entailer!.
+    apply data_at_complete_split_reverse.
+    assumption.
+  }
+  
+  (* ctx->reseed_counter = 1; *)
+  forward.
+
+  (* return 0 *)
+  forward.
+
+  destruct final_state_abs.
+  destruct final_state as [md_ctx0' [V0' [reseed_counter0' [entropy_len0' [prediction_resistance0' reseed_interval0']]]]].
+  unfold hmac_drbg_update_post.
+  Exists seed (HMAC256DRBGabs md_ctx0 V0 1 entropy_len0 prediction_resistance0 reseed_interval0) (Vint (Int.repr 0)) (md_ctx0',
+             (V0',
+             (Vone,
+             (entropy_len0', (prediction_resistance0', reseed_interval0'))))).
+  destruct md_ctx.
+  rewrite andb_negb_r.
+  assert (HcontentsLength: Zlength contents >? 256 = false).
+  {
+    rewrite Z.gtb_ltb.
+    apply Z.ltb_nlt.
+    omega.
+  }
+  rewrite HcontentsLength.
+  unfold HMAC_DRBG_update.HMAC_DRBG_update.
+  replace (map (fun x : Z => Vint (Int.repr x)) contents) with (map Vint (map Int.repr contents)) by (rewrite map_map; auto).
+  cancel.
+  unfold hmac256drbg_relate.
+  unfold get_stream_reseed_result.
+  entailer!.
+  simpl in H10; rewrite <- H10. (* rewrite V0 *)
+  unfold hmac256drbgabs_relate_reseed_result.
+  unfold HMAC256_DRBG_functional_prog.HMAC256_DRBG_update.
+  remember (entropy.get_bytes_helper (Z.to_nat entropy_len) s
+                         (Z.to_nat entropy_len) ++ contents) as seedContents.
+  destruct seedContents as [|hdSeed tlSeed].
+  {
+    (* this case can't be true. case: seedContents = [] *)
+    simpl in H2; subst entropy_len.
+    inversion HeqseedContents.
+  }
+  destruct md_ctx0.
+  destruct H11 as [H11' [H11'' [H11''' H11'''']]]. (* metadata *)
+  repeat split; auto.
 Qed.

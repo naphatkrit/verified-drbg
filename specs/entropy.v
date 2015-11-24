@@ -2,6 +2,8 @@ Require Import Coqlib.
 Require Import List. Import ListNotations.
 Require Import Coq.Logic.FunctionalExtensionality.
 
+Require Import sha.general_lemmas.
+
 Definition stream: Type := nat -> Z.
 
 Fixpoint get_bytes_helper (k: nat) (s: stream) (max: nat): (list Z) :=
@@ -31,6 +33,32 @@ Proof.
   extensionality i.
   rewrite plus_assoc.
   reflexivity.
+Qed.
+
+Lemma get_bytes_helper_length:
+  forall k s k', length (get_bytes_helper k s k') = k.
+Proof.
+  intros.
+  induction k; simpl; auto.
+Qed.
+
+Lemma get_bytes_helper_Zlength:
+  forall k s k', Zlength (get_bytes_helper k s k') = Z.of_nat k.
+Proof.
+  intros.
+  rewrite Zlength_correct.
+  rewrite get_bytes_helper_length.
+  reflexivity.
+Qed.
+
+Lemma get_bytes_helper_isbyteZ:
+  forall k s k', (forall n, isbyteZ (s n)) -> Forall isbyteZ (get_bytes_helper k s k').
+Proof.
+  intros k s k' H.
+  induction k. constructor.
+  simpl.
+  constructor; [apply H|].
+  assumption.  
 Qed.
 
 Fixpoint get_bytes_helper_abstract k (s: stream) :=

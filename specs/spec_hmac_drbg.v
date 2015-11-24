@@ -164,6 +164,9 @@ Definition hmac256drbgabs_update_value (a: hmac256drbgabs) (new_value: list Z): 
 Definition hmac256drbgabs_update_key (a: hmac256drbgabs) (new_key: list Z): hmac256drbgabs :=
   match a with HMAC256DRBGabs (hABS _ data) V reseed_counter entropy_len prediction_resistance reseed_interval => HMAC256DRBGabs (hABS new_key data) V reseed_counter entropy_len prediction_resistance reseed_interval end.
 
+Definition hmac256drbgabs_update_reseed_counter (a: hmac256drbgabs) (new_counter: Z): hmac256drbgabs :=
+  match a with HMAC256DRBGabs (hABS key data) V _ entropy_len prediction_resistance reseed_interval => HMAC256DRBGabs (hABS key data) V new_counter entropy_len prediction_resistance reseed_interval end.
+
 Definition hmac256drbgabs_empty_md (a: hmac256drbgabs): Prop :=
   match a with
     | HMAC256DRBGabs (hABS _ nil) _ _ _ _ _ => True
@@ -289,7 +292,8 @@ Definition hmac_drbg_reseed_spec :=
          add_len = Zlength contents;
          hmac256drbgabs_entropy_len initial_state_abs = 32;
          Forall isbyteZ (hmac256drbgabs_value initial_state_abs);
-         Forall isbyteZ contents
+         Forall isbyteZ contents;
+         (forall n, isbyteZ (s n))
        )
        LOCAL (temp _ctx ctx; temp _additional additional; temp _len (Vint (Int.repr add_len)); gvar sha._K256 kv)
        SEP (
