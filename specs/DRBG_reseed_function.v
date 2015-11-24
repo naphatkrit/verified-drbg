@@ -13,10 +13,10 @@ Definition DRBG_reseed_function (reseed_algorithm: DRBG_working_state -> list Z 
   let '(working_state, security_strength, prediction_resistance_flag) := state_handle in
   if prediction_resistance_request && (negb prediction_resistance_flag) then reseed_error entropy_stream
   else
-    if Z.gtb (Z.of_nat (length additional_input)) max_additional_input_length then reseed_error entropy_stream
+    if Z.gtb (Zlength additional_input) max_additional_input_length then reseed_error entropy_stream
     else
       match get_entropy security_strength min_entropy_length max_entropy_length prediction_resistance_flag entropy_stream with
-        | entropy_error => reseed_catastrophic_error entropy_stream
+        | entropy_error _ => reseed_catastrophic_error entropy_stream
         | entropy_success (entropy_input, entropy_stream) =>
           let new_working_state := reseed_algorithm working_state entropy_input additional_input in
           reseed_success (new_working_state, security_strength, prediction_resistance_flag) entropy_stream

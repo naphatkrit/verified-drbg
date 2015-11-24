@@ -134,7 +134,7 @@ Proof.
 Qed.
 
 Inductive entropy_result :=
-| entropy_error: entropy_result
+| entropy_error: stream -> entropy_result
 | entropy_success: (list Z * stream) -> entropy_result.
 
 Definition get_entropy (security_strength min_length max_length: Z) (prediction_resistance: bool) s := entropy_success (get_bytes (Z.to_nat min_length) s).

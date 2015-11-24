@@ -19,7 +19,7 @@ Definition DRBG_instantiate_function (instantiate_algorithm: list Z -> list Z ->
            else
              let security_strength := requested_instantiation_security_strength in (* TODO actually follow specs *)
              match get_entropy security_strength min_entropy_length max_entropy_length prediction_resistance_flag entropy_stream with
-               | entropy_error => instantiate_catastrophic_error entropy_stream
+               | entropy_error _ => instantiate_catastrophic_error entropy_stream
                | entropy_success (entropy_input, entropy_stream) =>
                  let nonce := get_nonce tt in
                  let initial_working_state := instantiate_algorithm entropy_input nonce personalization_string security_strength in
