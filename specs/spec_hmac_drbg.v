@@ -130,11 +130,11 @@ Definition md_final_spec :=
 Inductive hmac256drbgabs :=
   HMAC256DRBGabs: forall (md_ctx: HABS) (V: list Z) (reseed_counter entropy_len: Z) (prediction_resistance: bool) (reseed_interval: Z), hmac256drbgabs.
 
-Definition hmac256drbgstate: Type := (mdstate * (list val * (val * (val * (val * (val * (val * val)))))))%type.
+Definition hmac256drbgstate: Type := (mdstate * (list val * (val * (val * (val * val)))))%type.
 
 Definition hmac256drbg_relate (a: hmac256drbgabs) (r: hmac256drbgstate) : mpred :=
   match a with HMAC256DRBGabs md_ctx V reseed_counter entropy_len prediction_resistance reseed_interval =>
-               match r with (md_ctx', (V', (reseed_counter', (entropy_len', (prediction_resistance', (reseed_interval', (f_entropy', p_entropy'))))))) =>
+               match r with (md_ctx', (V', (reseed_counter', (entropy_len', (prediction_resistance', reseed_interval'))))) =>
                             md_full md_ctx md_ctx'
                                       && !! (
                                         map Vint (map Int.repr V) = V'
@@ -291,7 +291,7 @@ Definition hmac_drbg_reseed_spec :=
          Forall isbyteZ (hmac256drbgabs_value initial_state_abs);
          Forall isbyteZ contents
        )
-       LOCAL (temp _ctx ctx; temp _additional additional; temp _add_len (Vint (Int.repr add_len)); gvar sha._K256 kv)
+       LOCAL (temp _ctx ctx; temp _additional additional; temp _len (Vint (Int.repr add_len)); gvar sha._K256 kv)
        SEP (
          (data_at Tsh (tarray tuchar add_len) (map Vint (map Int.repr contents)) additional);
          (data_at Tsh t_struct_hmac256drbg_context_st initial_state ctx);
@@ -318,17 +318,59 @@ Definition hmac_drbg_reseed_spec :=
          (K_vector kv)
        ).
 
+Definition return_value_relate_entropy_result (r: entropy_result) (ret_value: val): Prop :=
+  match r with
+    | entropy_error _ => ret_value <> Vzero
+    | entropy_success _ => ret_value = Vzero
+  end.
+
+Definition get_stream_entropy_result (r: entropy_result): stream :=
+  match r with
+    | entropy_error s => s
+    | entropy_success (_, s) => s
+  end.
+
+Definition get_entropy_spec :=
+  DECLARE _get_entropy
+   WITH
+        sh: share,
+        s: stream,
+        buf: val, len: Z
+    PRE [ 1%positive OF (tptr tuchar), 2%positive OF tuint ]
+       PROP (
+         0 <= len <= Int.max_unsigned;
+         writable_share sh
+       )
+       LOCAL (temp 1%positive buf; temp 2%positive (Vint (Int.repr len)))
+       SEP (
+         memory_block sh len buf;
+         (Stream s)
+           )
+    POST [ tint ]
+       EX ret_value:_,
+       PROP (
+           return_value_relate_entropy_result (get_entropy 0 len len false s) ret_value
+         )
+       LOCAL (temp ret_temp ret_value)
+       SEP (
+         Stream (get_stream_entropy_result (get_entropy 0 len len false s));
+         data_at sh (tarray tuchar len) (map Vint (map Int.repr (fst (get_bytes (Z.to_nat len) s)))) buf
+       ).
+
+
 Definition HmacDrbgVarSpecs : varspecs := (sha._K256, tarray tuint 64)::nil.
 
 Definition HmacDrbgFunSpecs : funspecs := 
   hmac_drbg_update_spec::
+  hmac_drbg_reseed_spec::
+  get_entropy_spec::
   md_reset_spec::md_final_spec::md_update_spec::md_starts_spec::
   md_get_size_spec::
   OPENSSL_HMAC_ABSTRACT_SPEC.hmac_update_spec::
   OPENSSL_HMAC_ABSTRACT_SPEC.hmac_final_spec::
   OPENSSL_HMAC_ABSTRACT_SPEC.hmac_reset_spec::
   OPENSSL_HMAC_ABSTRACT_SPEC.hmac_starts_spec::
-  memcpy_spec_data_at:: memset_spec::
+  memcpy_spec:: memset_spec::
   sha256init_spec::sha256update_spec::sha256final_spec::(*SHA256_spec::*)
   HMAC_Init_spec:: HMAC_Update_spec::HMAC_Cleanup_spec::
   HMAC_Final_spec:: HMAC_spec ::nil.
