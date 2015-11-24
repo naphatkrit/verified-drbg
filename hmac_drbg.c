@@ -193,6 +193,7 @@ int mbedtls_hmac_drbg_reseed( mbedtls_hmac_drbg_context *ctx,
                       const unsigned char *additional, size_t len )
 {
     unsigned char seed[MBEDTLS_HMAC_DRBG_MAX_SEED_INPUT];
+	unsigned char *temp;
     size_t seedlen;
 	size_t entropy_len;
 
@@ -217,7 +218,8 @@ int mbedtls_hmac_drbg_reseed( mbedtls_hmac_drbg_context *ctx,
     /* 1. Concatenate entropy and additional data if any */
     if( additional != NULL && len != 0 )
     {
-        memcpy( seed + seedlen, additional, len );
+	temp = seed + seedlen;
+        memcpy( temp /* seed + seedlen */, additional, len );
         seedlen += len;
     }
 
