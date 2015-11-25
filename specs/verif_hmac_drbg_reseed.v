@@ -44,60 +44,35 @@ Admitted.
 Hint Resolve data_at_weak_valid_ptr: valid_pointer.
 
 Lemma data_at_complete_split:
-  forall A B p sh,
+  forall A B lengthA lengthB AB length p offset sh,
     field_compatible (tarray tuchar (Zlength A + Zlength B)) [] p ->
-    (data_at sh (tarray tuchar (Zlength A + Zlength B)) (A ++ B) p) |-- (data_at sh (tarray tuchar (Zlength A)) A p) * (data_at sh (tarray tuchar (Zlength B)) B (offset_val (Int.repr (Zlength A)) p)).
+    lengthA = Zlength A ->
+    lengthB = Zlength B ->
+    length = lengthA + lengthB ->
+    offset = lengthA ->
+    AB = A ++ B ->
+    (data_at sh (tarray tuchar length) (AB) p) = (data_at sh (tarray tuchar lengthA) A p) * (data_at sh (tarray tuchar lengthB) B (offset_val (Int.repr offset) p)).
 Proof.
   intros until sh.
   intros Hfield.
+  intros; subst.
   pose proof (Zlength_nonneg A).
   pose proof (Zlength_nonneg B).
-  assert_PROP (isptr p) as Hisptr by (destruct Hfield; entailer!).
+  assert (Hisptr: isptr p) by (destruct Hfield; assumption).
   destruct p; try solve [inversion Hisptr]; clear Hisptr.
   unfold tarray.
-  rewrite split2_data_at_Tarray_tuchar with (n1:=Zlength A); [|auto|rewrite Zlength_app; reflexivity].
-  Focus 2.  
-  pose proof (Zlength_nonneg A).
-  pose proof (Zlength_nonneg B).
-  split.
-  auto.
-  omega.
+  rewrite split2_data_at_Tarray_tuchar with (n1:=Zlength A); [|split; omega|rewrite Zlength_app; reflexivity].
   rewrite sublist_app_exact1, sublist_app_exact2.
   replace (Zlength A + Zlength B - Zlength A) with (Zlength B) by omega.
-  entailer!.
   replace (field_address0 (Tarray tuchar (Zlength A + Zlength B) noattr) [ArraySubsc (Zlength A)] (Vptr b i)) with (Vptr b (Int.add i (Int.repr (Zlength A)))).
-  apply derives_refl. 
+  reflexivity.
   rewrite field_address0_offset.
   simpl. replace (0 + 1 * Zlength A) with (Zlength A) by omega. reflexivity.
   destruct Hfield as [Hfield1 [Hfield2 [Hfield3 [Hfield4 [Hfield5 [Hfield6 [Hfield7 Hfield8]]]]]]].
   unfold field_compatible0; repeat split; try assumption; auto; omega.
 Qed.
 
-Lemma data_at_complete_split_reverse:
-  forall A B p sh,
-    field_compatible (tarray tuchar (Zlength A + Zlength B)) [] p ->
-    (data_at sh (tarray tuchar (Zlength A)) A p) * (data_at sh (tarray tuchar (Zlength B)) B (offset_val (Int.repr (Zlength A)) p)) |-- (data_at sh (tarray tuchar (Zlength A + Zlength B)) (A ++ B) p).
-Proof.
-  intros until sh.
-  intros Hfield.
-  pose proof (Zlength_nonneg A).
-  pose proof (Zlength_nonneg B).
-  assert_PROP (isptr p) as Hisptr by (destruct Hfield; entailer!).
-  destruct p; try solve [inversion Hisptr]; clear Hisptr.
-  unfold tarray.
-  rewrite split2_data_at_Tarray_tuchar with (n1:=Zlength A) (n:= Zlength A + Zlength B); [|split; omega|rewrite Zlength_app; reflexivity].
-  rewrite sublist_app_exact1, sublist_app_exact2.
-  replace (Zlength A + Zlength B - Zlength A) with (Zlength B) by omega.
-  entailer!.
-  replace (field_address0 (Tarray tuchar (Zlength A + Zlength B) noattr) [ArraySubsc (Zlength A)] (Vptr b i)) with (Vptr b (Int.add i (Int.repr (Zlength A)))).
-  apply derives_refl. 
-  rewrite field_address0_offset.
-  simpl. replace (0 + 1 * Zlength A) with (Zlength A) by omega. reflexivity.
-  destruct Hfield as [Hfield1 [Hfield2 [Hfield3 [Hfield4 [Hfield5 [Hfield6 [Hfield7 Hfield8]]]]]]].
-  unfold field_compatible0; repeat split; try assumption; auto; omega.
-Qed.
-
-Lemma body_hmac_drbg_update: semax_body HmacDrbgVarSpecs HmacDrbgFunSpecs 
+Lemma body_hmac_drbg_reseed: semax_body HmacDrbgVarSpecs HmacDrbgFunSpecs 
        f_mbedtls_hmac_drbg_reseed hmac_drbg_reseed_spec.
 Proof.
   start_function.
@@ -235,18 +210,8 @@ Proof.
   {
     simpl in H2.
     subst entropy_len.
-    replace (384 - 32) with 352 by omega.
-    change (list_repeat (Z.to_nat 384) (Vint Int.zero)) with ((list_repeat (Z.to_nat 32) (Vint Int.zero)) ++ (list_repeat (Z.to_nat 352) (Vint Int.zero))).
-    remember (list_repeat (Z.to_nat 32) (Vint Int.zero)) as A.
-    remember (list_repeat (Z.to_nat 352) (Vint Int.zero)) as B.                            
-    assert (HlengthA: Zlength A = 32) by (subst A; reflexivity).
-    assert (HlengthB: Zlength B = 352) by (subst B; reflexivity).
-    clear HeqA HeqB.
-    change 384 with (32 + 352) in *.
-    rewrite <- HlengthA, <- HlengthB in *.
     entailer!.
-    apply data_at_complete_split.
-    assumption.
+    apply derives_refl'; apply data_at_complete_split; auto.
   }
   normalize.
 
@@ -272,31 +237,12 @@ Proof.
                (entropy.get_bytes_helper (Z.to_nat entropy_len) s
                   (Z.to_nat entropy_len)))) ++ (list_repeat (Z.to_nat (384 - entropy_len)) (Vint Int.zero))) seed).
   {
-    unfold entropy.get_bytes.
-    change (fst
-               (entropy.get_bytes_helper (Z.to_nat entropy_len) s
-                  (Z.to_nat entropy_len),
-                fun i : nat => s (Z.to_nat entropy_len + i)%nat)) with
-    (entropy.get_bytes_helper (Z.to_nat entropy_len) s
-                  (Z.to_nat entropy_len)).
-    remember (map Vint
-            (map Int.repr
-               (entropy.get_bytes_helper (Z.to_nat entropy_len) s
-                  (Z.to_nat entropy_len)))) as A.
-    remember (list_repeat (Z.to_nat (384 - entropy_len)) (Vint Int.zero)) as B.    
     simpl in H2.
     subst entropy_len.
-    change (384 - 32) with 352.
-    assert_PROP (Zlength A = 32) as HlengthA by entailer!.
-    assert_PROP (Zlength B = 352) as HlengthB by entailer!.
-    clear HeqA HeqB.
-    change 384 with (32 + 352) in *.
-    rewrite <- HlengthA, <- HlengthB in *.
     entailer!.
-    apply data_at_complete_split_reverse.
-    assumption.
+    apply derives_refl'; symmetry; apply data_at_complete_split; auto.
   }
-  
+
   (* if( get_entropy(seed, entropy_len ) != 0 ) *)
   forward_if (
       PROP  (vret = Vzero)
@@ -472,21 +418,11 @@ Proof.
                   (Z.to_nat entropy_len)))) seed) * (data_at Tsh (tarray tuchar (384 - entropy_len))
          (list_repeat (Z.to_nat (384 - entropy_len)) (Vint Int.zero)) (offset_val (Int.repr entropy_len) seed))).
     {
+      entailer!.
       simpl in H2.
       subst entropy_len.
       replace (384 - 32) with 352 by omega.
-      remember (map Vint
-         (map Int.repr
-            (entropy.get_bytes_helper (Z.to_nat 32) s (Z.to_nat 32)))) as A.
-      remember (list_repeat (Z.to_nat 352) (Vint Int.zero)) as B.
-      assert (HlengthA: Zlength A = 32) by (subst A; reflexivity).
-      assert (HlengthB: Zlength B = 352) by (subst B; reflexivity).
-      clear HeqA HeqB.
-      change 384 with (32 + 352) in *.
-      rewrite <- HlengthA, <- HlengthB in *.
-      entailer!.
-      apply data_at_complete_split.
-      assumption.
+      apply derives_refl'; apply data_at_complete_split; auto.
     }
     normalize.
     assert_PROP (isptr seed) as Hisptr by entailer!. destruct seed; try solve [inversion Hisptr]; change (offset_val (Int.repr entropy_len) (Vptr b i)) with (Vptr b (Int.add i (Int.repr entropy_len))).
@@ -496,30 +432,24 @@ Proof.
          (list_repeat (Z.to_nat (Zlength contents)) (Vint Int.zero)) (Vptr b (Int.add i (Int.repr entropy_len)))) * (data_at Tsh (tarray tuchar (384 - entropy_len - Zlength contents))
          (list_repeat (Z.to_nat (384 - entropy_len - Zlength contents)) (Vint Int.zero)) (offset_val (Int.repr (Zlength contents)) (Vptr b (Int.add i (Int.repr entropy_len)))))).
     {
-      simpl in H2. subst entropy_len.
+      simpl in H2; subst entropy_len.
       replace (384 - 32) with 352 by omega.
-      assert (Hsplit: list_repeat (Z.to_nat 352) (Vint Int.zero) = list_repeat (Z.to_nat (Zlength contents)) (Vint Int.zero) ++ list_repeat (Z.to_nat (352 - (Zlength contents))) (Vint Int.zero)).
+      remember (Vptr b (Int.add i (Int.repr 32))) as seed'.
+      clear Heqseed'.
+      entailer!.
+      replace (length contents) with (Z.to_nat (Zlength contents)) by
+        (rewrite Zlength_correct; apply Nat2Z.id).
+      apply derives_refl'; apply data_at_complete_split; repeat rewrite Zlength_list_repeat; try omega; auto.
+      {
+        replace (Zlength contents + (352 - Zlength contents)) with (384 - 32) by omega.
+        assumption.
+      }
       {
         rewrite list_repeat_app.
         rewrite <- Z2Nat.inj_add; try omega.
         replace (Zlength contents + (352 - Zlength contents)) with 352 by omega.
         reflexivity.
       }
-      rewrite Hsplit.
-      remember (list_repeat (Z.to_nat (Zlength contents)) (Vint Int.zero)) as A.
-      remember (list_repeat (Z.to_nat (352 - Zlength contents)) (Vint Int.zero)) as B.
-      assert (HlengthA: Zlength A = Zlength contents) by (subst; apply sublist.Zlength_list_repeat; apply Zlength_nonneg).
-      assert (HlengthB: Zlength B = 352 - Zlength contents) by (
-      subst; apply sublist.Zlength_list_repeat; omega).
-      clear HeqA HeqB.
-      replace 352 with (Zlength contents + (352 - Zlength contents)) by omega.
-      rewrite <- HlengthA, <- HlengthB in *.
-      replace (Zlength A + Zlength B - Zlength A) with (Zlength B) by omega.
-      remember (Vptr b (Int.add i (Int.repr 32))) as seed'.
-      clear Heqseed'.
-      entailer!.
-      apply data_at_complete_split.
-      assumption.
     }
     normalize.
     replace_SEP 0 (memory_block Tsh (Zlength contents) (Vptr b (Int.add i (Int.repr entropy_len)))).
@@ -565,22 +495,17 @@ Proof.
     {
       simpl in H2; subst entropy_len.
       replace (384 - 32) with 352 by omega.
-      remember (map Vint (map Int.repr contents)) as A.
-      remember (list_repeat (Z.to_nat (352 - Zlength contents)) (Vint Int.zero)) as B.
-      assert (HlengthA: Zlength A = Zlength contents) by (subst; repeat rewrite Zlength_map; reflexivity).
-      assert (HlengthB: Zlength B = 352 - Zlength contents) by (
-      subst; apply sublist.Zlength_list_repeat; omega).
-      clear HeqA HeqB.
-      replace 352 with (Zlength contents + (352 - Zlength contents)) by omega.
-      rewrite <- HlengthA, <- HlengthB in *.
-      replace (Zlength A + Zlength B - Zlength A) with (Zlength B) by omega.
       remember (Vptr b (Int.add i (Int.repr 32))) as seed'.
       clear Heqseed'.
       entailer!.
-      apply data_at_complete_split_reverse.
-      rewrite HlengthA, HlengthB.
-      replace (Zlength contents + (352 - Zlength A)) with 352 by omega.
-      replace (384 - 32) with 352 in H10 by omega.
+      apply derives_refl'; symmetry; apply data_at_complete_split; repeat rewrite Zlength_list_repeat; try omega; auto.
+      change ((fix map (l : list int) : list val :=
+               match l with
+               | [] => []
+               | a :: t => Vint a :: map t
+               end) (map Int.repr contents)) with (map Vint (map Int.repr contents)).
+      repeat rewrite Zlength_map.
+      replace (Zlength contents + (352 - Zlength contents)) with 352 by omega.
       assumption.
     }
     change (Vptr b (Int.add i (Int.repr entropy_len))) with (offset_val (Int.repr entropy_len) (Vptr b i)). remember (Vptr b i) as seed; clear Heqseed.
@@ -595,19 +520,28 @@ Proof.
       simpl in H2;
       subst entropy_len.
       replace (384 - 32) with 352 by omega.
-      remember (map Vint
-         (map Int.repr
-            (entropy.get_bytes_helper (Z.to_nat 32) s (Z.to_nat 32)))) as A.
-      remember (map Vint (map Int.repr contents) ++
-       list_repeat (Z.to_nat (352 - Zlength contents))
-         (Vint Int.zero)) as B.
-      assert (HlengthA: Zlength A = 32) by (subst A; reflexivity).
-      assert_PROP (Zlength B = 352) as HlengthB by entailer!.
-      clear HeqA HeqB.
-      change 384 with (32 + 352) in *.
-      rewrite <- HlengthA, <- HlengthB in *.
       entailer!.
-      apply data_at_complete_split_reverse.
+      apply derives_refl'; symmetry; apply data_at_complete_split; repeat rewrite Zlength_list_repeat; try omega; auto.
+      rewrite Zlength_app; rewrite Zlength_list_repeat; repeat rewrite Zlength_map; try omega.
+      change (Zlength
+           [Vint (Int.repr (s 0%nat)); Vint (Int.repr (s 1%nat));
+           Vint (Int.repr (s 2%nat)); Vint (Int.repr (s 3%nat));
+           Vint (Int.repr (s 4%nat)); Vint (Int.repr (s 5%nat));
+           Vint (Int.repr (s 6%nat)); Vint (Int.repr (s 7%nat));
+           Vint (Int.repr (s 8%nat)); Vint (Int.repr (s 9%nat));
+           Vint (Int.repr (s 10%nat)); Vint (Int.repr (s 11%nat));
+           Vint (Int.repr (s 12%nat)); Vint (Int.repr (s 13%nat));
+           Vint (Int.repr (s 14%nat)); Vint (Int.repr (s 15%nat));
+           Vint (Int.repr (s 16%nat)); Vint (Int.repr (s 17%nat));
+           Vint (Int.repr (s 18%nat)); Vint (Int.repr (s 19%nat));
+           Vint (Int.repr (s 20%nat)); Vint (Int.repr (s 21%nat));
+           Vint (Int.repr (s 22%nat)); Vint (Int.repr (s 23%nat));
+           Vint (Int.repr (s 24%nat)); Vint (Int.repr (s 25%nat));
+           Vint (Int.repr (s 26%nat)); Vint (Int.repr (s 27%nat));
+           Vint (Int.repr (s 28%nat)); Vint (Int.repr (s 29%nat));
+           Vint (Int.repr (s 30%nat)); Vint (Int.repr (s 31%nat))]) with 32.
+      replace (32 +
+         (Zlength contents + (352 - Zlength contents))) with 384 by omega.
       assumption.
     }
     entailer!.
@@ -641,32 +575,12 @@ Proof.
     replace (384 - 32) with 352 by omega.
     rewrite app_assoc.
     remember (map Vint
-            (map Int.repr
-               (entropy.get_bytes_helper (Z.to_nat 32) s
-                  (Z.to_nat 32))) ++
-            map Vint (map Int.repr contents)) as A.
-    remember (list_repeat (Z.to_nat (352 - Zlength contents)) (Vint Int.zero)) as B.
-    assert (HlengthA: Zlength A = 32 + Zlength contents).
-    {
-      subst A.
-      clear.
-      rewrite Zlength_app.
-      repeat rewrite Zlength_map.
-      rewrite entropy.get_bytes_helper_Zlength.
-      change (Z.of_nat (Z.to_nat 32)) with 32.
-      reflexivity.
-    }
-    assert (HlengthB: Zlength B = 352 - Zlength contents).
-    {
-      subst B.
-      rewrite Zlength_list_repeat by omega.
-      reflexivity.
-    }
-    clear HeqA HeqB.
-    replace 384 with ((32 + Zlength contents) + (352 - Zlength contents)) in * by omega.
-    rewrite <- HlengthA, <- HlengthB in *.
+          (map Int.repr
+             (entropy.get_bytes_helper (Z.to_nat 32) s (Z.to_nat 32)))) as A.
     entailer!.
-    apply data_at_complete_split.
+    apply derives_refl'; apply data_at_complete_split; repeat rewrite Zlength_list_repeat; try omega; auto; rewrite Zlength_app; repeat rewrite Zlength_map; rewrite entropy.get_bytes_helper_Zlength; auto.
+    rewrite Z2Nat.id; try omega.
+    replace (32 + Zlength contents + (352 - Zlength contents)) with 384 by omega.
     assumption.
   }
   normalize.
@@ -726,33 +640,11 @@ Proof.
     rewrite map_app.
     rewrite <- map_map.
     replace (map (fun x : Z => Vint (Int.repr x)) contents) with (map Vint (map Int.repr contents)) by (rewrite map_map; auto).
-    remember (map Vint
-            (map Int.repr
-               (entropy.get_bytes_helper (Z.to_nat 32) s
-                  (Z.to_nat 32))) ++
-            map Vint (map Int.repr contents)) as A.
-    remember (list_repeat (Z.to_nat (352 - Zlength contents)) (Vint Int.zero)) as B.
-    assert (HlengthA: Zlength A = 32 + Zlength contents).
-    {
-      subst A.
-      clear.
-      rewrite Zlength_app.
-      repeat rewrite Zlength_map.
-      rewrite entropy.get_bytes_helper_Zlength.
-      change (Z.of_nat (Z.to_nat 32)) with 32.
-      reflexivity.
-    }
-    assert (HlengthB: Zlength B = 352 - Zlength contents).
-    {
-      subst B.
-      rewrite Zlength_list_repeat by omega.
-      reflexivity.
-    }
-    clear HeqA HeqB.
-    replace 384 with ((32 + Zlength contents) + (352 - Zlength contents)) in * by omega.
-    rewrite <- HlengthA, <- HlengthB in *.
+    remember (entropy.get_bytes_helper (Z.to_nat 32) s (Z.to_nat 32)) as A.
     entailer!.
-    apply data_at_complete_split_reverse.
+    apply derives_refl'; symmetry; apply data_at_complete_split; repeat rewrite Zlength_list_repeat; try omega; auto; rewrite Zlength_app; repeat rewrite Zlength_map; rewrite entropy.get_bytes_helper_Zlength; auto.
+    rewrite Z2Nat.id; try omega.
+    replace (32 + Zlength contents + (352 - Zlength contents)) with 384 by omega.
     assumption.
   }
   
