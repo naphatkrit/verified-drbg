@@ -14,13 +14,16 @@ Inductive error_code: Type :=
 | generic_error
 .
 
-Inductive result {X: Type}: Type :=
+Inductive result X: Type: Type :=
 | success: X -> stream -> @result X
 | error : error_code -> stream -> @result X
 .
 
-Parameter get_bytes: nat -> stream -> @result (list Z).
-Parameter get_bits: nat -> stream -> @result (list bool).
+Arguments success {X} _ _. 
+Arguments error {X} _ _. 
+
+Parameter get_bytes: nat -> stream -> result (list Z).
+Parameter get_bits: nat -> stream -> result (list bool).
 
 Parameter get_bits_length:
   forall k s b s',
@@ -45,12 +48,15 @@ Inductive error_code: Type :=
 | generic_error
 .
 
-Inductive result {X: Type}: Type :=
+Inductive result X: Type: Type :=
 | success: X -> stream -> @result X
 | error : error_code -> stream -> @result X
 .
 
-Fixpoint get_bits (k: nat) (s: stream): @result (list bool) :=
+Arguments success {X} _ _. 
+Arguments error {X} _ _. 
+
+Fixpoint get_bits (k: nat) (s: stream): result (list bool) :=
   match k with
     | O => success [] s
     | S k' => match get_bits k' s with
@@ -66,6 +72,7 @@ Fixpoint get_bits (k: nat) (s: stream): @result (list bool) :=
                   end
               end
   end.
+
 Example get_bits_test1:
   forall bits s output s',
     bits = [Some false; Some true; Some false; Some false] ->
@@ -256,7 +263,7 @@ Proof.
   rewrite IHk' with (s':=s0) (s:=s); auto.
 Qed.
 
-Definition get_bytes (k: nat) (s: stream): @result (list Z) :=
+Definition get_bytes (k: nat) (s: stream): result (list Z) :=
   match get_bits (8 * k)%nat s with
     | success bits s' => success (bitsToBytes bits) s'
     | error e s' => error e s'

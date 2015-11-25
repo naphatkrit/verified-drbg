@@ -10,8 +10,12 @@ Require Import DRBG_generate_function.
 Require Import DRBG_instantiate_function.
 Require Import DRBG_reseed_function.
 
-Definition stream_dummy (result: string) (n: nat) : Z :=
-  nth n (hexstring_to_Zlist result) 0.
+Require Import sha.ByteBitRelations.
+
+Definition stream_dummy (result: string) (n: nat) : option bool :=
+  let hex := bytesToBits (hexstring_to_Zlist result) in
+  if nth_ok n hex false then Some (nth n hex false)
+  else None.
 
 Definition get_nonce_dummy (result: string) (_: unit) := hexstring_to_Zlist result.
 
@@ -26,8 +30,8 @@ Fixpoint DRBG_generate_check (state_handle: DRBG_state_handle) (internal_states:
       let additional_input := hexstring_to_Zlist additional_input in
       let returned_bits := hexstring_to_Zlist returned_bits in
       match test_HMAC256_DRBG_generate_function (stream_dummy entropy_input_reseed) state_handle 128 256 true additional_input with
-        | generate_success returned_bits' ((value', key', _), _, _) _ => listZ_eq value value' = true /\ listZ_eq key key' = true /\ listZ_eq returned_bits returned_bits' = true
-        | generate_error _ => False
+        | ENTROPY.success (returned_bits', ((value', key', _), _, _)) _ => listZ_eq value value' = true /\ listZ_eq key key' = true /\ listZ_eq returned_bits returned_bits' = true
+        | ENTROPY.error _ _ => False
       end
     | (key, v, additional_input, entropy_input_reseed)::tl =>
       let test_HMAC256_DRBG_reseed_function := HMAC256_DRBG_reseed_function 32 32 256 in
@@ -36,8 +40,8 @@ Fixpoint DRBG_generate_check (state_handle: DRBG_state_handle) (internal_states:
       let value := hexstring_to_Zlist v in
       let additional_input := hexstring_to_Zlist additional_input in
       match test_HMAC256_DRBG_generate_function (stream_dummy entropy_input_reseed) state_handle 128 256 true additional_input with
-        | generate_success _ ((value', key', x), y, z) _ => listZ_eq value value' = true /\ listZ_eq key key' = true /\ DRBG_generate_check ((value', key', x), y, z) tl returned_bits
-        | generate_error _ => False
+        | ENTROPY.success (_, ((value', key', x), y, z)) _ => listZ_eq value value' = true /\ listZ_eq key key' = true /\ DRBG_generate_check ((value', key', x), y, z) tl returned_bits
+        | ENTROPY.error _ _ => False
       end
   end.
 
@@ -46,7 +50,7 @@ Definition DRBG_check (entropy_input nonce key value personalization_string: str
   let value := hexstring_to_Zlist value in
   let personalization_string := hexstring_to_Zlist personalization_string in
   match HMAC256_DRBG_instantiate_function 32 32 (get_nonce_dummy nonce) 256 256 true (stream_dummy entropy_input) 256 true personalization_string with
-    | instantiate_success ((value', key', x), y, z) _ => listZ_eq value value' = true /\ listZ_eq key key' = true /\ DRBG_generate_check ((value', key', x), y, z) internal_states returned_bits
+    | ENTROPY.success ((value', key', x), y, z) _ => listZ_eq value value' = true /\ listZ_eq key key' = true /\ DRBG_generate_check ((value', key', x), y, z) internal_states returned_bits
     | _ => False
   end.
 

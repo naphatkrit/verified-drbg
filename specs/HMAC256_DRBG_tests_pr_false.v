@@ -10,12 +10,16 @@ Require Import DRBG_generate_function.
 Require Import DRBG_instantiate_function.
 Require Import DRBG_reseed_function.
 
-Definition stream_dummy (result: string) (n: nat) : Z :=
-  nth n (hexstring_to_Zlist result) 0.
+Require Import sha.ByteBitRelations.
+
+Definition stream_dummy (result: string) (n: nat) : option bool :=
+  let hex := bytesToBits (hexstring_to_Zlist result) in
+  if nth_ok n hex false then Some (nth n hex false)
+  else None.
 
 Definition get_nonce_dummy (result: string) (_: unit) := hexstring_to_Zlist result.
 
-Definition noop_reseed_function (s: stream) (x: DRBG_state_handle) (_: bool) (_: list Z) := reseed_success x s.
+Definition noop_reseed_function (s: ENTROPY.stream) (x: DRBG_state_handle) (_: bool) (_: list Z) := ENTROPY.success x s.
 
 Fixpoint DRBG_generate_check (state_handle: DRBG_state_handle) (internal_states: list (string * string * string)) (returned_bits: string) :=
   let test_HMAC256_DRBG_generate_function := HMAC256_DRBG_generate_function noop_reseed_function 128 128 in
@@ -27,16 +31,16 @@ Fixpoint DRBG_generate_check (state_handle: DRBG_state_handle) (internal_states:
       let additional_input := hexstring_to_Zlist additional_input in
       let returned_bits := hexstring_to_Zlist returned_bits in
       match test_HMAC256_DRBG_generate_function (stream_dummy "") state_handle 128 256 false additional_input with
-        | generate_success returned_bits' ((value', key', _), _, _) _ => listZ_eq value value' = true /\ listZ_eq key key' = true /\ listZ_eq returned_bits returned_bits' = true
-        | generate_error _ => False
+        | ENTROPY.success (returned_bits', ((value', key', _), _, _)) _ => listZ_eq value value' = true /\ listZ_eq key key' = true /\ listZ_eq returned_bits returned_bits' = true
+        | ENTROPY.error _ _ => False
       end
     | (key, v, additional_input)::tl =>
       let key := hexstring_to_Zlist key in
       let value := hexstring_to_Zlist v in
       let additional_input := hexstring_to_Zlist additional_input in
       match test_HMAC256_DRBG_generate_function (stream_dummy "") state_handle 128 256 false additional_input with
-        | generate_success _ ((value', key', x), y, z) _ => listZ_eq value value' = true /\ listZ_eq key key' = true /\ DRBG_generate_check ((value', key', x), y, z) tl returned_bits
-        | generate_error _ => False
+        | ENTROPY.success (_, ((value', key', x), y, z)) _ => listZ_eq value value' = true /\ listZ_eq key key' = true /\ DRBG_generate_check ((value', key', x), y, z) tl returned_bits
+        | ENTROPY.error _ _ => False
       end
   end.
 
@@ -44,7 +48,7 @@ Definition DRBG_reseed_check (state_handle: DRBG_state_handle) (entropy_input_re
   let key := hexstring_to_Zlist key_reseed in
   let value := hexstring_to_Zlist value_reseed in
   match HMAC256_DRBG_reseed_function 32 32 256 (stream_dummy entropy_input_reseed) state_handle false (hexstring_to_Zlist additional_input_reseed) with
-    | reseed_success ((value', key', x), y, z) _ => listZ_eq value value' = true /\ listZ_eq key key' = true /\ DRBG_generate_check ((value', key', x), y, z) internal_states returned_bits
+    | ENTROPY.success ((value', key', x), y, z) _ => listZ_eq value value' = true /\ listZ_eq key key' = true /\ DRBG_generate_check ((value', key', x), y, z) internal_states returned_bits
     | _ => False
   end.
 
@@ -53,7 +57,7 @@ Definition DRBG_check (entropy_input nonce key value personalization_string: str
   let value := hexstring_to_Zlist value in
   let personalization_string := hexstring_to_Zlist personalization_string in
   match HMAC256_DRBG_instantiate_function 32 32 (get_nonce_dummy nonce) 256 256 false (stream_dummy entropy_input) 256 false personalization_string with
-    | instantiate_success ((value', key', x), y, z) _ => listZ_eq value value' = true /\ listZ_eq key key' = true /\ DRBG_reseed_check ((value', key', x), y, z) entropy_input_reseed additional_input_reseed key_reseed value_reseed internal_states returned_bits
+    | ENTROPY.success ((value', key', x), y, z) _ => listZ_eq value value' = true /\ listZ_eq key key' = true /\ DRBG_reseed_check ((value', key', x), y, z) entropy_input_reseed additional_input_reseed key_reseed value_reseed internal_states returned_bits
     | _ => False
   end.
 
