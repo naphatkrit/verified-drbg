@@ -6,6 +6,7 @@ Require Import hmac_drbg.
 Require Import HMAC256_DRBG_functional_prog.
 Require Import entropy.
 Require Import DRBG_reseed_function.
+Require Import DRBG_state_handle.
 Require Import sha.spec_hmacNK.
 Require Import sha.funspec_hmacNK.
 Require Import sha.general_lemmas.
@@ -239,16 +240,15 @@ Definition hmac_drbg_update_spec :=
          (K_vector kv)
        ).
 
-Definition mbedtls_HMAC256_DRBG_reseed_function (entropy_stream: stream) (a:hmac256drbgabs) (additional_input: list Z): reseed_result :=
+Definition mbedtls_HMAC256_DRBG_reseed_function (entropy_stream: ENTROPY.stream) (a:hmac256drbgabs) (additional_input: list Z): ENTROPY.result DRBG_state_handle :=
   match a with HMAC256DRBGabs (hABS key _) V reseed_counter entropy_len prediction_resistance reseed_interval =>
                HMAC256_DRBG_reseed_function entropy_len entropy_len 256 entropy_stream ((V, key, reseed_counter), 256 (* security strength, not used *), prediction_resistance) prediction_resistance additional_input
   end.
 
-Definition hmac256drbgabs_relate_reseed_result (result: reseed_result) (initial_state_abs final_state_abs: hmac256drbgabs): Prop :=
+Definition hmac256drbgabs_relate_reseed_result (result: ENTROPY.result DRBG_state_handle) (initial_state_abs final_state_abs: hmac256drbgabs): Prop :=
   match result with
-    | reseed_error _ => initial_state_abs = final_state_abs
-    | reseed_catastrophic_error _ => initial_state_abs = final_state_abs
-    | reseed_success ((V', key', reseed_counter'), _, pr') _ =>
+    | ENTROPY.error _ _ => initial_state_abs = final_state_abs
+    | ENTROPY.success ((V', key', reseed_counter'), _, pr') _ =>
       match initial_state_abs with HMAC256DRBGabs _ _ _ entropy_len' _ reseed_interval' =>
                                    match final_state_abs with HMAC256DRBGabs (hABS key _) V reseed_counter entropy_len pr reseed_interval =>
                                                               key = key'/\
@@ -261,21 +261,22 @@ Definition hmac256drbgabs_relate_reseed_result (result: reseed_result) (initial_
       end
   end.
     
-Definition get_stream_reseed_result (result: reseed_result): stream :=
+Definition get_stream_result {X} (result: ENTROPY.result X): ENTROPY.stream :=
   match result with
-    | reseed_error s => s
-    | reseed_catastrophic_error s => s
-    | reseed_success _ s => s
+    | ENTROPY.success _ s => s
+    | ENTROPY.error _ s => s
   end.
 
-Definition return_value_relate_reseed_result (result: reseed_result) (ret_value: val): Prop :=
+Definition return_value_relate_result {X} (result: ENTROPY.result X) (ret_value: val): Prop :=
   match result with
-    | reseed_error _ => ret_value <> Vzero
-    | reseed_catastrophic_error _ => ret_value = (Vint (Int.repr (-9)))
-    | reseed_success _ _ => ret_value = Vzero
+    | ENTROPY.error e _ => match e with
+                             | ENTROPY.generic_error => ret_value <> Vzero
+                             | ENTROPY.catastrophic_error => ret_value = (Vint (Int.repr (-9)))
+                           end
+    | ENTROPY.success _ _ => ret_value = Vzero
   end.
 
-Parameter Stream: stream -> mpred.
+Parameter Stream: ENTROPY.stream -> mpred.
 
 Definition hmac_drbg_reseed_spec :=
   DECLARE _mbedtls_hmac_drbg_reseed
@@ -284,7 +285,7 @@ Definition hmac_drbg_reseed_spec :=
         ctx: val, initial_state: hmac256drbgstate,
         initial_state_abs: hmac256drbgabs,
         kv: val, info_contents: md_info_state,
-        s: stream
+        s: ENTROPY.stream
     PRE [ _ctx OF (tptr t_struct_hmac256drbg_context_st), _additional OF (tptr tuchar), _len OF tuint ]
        PROP (
          0 <= add_len <= Int.max_unsigned;
@@ -292,8 +293,7 @@ Definition hmac_drbg_reseed_spec :=
          add_len = Zlength contents;
          hmac256drbgabs_entropy_len initial_state_abs = 32;
          Forall isbyteZ (hmac256drbgabs_value initial_state_abs);
-         Forall isbyteZ contents;
-         (forall n, isbyteZ (s n))
+         Forall isbyteZ contents
        )
        LOCAL (temp _ctx ctx; temp _additional additional; temp _len (Vint (Int.repr add_len)); gvar sha._K256 kv)
        SEP (
@@ -308,7 +308,7 @@ Definition hmac_drbg_reseed_spec :=
        EX final_state_abs:_, EX ret_value:_,
        PROP (
            hmac256drbgabs_relate_reseed_result (mbedtls_HMAC256_DRBG_reseed_function s initial_state_abs contents) initial_state_abs final_state_abs;
-           return_value_relate_reseed_result (mbedtls_HMAC256_DRBG_reseed_function s initial_state_abs contents) ret_value;
+           return_value_relate_result (mbedtls_HMAC256_DRBG_reseed_function s initial_state_abs contents) ret_value;
            Zlength (hmac256drbgabs_value final_state_abs) = Z.of_nat SHA256.DigestLength;
            add_len = Zlength contents;
            Forall isbyteZ (hmac256drbgabs_value final_state_abs);
@@ -318,27 +318,15 @@ Definition hmac_drbg_reseed_spec :=
        SEP (
          (hmac_drbg_update_post final_state_abs ctx info_contents);
          (data_at Tsh (tarray tuchar add_len) (map Vint (map Int.repr contents)) additional);
-         (Stream (get_stream_reseed_result (mbedtls_HMAC256_DRBG_reseed_function s initial_state_abs contents)));
+         (Stream (get_stream_result (mbedtls_HMAC256_DRBG_reseed_function s initial_state_abs contents)));
          (K_vector kv)
        ).
-
-Definition return_value_relate_entropy_result (r: entropy_result) (ret_value: val): Prop :=
-  match r with
-    | entropy_error _ => ret_value <> Vzero
-    | entropy_success _ => ret_value = Vzero
-  end.
-
-Definition get_stream_entropy_result (r: entropy_result): stream :=
-  match r with
-    | entropy_error s => s
-    | entropy_success (_, s) => s
-  end.
 
 Definition get_entropy_spec :=
   DECLARE _get_entropy
    WITH
         sh: share,
-        s: stream,
+        s: ENTROPY.stream,
         buf: val, len: Z
     PRE [ 1%positive OF (tptr tuchar), 2%positive OF tuint ]
        PROP (
@@ -353,12 +341,16 @@ Definition get_entropy_spec :=
     POST [ tint ]
        EX ret_value:_,
        PROP (
-           return_value_relate_entropy_result (get_entropy 0 len len false s) ret_value
+           return_value_relate_result (get_entropy 0 len len false s) ret_value
          )
        LOCAL (temp ret_temp ret_value)
        SEP (
-         Stream (get_stream_entropy_result (get_entropy 0 len len false s));
-         data_at sh (tarray tuchar len) (map Vint (map Int.repr (fst (get_bytes (Z.to_nat len) s)))) buf
+         Stream (get_stream_result (get_entropy 0 len len false s));
+         (match ENTROPY.get_bytes (Z.to_nat len) s with
+            | ENTROPY.error _ _ => memory_block sh len buf
+            | ENTROPY.success bytes _ =>
+              data_at sh (tarray tuchar len) (map Vint (map Int.repr (bytes))) buf
+                 end)
        ).
 
 
