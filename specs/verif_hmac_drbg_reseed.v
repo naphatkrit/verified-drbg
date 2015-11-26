@@ -304,17 +304,14 @@ Proof.
     change (1 * Z.max 0 (384 - 32))%Z with 352.
     rewrite add_repr.
     rewrite <- memory_block_split; auto.
-    clear - H12. rename H12 into Hfield.
-    destruct Hfield as [Hfield1 [Hfield2 [Hfield3 [Hfield4 [Hfield5 [Hfield6 [Hfield7 Hfield8]]]]]]].
-    unfold size_compatible in Hfield6. simpl in Hfield6.
+    clear - H10. rename H10 into Hlvar.
+    unfold lvar in Hlvar; unfold size_compatible in Hlvar.
+    destruct (Map.get (ve_of rho) _seed); try solve [inversion Hlvar].
+    destruct p. destruct (eqb_type (tarray tuchar 384) t); try solve [inversion Hlvar].
+    destruct Hlvar as [Hblock Hsize].
+    simpl in Hsize.
     assert (Int.unsigned i >= 0) by (pose proof (Int.unsigned_range i); omega).
-    split. omega.
-    replace (Int.unsigned (Int.add i (Int.repr 32))) with (Int.unsigned i + 32) in Hfield6.
     omega.
-    change 32 with (Int.unsigned (Int.repr 32)).
-    rewrite Int.add_unsigned.
-    rewrite repr_unsigned.
-    admit (* TODO *).
   }
   {
     forward.
