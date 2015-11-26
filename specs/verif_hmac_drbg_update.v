@@ -93,7 +93,9 @@ Proof.
   forward.
 
   (* md_len = mbedtls_md_get_size( info ); *)
-  forward_call tt md_len.
+  forward_call tt.
+
+  Intros md_len.
 
   (* rounds = ( additional != NULL && add_len != 0 ) ? 2 : 1; *)
   remember (if eq_dec add_len 0 then false else if eq_dec additional nullval then false else true) as non_empty_additional.
@@ -103,7 +105,7 @@ Proof.
       temp _ctx ctx;
       lvar _sep (tarray tuchar 1) sep;
       temp _additional additional; temp _add_len (Vint (Int.repr add_len));
-      temp 141%positive (Val.of_bool non_empty_additional);
+      temp 140%positive (Val.of_bool non_empty_additional);
       gvar sha._K256 kv
              )
       SEP  ((data_at_ Tsh (tarray tuchar 32) K);
@@ -179,7 +181,7 @@ Proof.
       temp _ctx ctx;
       lvar _sep (tarray tuchar 1) sep;
       temp _additional additional; temp _add_len (Vint (Int.repr add_len));
-      temp 142%positive (Vint (Int.repr rounds));
+      temp 141%positive (Vint (Int.repr rounds));
       gvar sha._K256 kv
              )
       SEP  ((data_at_ Tsh (tarray tuchar 32) K);
@@ -285,33 +287,40 @@ Proof.
       destruct (field_compatible_dec t_struct_hmac256drbg_context_st); [reflexivity|contradiction].
     }
     destruct state_abs. destruct md_ctx.
-    destruct state as [md_ctx [V' [reseed_counter' [entropy_len' [prediction_resistance' [reseed_interval' [f_entropy' p_entropy']]]]]]].
+    destruct state as [md_ctx [V' [reseed_counter' [entropy_len' [prediction_resistance' reseed_interval']]]]]. simpl in H7; subst key0.
     unfold hmac256drbg_relate. unfold md_full.
     Intros.
     simpl in H8.
-    assert (Hmdlen_V: md_len = Vint (Int.repr (Zlength V))) by (rewrite H8; assumption).
-    rewrite <- H8.
-    
+    subst value.
+    assert (Hmdlen_V: md_len = Vint (Int.repr (Zlength V))) by (subst md_len; rewrite H10; reflexivity).
+
     (* sep[0] = sep_value; *)
     forward.
 
     (* mbedtls_md_hmac_reset( &ctx->md_ctx ); *)
-    Time forward_call (field_address t_struct_hmac256drbg_context_st [StructField _md_ctx] ctx, md_ctx, key, kv) v. (* 79 *)
+    Time forward_call (field_address t_struct_hmac256drbg_context_st [StructField _md_ctx] ctx, md_ctx, key, kv). (* 79 *)
     {
       entailer!.
     }
-    subst v.
+    Intros v; subst v.
 
     (* mbedtls_md_hmac_update( &ctx->md_ctx, ctx->V, md_len ); *)
-    Time forward_call (key, field_address t_struct_hmac256drbg_context_st [StructField _md_ctx] ctx, md_ctx, field_address t_struct_hmac256drbg_context_st [StructField _V] ctx, @nil Z, V, kv) v. (* 83 *)
+    Time forward_call (key, field_address t_struct_hmac256drbg_context_st [StructField _md_ctx] ctx, md_ctx, field_address t_struct_hmac256drbg_context_st [StructField _V] ctx, @nil Z, V, kv). (* 83 *)
     {
-      entailer!. rewrite H8; reflexivity.
+      entailer!.
+      rewrite H10; reflexivity.
     }
     {
-      rewrite H8.
+      rewrite H10.
+      rewrite H7.
+      cancel.
+    }
+    {
+      rewrite H10.
+      idtac.
       repeat split; [hnf;auto | hnf;auto | assumption].
     }
-    subst v.
+    Intros v; subst v.
       
     unfold upd_Znth.
     unfold sublist. simpl.
@@ -324,21 +333,21 @@ Proof.
     rewrite Hiuchar.
 
     (* mbedtls_md_hmac_update( &ctx->md_ctx, sep, 1 ); *)
-    Time forward_call (key, field_address t_struct_hmac256drbg_context_st [StructField _md_ctx] ctx, md_ctx, sep, V, [i], kv) v. (* 62 *)
+    Time forward_call (key, field_address t_struct_hmac256drbg_context_st [StructField _md_ctx] ctx, md_ctx, sep, V, [i], kv). (* 62 *)
     {
       entailer!.
     }
     {
       (* prove the PROP clauses *)
-      rewrite H8.
+      rewrite H10.
       change (Zlength [i]) with 1.
       repeat split; [hnf;auto | hnf;auto | ].
       unfold general_lemmas.isbyteZ.
       repeat constructor.
       omega.
-      destruct non_empty_additional; subst; omega.
+      destruct non_empty_additional; subst rounds; omega.
     }
-    subst v.
+    Intros v; subst v.
       
     (* if( rounds == 2 ) *)
     Time forward_if (
@@ -365,18 +374,12 @@ Proof.
       (field_at Tsh t_struct_hmac256drbg_context_st
           [StructField _reseed_interval] (Vint (Int.repr reseed_interval))
           ctx);
-      (field_at Tsh t_struct_hmac256drbg_context_st 
-          [StructField _f_entropy] f_entropy' ctx);
-      (field_at Tsh t_struct_hmac256drbg_context_st 
-          [StructField _p_entropy] p_entropy' ctx);
       (data_at Tsh t_struct_mbedtls_md_info info_contents
           (hmac256drbgstate_md_info_pointer
              (md_ctx,
-             (map Vint (map Int.repr V),
-             (Vint (Int.repr reseed_counter),
-             (Vint (Int.repr entropy_len),
-             (prediction_resistance',
-             (Vint (Int.repr reseed_interval), (f_entropy', p_entropy')))))))));
+         (V',
+         (reseed_counter',
+         (entropy_len', (prediction_resistance', reseed_interval')))))));
       (data_at_ Tsh (tarray tuchar (Zlength V)) K);
       (data_at Tsh (tarray tuchar (Zlength contents))
           (map Vint (map Int.repr contents)) additional)) 
@@ -386,7 +389,7 @@ Proof.
       rewrite H1.
 
       (* mbedtls_md_hmac_update( &ctx->md_ctx, additional, add_len ); *)
-      Time forward_call (key, field_address t_struct_hmac256drbg_context_st [StructField _md_ctx] ctx, md_ctx, additional, V ++ [i], contents, kv) v. (* 63 *)
+      Time forward_call (key, field_address t_struct_hmac256drbg_context_st [StructField _md_ctx] ctx, md_ctx, additional, V ++ [i], contents, kv). (* 63 *)
       {
         (* prove the parameters match up *)
         entailer!.
@@ -394,7 +397,7 @@ Proof.
       {
         (* prove the PROP clause matches *)
         rewrite H1 in *. repeat split; [omega | omega | | assumption].
-        rewrite Zlength_app; rewrite H8.
+        rewrite Zlength_app; rewrite H10.
         simpl. remember (Zlength contents) as n; clear - H.
         destruct H. rewrite <- Zplus_assoc.
         unfold Int.max_unsigned in H0.
@@ -405,17 +408,20 @@ Proof.
       }
       (* prove the post condition of the if statement *)
       rewrite <- app_assoc.
+      Intros v.
+      rewrite H10.
       entailer!.
     }
     {
       (* rounds <> 2 case *)
       forward.
+      rewrite H10.
       entailer!.
       destruct contents.
       entailer!.
 
       (* contents not empty, which is a contradiction *)
-      rewrite Zlength_cons in H11.
+      rewrite Zlength_cons in H8.
       destruct (eq_dec (Z.succ (Zlength contents)) 0) as [Zlength_eq | Zlength_neq].
       assert (0 <= Zlength contents) by (apply Zlength_nonneg).
       destruct (Zlength contents); [inversion Zlength_eq| omega | omega].
@@ -423,24 +429,30 @@ Proof.
       assert (Hisptr: isptr additional') by auto.
       destruct (eq_dec additional' nullval) as [additional_null | additional_not_null].
       subst. inversion Hisptr.
-      assert (contra: False) by (apply H11; reflexivity); inversion contra.
+      assert (contra: False) by (apply H8; reflexivity); inversion contra.
     }
-    rewrite H8.
+    rewrite H10.
 
     (* mbedtls_md_hmac_finish( &ctx->md_ctx, K ); *)
     rewrite data_at__memory_block. change (sizeof cenv_cs (tarray tuchar 32)) with 32.
     Intros.
-    Time forward_call ((V ++ [i] ++ contents), key, field_address t_struct_hmac256drbg_context_st [StructField _md_ctx] ctx, md_ctx, K, Tsh, kv) new_key. (* 62 *)
+    Time forward_call ((V ++ [i] ++ contents), key, field_address t_struct_hmac256drbg_context_st [StructField _md_ctx] ctx, md_ctx, K, Tsh, kv). (* 62 *)
     {
       (* prove the parameters match up *)
       entailer!.
     }
+    {
+      change (sizeof cenv_cs (tarray tuchar (Z.of_nat SHA256.DigestLength))) with 32.
+      cancel.
+    }
+    Intros new_key.
+
     assert_PROP (isptr K) as HisptrK by entailer!. 
     destruct K; try solve [inversion HisptrK].
     replace_SEP 1 (UNDER_SPEC.EMPTY (snd (snd md_ctx))) by (entailer!; apply UNDER_SPEC.FULL_EMPTY).
 
     (* mbedtls_md_hmac_starts( &ctx->md_ctx, K, md_len ); *)
-    Time forward_call (field_address t_struct_hmac256drbg_context_st [StructField _md_ctx] ctx, md_ctx, (Zlength (HMAC256 (V ++ [i] ++ contents) key)), HMAC256 (V ++ [i] ++ contents) key, kv, b, i0) v. (* 75 *)
+    Time forward_call (field_address t_struct_hmac256drbg_context_st [StructField _md_ctx] ctx, md_ctx, (Zlength (HMAC256 (V ++ [i] ++ contents) key)), HMAC256 (V ++ [i] ++ contents) key, kv, b, i0). (* 75 *)
     {
       (* prove the function parameters match up *)
       entailer!. rewrite hmac_common_lemmas.HMAC_Zlength. reflexivity.
@@ -458,35 +470,37 @@ Proof.
         apply hmac_common_lemmas.isbyte_hmac.
       }
     }
-    subst v.
+    Intros v; subst v.
 
     (* mbedtls_md_hmac_update( &ctx->md_ctx, ctx->V, md_len ); *)
-    Time forward_call (HMAC256 (V ++ [i] ++ contents) key, field_address t_struct_hmac256drbg_context_st [StructField _md_ctx] ctx, md_ctx, field_address t_struct_hmac256drbg_context_st [StructField _V] ctx, @nil Z, V, kv) v. (* 72 *)
+    Time forward_call (HMAC256 (V ++ [i] ++ contents) key, field_address t_struct_hmac256drbg_context_st [StructField _md_ctx] ctx, md_ctx, field_address t_struct_hmac256drbg_context_st [StructField _V] ctx, @nil Z, V, kv). (* 72 *)
     {
       (* prove the function parameters match up *)
-      entailer!. rewrite H8; reflexivity.
+      entailer!. rewrite H10; reflexivity.
     }
     {
       (* prove the function SEP clauses match up *)
-      rewrite H8; cancel.
+      rewrite H10; cancel.
     }
     {
       (* prove the PROP clauses *)
-      rewrite H8.
+      rewrite H10.
       repeat split; [hnf;auto | hnf;auto | assumption].
     }
-    rewrite H8.
+    Intros v; subst v.
+    rewrite H10.
     normalize.
     replace_SEP 2 (memory_block Tsh (sizeof cenv_cs (tarray tuchar 32)) (field_address t_struct_hmac256drbg_context_st [StructField _V] ctx)) by (entailer!; apply data_at_memory_block).
     simpl.
     (* mbedtls_md_hmac_finish( &ctx->md_ctx, ctx->V ); *)
-    Time forward_call (V, HMAC256 (V ++ i::contents) key, field_address t_struct_hmac256drbg_context_st [StructField _md_ctx] ctx, md_ctx, field_address t_struct_hmac256drbg_context_st [StructField _V] ctx, Tsh, kv) new_V. (* 75 *)
+    Time forward_call (V, HMAC256 (V ++ i::contents) key, field_address t_struct_hmac256drbg_context_st [StructField _md_ctx] ctx, md_ctx, field_address t_struct_hmac256drbg_context_st [StructField _V] ctx, Tsh, kv). (* 75 *)
     {
       (* prove the function parameters match up *)
       entailer!.
     }
+    Intros new_V.
     unfold update_relate_final_state.
-    Exists (HMAC256 (V ++ [i] ++ contents) key) (HMAC256 V (HMAC256 (V ++ [i] ++ contents) key))    (HMAC256DRBGabs (hABS (HMAC256 (V ++ [i] ++ contents) key) []) (HMAC256 V (HMAC256 (V ++ [i] ++ contents) key)) reseed_counter entropy_len prediction_resistance reseed_interval) (md_ctx, (map Vint (map Int.repr (HMAC256 V (HMAC256 (V ++ [i] ++ contents) key))), (Vint (Int.repr reseed_counter), (Vint (Int.repr entropy_len), (prediction_resistance', (Vint (Int.repr reseed_interval), (f_entropy', p_entropy'))))))).
+    Exists (HMAC256 (V ++ [i] ++ contents) key) (HMAC256 V (HMAC256 (V ++ [i] ++ contents) key))    (HMAC256DRBGabs (hABS (HMAC256 (V ++ [i] ++ contents) key) []) (HMAC256 V (HMAC256 (V ++ [i] ++ contents) key)) reseed_counter entropy_len prediction_resistance reseed_interval) (md_ctx, (map Vint (map Int.repr (HMAC256 V (HMAC256 (V ++ [i] ++ contents) key))), (Vint (Int.repr reseed_counter), (Vint (Int.repr entropy_len), (prediction_resistance', Vint (Int.repr reseed_interval)))))).
     Time entailer!. (* 335 ! *)
     {
       split; [| apply hmac_common_lemmas.HMAC_Zlength].
