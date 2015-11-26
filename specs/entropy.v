@@ -33,6 +33,11 @@ Parameter get_bytes_length:
   forall k s b s',
     success b s' = get_bytes k s ->
     length b = k.
+Parameter get_bytes_Zlength:
+  forall k s b s',
+    k >= 0 ->
+    success b s' = get_bytes (Z.to_nat k) s ->
+    Zlength b = k.
 Parameter get_bytes_isbyteZ:
   forall k s b s',
     success b s' = get_bytes k s ->
@@ -285,12 +290,15 @@ Qed.
 
 Lemma get_bytes_Zlength:
   forall k s b s',
-    success b s' = get_bytes k s ->
-    Zlength b = Z.of_nat k.
+    k >= 0 ->
+    success b s' = get_bytes (Z.to_nat k) s ->
+    Zlength b = k.
 Proof.
   intros.
   rewrite Zlength_correct.
-  erewrite get_bytes_length; [reflexivity | eauto].
+  erewrite get_bytes_length.
+  rewrite Z2Nat.id; [reflexivity | omega].
+  eauto.
 Qed.
 
 Lemma get_bytes_isbyteZ:
