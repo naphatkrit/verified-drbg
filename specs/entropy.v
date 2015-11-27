@@ -225,6 +225,18 @@ Proof.
   simpl.
   *)
 
+Fixpoint get_first_None (limit:nat) (s: stream): nat :=
+  match limit with
+    | O => O (* bogus *)
+    | S limit' =>
+      match s O with
+        | None => O
+        | Some _ => S (get_first_None limit' (fun i => s (S i)))
+      end
+  end
+.
+
+
 Lemma get_bits_stream_success:
   forall k s b s',
     success b s' = get_bits k s ->
@@ -241,6 +253,90 @@ Proof.
   destruct (s0 0%nat); try solve [inversion H].
   inv H.
   reflexivity.
+Qed.
+
+Lemma get_bits_stream_success_Some:
+  forall k s b s',
+    success b s' = get_bits k s ->
+    (forall i, (i < k)%nat -> s i <> None).
+Proof.
+  intros k.
+  induction k as [|k']; intros. omega.
+  simpl in H.
+  remember (get_bits k' s) as get_bits_k'_s; destruct get_bits_k'_s; try solve [inversion H].
+  remember (s0 0%nat) as s0_0; destruct s0_0; try solve [inversion H].
+  inv H.
+  pose proof Heqget_bits_k'_s as IHsimpl.
+  pose proof (Heqget_bits_k'_s) as Hstream.
+  apply get_bits_stream_success in Hstream; subst.
+  destruct (le_lt_eq_dec i k'). omega.
+  {
+    (* i < k', use inductive case *)
+    eapply IHk'; eassumption.
+  }
+  {
+    (* i = k', use known info *)
+    subst.
+    replace (k' + 0)%nat with k' in Heqs0_0 by omega.
+    intros contra; rewrite <- Heqs0_0 in contra; inversion contra.
+  }  
+Qed.
+
+Lemma get_first_None_limit:
+  forall k s i,
+    i = get_first_None k s ->
+    (i <= k)%nat.
+Proof.
+  induction k as [|k']; intros. simpl in H. omega.
+  simpl in H.
+  remember (s O) as s_O; destruct s_O.
+  destruct i as [|i']; try solve [omega].
+  inversion H.
+  pose proof (IHk' (fun i => s (S i)) i').
+  subst; omega.
+  subst; omega.
+Qed.
+
+(* TODO convert this to use get_first_None_limit *)
+Lemma get_bits_stream_error:
+  forall k s e s',
+    error e s' = get_bits k s ->
+    (exists i, (i < k)%nat /\ (forall i', s' i' = match nat_compare i' i with
+                                   | Lt => s i'
+                                   | Eq | Gt => s (S i')
+                                 end) /\ s i = None /\ (forall i', (i' < i)%nat -> s i' <> None)).
+Proof.
+  intros k.
+  induction k as [|k']; intros. inversion H.
+  simpl in H.
+  remember (get_bits k' s) as get_bits_k'_s; destruct get_bits_k'_s.
+  {
+    (* get_bits k' s = success *)
+    pose proof (Heqget_bits_k'_s) as Hstream.
+    apply get_bits_stream_success in Hstream; subst.
+    replace (k' + 0)%nat with k' in H by omega.
+    remember (s k') as s_k'; destruct s_k'; inv H.
+    exists k'.
+    repeat split; auto.
+    intros.
+    eapply get_bits_stream_success_Some; eassumption.
+  }
+  {
+    (* get_bits k' s = error *)
+    pose proof (IHk' s e0 s0 Heqget_bits_k'_s) as IHsimpl.
+    destruct IHsimpl.
+    destruct (le_lt_dec k' x).
+    {
+      (* x >= k' *)
+      destruct H0. omega.
+    }
+    {
+      exists x.
+      inv H.
+      destruct H0.
+      split; auto.
+    }
+  }
 Qed.
 
 Lemma get_bits_length:
