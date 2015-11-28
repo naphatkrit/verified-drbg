@@ -322,9 +322,18 @@ int mbedtls_hmac_drbg_random_with_add( void *p_rng,
 {
     int ret;
     mbedtls_hmac_drbg_context *ctx = (mbedtls_hmac_drbg_context *) p_rng;
-    size_t md_len = mbedtls_md_get_size( ctx->md_ctx.md_info );
+    // size_t md_len = mbedtls_md_get_size( ctx->md_ctx.md_info );
+	size_t md_len;
     size_t left = out_len;
     unsigned char *out = output;
+
+	const mbedtls_md_info_t *info;
+	int prediction_resistance = ctx->prediction_resistance;
+	int reseed_counter = ctx->reseed_counter;
+	int reseed_interval = ctx->reseed_interval;
+
+	info = ctx->md_ctx.md_info;
+	md_len = mbedtls_md_get_size(info);
 
     /* II. Check request length */
     if( out_len > MBEDTLS_HMAC_DRBG_MAX_REQUEST )
@@ -336,8 +345,10 @@ int mbedtls_hmac_drbg_random_with_add( void *p_rng,
 
     /* 1. (aka VII and IX) Check reseed counter and PR */
     if( /* ctx->f_entropy != NULL && */ /* For no-reseeding instances */
-        ( ctx->prediction_resistance == MBEDTLS_HMAC_DRBG_PR_ON ||
-          ctx->reseed_counter > ctx->reseed_interval ) )
+        ( prediction_resistance == MBEDTLS_HMAC_DRBG_PR_ON ||
+          reseed_counter > reseed_interval ) )
+        // ( ctx->prediction_resistance == MBEDTLS_HMAC_DRBG_PR_ON ||
+        //   ctx->reseed_counter > ctx->reseed_interval ) )
     {
         if( ( ret = mbedtls_hmac_drbg_reseed( ctx, additional, add_len ) ) != 0 )
             return( ret );
