@@ -28,7 +28,7 @@ Fixpoint DRBG_generate_function_helper (generate_algorithm: DRBG_working_state -
       end
     end.
 
-Definition DRBG_generate_function (generate_algorithm: DRBG_working_state -> Z -> list Z -> DRBG_generate_algorithm_result) (reseed_function: ENTROPY.stream -> DRBG_state_handle -> bool -> list Z -> ENTROPY.result DRBG_state_handle) (max_number_of_bytes_per_request: Z) (max_additional_input_length: Z) (entropy_stream: ENTROPY.stream) (state_handle: DRBG_state_handle) (requested_number_of_bytes requested_security_strength: Z) (prediction_resistance_request: bool) (additional_input: list Z): ENTROPY.result (list Z * DRBG_state_handle) :=
+Definition DRBG_generate_function (generate_algorithm: Z -> DRBG_working_state -> Z -> list Z -> DRBG_generate_algorithm_result) (reseed_function: ENTROPY.stream -> DRBG_state_handle -> bool -> list Z -> ENTROPY.result DRBG_state_handle) (reseed_interval: Z) (max_number_of_bytes_per_request: Z) (max_additional_input_length: Z) (entropy_stream: ENTROPY.stream) (state_handle: DRBG_state_handle) (requested_number_of_bytes requested_security_strength: Z) (prediction_resistance_request: bool) (additional_input: list Z): ENTROPY.result (list Z * DRBG_state_handle) :=
   let '(working_state, security_strength, prediction_resistance_flag) := state_handle in
   if Z.gtb requested_number_of_bytes max_number_of_bytes_per_request then ENTROPY.error ENTROPY.generic_error entropy_stream
   else
@@ -38,7 +38,7 @@ Definition DRBG_generate_function (generate_algorithm: DRBG_working_state -> Z -
       else
         if prediction_resistance_request && (negb prediction_resistance_flag) then ENTROPY.error ENTROPY.generic_error entropy_stream
         else
-          match DRBG_generate_function_helper generate_algorithm reseed_function entropy_stream state_handle requested_number_of_bytes prediction_resistance_request additional_input prediction_resistance_request 1%nat with
+          match DRBG_generate_function_helper (generate_algorithm reseed_interval) reseed_function entropy_stream state_handle requested_number_of_bytes prediction_resistance_request additional_input prediction_resistance_request 1%nat with
             | ENTROPY.error e s => ENTROPY.error e s
                                                  | ENTROPY.success (output, new_working_state) entropy_stream =>
                                                    ENTROPY.success (output, (new_working_state, security_strength, prediction_resistance_flag)) entropy_stream

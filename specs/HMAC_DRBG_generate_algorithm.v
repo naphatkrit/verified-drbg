@@ -8,11 +8,11 @@ Require Import DRBG_generate_algorithm_result.
 Function HMAC_DRBG_generate_helper (HMAC: list Z -> list Z -> list Z) (key v: list Z) (requested_number_of_bytes: Z) {measure Z.to_nat requested_number_of_bytes}: (list Z * list Z) :=
   if Z.geb 0 requested_number_of_bytes then (v, [])
   else
-    let v := HMAC v key in
-    let temp := v in
     let len := 32%nat in (* TODO get this from property of HMAC *)
     let (v, rest) := HMAC_DRBG_generate_helper HMAC key v (requested_number_of_bytes - (Z.of_nat len)) in
-    (v, temp ++ rest). 
+    let v := HMAC v key in
+    let temp := v in
+    (v, rest ++ temp). 
 Proof.
   intros. rewrite Z2Nat.inj_sub by omega.
   rewrite Nat2Z.id.
