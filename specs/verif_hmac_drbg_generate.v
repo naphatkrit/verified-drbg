@@ -1,6 +1,7 @@
 Require Import floyd.proofauto.
 Import ListNotations.
 Local Open Scope logic.
+Require Import floyd.sublist.
 
 Require Import sha.HMAC256_functional_prog.
 Require Import sha.general_lemmas.
@@ -27,29 +28,83 @@ Lemma sepcon_weak_valid_pointer1
     P |-- weak_valid_pointer p -> P * Q |-- weak_valid_pointer p.
 Proof. Admitted.
 Hint Resolve sepcon_weak_valid_pointer1 sepcon_weak_valid_pointer2 data_at_weak_valid_ptr: valid_pointer.
-
-Fixpoint generate_while_loop (key v: list Z) (left: Z) (rounds: nat): (list Z * list Z) :=
+(*
+Fixpoint generate_while_loop_rounds (key v: list Z) (left: Z) (rounds: nat): (list Z * list Z) :=
   match rounds with
     | O => (v, [])
     | S rounds' =>
       let use_len := Z.min 32 left in
-      let (v, rest) := generate_while_loop key v (left - 32) rounds' in
+      let (v, rest) := generate_while_loop_rounds key v (left - use_len) rounds' in
       let v := HMAC256 v key in
-      let temp := leftmost_items v use_len in
+      let temp := sublist 0 use_len v in
       (v, rest ++ temp)
   end
 .
-(*
-Lemma generate_while_loop_correct:
-  forall key v n left,
-    left = Z.of_nat n ->
-    generate_while_loop key v left = (let '(v, bytes) := HMAC_DRBG_generate_helper HMAC256 key v left in
-                                      (v, leftmost_items bytes left)).
+
+Lemma generate_while_loop_rounds_correct:
+  forall key v z n,
+    (Z.to_nat ((z + 31)/32)) = n ->
+    generate_while_loop_rounds key v z n = (match HMAC_DRBG_generate_helper_rounds HMAC256 key v n with (v, bytes) => (v, sublist 0 z bytes) end).
+Proof.
+  intros until n.
+  revert key v z.
+  induction n as [|n']; intros.
+  {
+    (* n = 0 *)
+    simpl. unfold sublist. change (Z.to_nat 0) with 0%nat. simpl. unfold skipn.
+    replace (z - 0) with z by omega.
+    destruct (Z.to_nat z); reflexivity.
+  }
+  simpl.
+  SearchAbout Zdiv.
+  rewrite IHn'.  
+  clear IHn'.
+  destruct (Z.min_dec 32 z) as [Hmin | Hmin].
+  {
+    (* z >= 32 *)
+    rewrite Hmin.
+    destruct (HMAC_DRBG_generate_helper_rounds HMAC256 key v (z - 32) n').
+    replace (sublist 0 (z - 32) l0 ++ sublist 0 32 (HMAC256 l key)) with (sublist 0 z (l0 ++ HMAC256 l key)); [reflexivity|].
+    admit (* TODO *).
+  }
+  {
+    (* z < 32 *)
+    rewrite Hmin.
+    replace (z - z) with 0 by omega.
+    remember (HMAC_DRBG_generate_helper_rounds HMAC256 key v 0 n') as x; destruct x.
+    remember (HMAC_DRBG_generate_helper_rounds HMAC256 key v (z - 32) n') as x; destruct x.
+    pose proof Heqx as Hl.
+    pose proof Heqx0 as Hl1.
+    apply HMAC_DRBG_generate_helper_rounds_v in Hl.
+    apply HMAC_DRBG_generate_helper_rounds_v in Hl1.
+    subst l l1.
+  }
+Qed.
+
+Function generate_while_loop (key v: list Z) (left: nat) {measure (fun x => x) left}: (list Z * list Z) :=
+  match left with
+    | O => (v, [])
+    | _ =>
+      let use_len := min 32 left in
+      let (v, rest) := generate_while_loop key v (left - use_len) in
+      let v := HMAC256 v key in
+      let temp := sublist 0 (Z.of_nat use_len) v in
+      (v, rest ++ temp)
+  end
+.
 Proof.
   intros.
-  subst.
-  remember (left/32) as round.
-  induction n as [|n']. reflexivity.
+  remember (S n) as m.
+  destruct (Min.min_dec 32 m) as [Hmin | Hmin]; rewrite Hmin; clear Hmin; subst m; omega.
+Defined.
+Lemma generate_while_loop_correct:
+  forall key v n,
+    generate_while_loop key v n = (let '(v, bytes) := HMAC_DRBG_generate_helper HMAC256 key v n in
+                                      (v, sublist 0 (Z.of_nat n) bytes)).
+Proof.
+  intros.
+  do 32 (induction n as [|n]; [reflexivity|]).
+  SearchAbout sublist S.
   simpl.
   unfold generate_while_loop.
   {
@@ -667,3 +722,44 @@ Proof.
     rewrite H10.
     entailer!.
   }
+  
+  forward_while (EX out_len1: Z,
+      PROP  ()
+      LOCAL  (temp _md_len md_len; temp _info (let (x, _) := md_ctx' in x);
+      temp _reseed_interval (Vint (Int.repr reseed_interval));
+      temp _reseed_counter (Vint (Int.repr reseed_counter));
+      temp _prediction_resistance (Val.of_bool prediction_resistance);
+      temp _out output; temp _left (Vint (Int.repr out_len1)); 
+      temp _ctx ctx; temp _p_rng ctx; temp _output output;
+      temp _out_len (Vint (Int.repr out_len)); temp _additional additional;
+      temp _add_len (Vint (Int.repr add_len_new)); 
+      gvar sha._K256 kv;
+      temp 160%positive (Val.of_bool non_empty_additional))
+      SEP 
+      (if non_empty_additional
+       then
+        EX  state_abs : hmac256drbgabs,
+        !!(Zlength
+             (snd
+                (HMAC256_DRBG_update contents
+                   (hmac256drbgabs_key initial_state_abs)
+                   (hmac256drbgabs_value initial_state_abs))) =
+           Z.of_nat SHA256.DigestLength /\
+           fst
+             (HMAC256_DRBG_update contents
+                (hmac256drbgabs_key initial_state_abs)
+                (hmac256drbgabs_value initial_state_abs)) =
+           hmac256drbgabs_key state_abs /\
+           snd
+             (HMAC256_DRBG_update contents
+                (hmac256drbgabs_key initial_state_abs)
+                (hmac256drbgabs_value initial_state_abs)) =
+           hmac256drbgabs_value state_abs /\
+           hmac256drbgabs_metadata_same state_abs initial_state_abs) &&
+        (hmac_drbg_update_post state_abs ctx info_contents * Stream s)
+       else drbg_SEP_after_reseed;
+       data_at Tsh (tarray tuchar out_len) (sublist 0 out_len1 (HMAC_DRBG_generate_helper_rounds HMAC key v (Z.to_nat ((requested_number_of_bytes + 31) / 32))) ++ list_repeat (Z.to_nat (out_len - out_len1)) Vundef) output
+       ;
+      data_at Tsh (tarray tuchar add_len) (map Vint (map Int.repr contents))
+        additional; K_vector kv)
+                ).
