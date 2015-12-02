@@ -202,6 +202,13 @@ Definition hmac_drbg_update_post (final_state_abs: hmac256drbgabs) (ctx: val) (i
                   (data_at Tsh t_struct_mbedtls_md_info info_contents (hmac256drbgstate_md_info_pointer final_state)) *
                   (hmac256drbg_relate final_state_abs final_state).
 
+Definition hmac256drbgabs_hmac_drbg_update (a:hmac256drbgabs) (additional_data: list Z): hmac256drbgabs :=
+  match a with HMAC256DRBGabs key V reseed_counter entropy_len prediction_resistance reseed_interval =>
+               let (key', V') := HMAC256_DRBG_update additional_data key V in
+               HMAC256DRBGabs key' V' reseed_counter entropy_len prediction_resistance reseed_interval
+  end
+.
+
 Definition hmac_drbg_update_spec :=
   DECLARE _mbedtls_hmac_drbg_update
    WITH contents: list Z,
@@ -228,12 +235,10 @@ Definition hmac_drbg_update_spec :=
     POST [ tvoid ]
        EX final_state_abs:_,
        PROP (
-           fst (HMAC256_DRBG_update contents (hmac256drbgabs_key initial_state_abs) (hmac256drbgabs_value initial_state_abs)) = hmac256drbgabs_key final_state_abs;
-           snd (HMAC256_DRBG_update contents (hmac256drbgabs_key initial_state_abs) (hmac256drbgabs_value initial_state_abs)) = hmac256drbgabs_value final_state_abs;
-           hmac256drbgabs_metadata_same final_state_abs initial_state_abs;
-           Zlength (snd (HMAC256_DRBG_update contents (hmac256drbgabs_key initial_state_abs) (hmac256drbgabs_value initial_state_abs))) = Z.of_nat SHA256.DigestLength;
+           final_state_abs = hmac256drbgabs_hmac_drbg_update initial_state_abs contents;
+           Zlength (hmac256drbgabs_value final_state_abs) = Z.of_nat SHA256.DigestLength;
            add_len = Zlength contents;
-           Forall isbyteZ (snd (HMAC256_DRBG_update contents (hmac256drbgabs_key initial_state_abs) (hmac256drbgabs_value initial_state_abs)));
+           Forall isbyteZ (hmac256drbgabs_value final_state_abs);
            Forall isbyteZ contents
          )
        LOCAL ()
