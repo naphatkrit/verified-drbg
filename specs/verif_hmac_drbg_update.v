@@ -522,46 +522,49 @@ Proof.
   forward.
 
   (* prove function post condition *)
-  Exists K sep final_state_abs.
+  Exists K sep.
   unfold hmac256drbgabs_hmac_drbg_update.
   unfold HMAC256_DRBG_functional_prog.HMAC256_DRBG_update.
   destruct initial_state_abs.
   rewrite HMAC_DRBG_update_concrete_correct.
   Time entailer!. (* 29 *)
   {
+    (*
     rename H1 into Hupdate_rounds.
     rename H6 into Hmetadata.
     destruct final_state_abs; unfold hmac256drbgabs_metadata_same in Hmetadata.
     destruct Hmetadata as [Hreseed_counter [Hentropy_len [Hpr Hrseed_interval]]]; subst.
-    destruct contents; unfold HMAC_DRBG_update_concrete.
-    {
-      simpl in Hupdate_rounds; simpl.
-      clear - Hupdate_rounds.
-      replace (HMAC256 V (HMAC256 (V ++ [0]) key)) with V0.
-      replace (HMAC256 (V ++ [0]) key) with key0.
-      reflexivity.
-      change key0 with (fst (key0, V0)); rewrite Hupdate_rounds; reflexivity.
-      change V0 with (snd (key0, V0)); rewrite Hupdate_rounds; reflexivity.
-    }
-    {
-      destruct (eq_dec (Zlength (z :: contents)) 0) as [Zlength_eq | Zlength_neq].
-      rewrite Zlength_cons, Zlength_correct in Zlength_eq; omega.
-      destruct (eq_dec additional' nullval) as [additional_eq | additional_neq].
-      subst. repeat rewrite Zlength_map in H10; inversion H10 as [isptr_null H']; inversion isptr_null.
-      simpl in Hupdate_rounds; simpl.
-      replace (HMAC256 (HMAC256 V (HMAC256 (V ++ 0 :: z :: contents) key))
-        (HMAC256
-           (HMAC256 V (HMAC256 (V ++ 0 :: z :: contents) key) ++
-            1 :: z :: contents) (HMAC256 (V ++ 0 :: z :: contents) key))) with V0.
-      replace (HMAC256
-        (HMAC256 V (HMAC256 (V ++ 0 :: z :: contents) key) ++
-                 1 :: z :: contents) (HMAC256 (V ++ 0 :: z :: contents) key)) with key0.
-      reflexivity.
-      change key0 with (fst (key0, V0)); rewrite Hupdate_rounds; reflexivity.
-      change V0 with (snd (key0, V0)); rewrite Hupdate_rounds; reflexivity.
-    }
+*)
+    destruct contents; unfold HMAC_DRBG_update_concrete;
+    simpl;
+    split; try apply hmac_common_lemmas.HMAC_Zlength; try apply hmac_common_lemmas.isbyte_hmac.
   }
   unfold hmac_drbg_update_post.
   Exists final_state.
-  Time entailer!. (* 7 *)
+  rename H1 into Hupdate_rounds.
+  rename H6 into Hmetadata.
+  destruct final_state_abs; unfold hmac256drbgabs_metadata_same in Hmetadata.
+  destruct Hmetadata as [Hreseed_counter [Hentropy_len [Hpr Hrseed_interval]]]; subst.
+  replace (HMAC_DRBG_update_concrete HMAC256 contents key V) with (key0, V0).
+  cancel.
+  unfold hmac256drbgabs_key, hmac256drbgabs_value in Hupdate_rounds.
+  rewrite Hupdate_rounds. unfold HMAC_DRBG_update_concrete.
+  replace (Z.to_nat
+        (if if eq_dec (Zlength contents) 0
+            then false
+            else if eq_dec additional' nullval then false else true
+         then 2
+         else 1)) with (match contents with | [] => 1%nat | _ => 2%nat end).
+  reflexivity.
+  destruct contents.
+  {
+    reflexivity.
+  }
+  {
+    destruct (eq_dec (Zlength (z :: contents)) 0) as [Zlength_eq | Zlength_neq].
+    rewrite Zlength_cons, Zlength_correct in Zlength_eq; omega.
+    destruct (eq_dec additional' nullval) as [additional_eq | additional_neq].
+    subst. repeat rewrite Zlength_map in H10; inversion H10 as [isptr_null H']; inversion isptr_null.
+    reflexivity.
+  }
 Time Qed. (* 1018 !!! *)

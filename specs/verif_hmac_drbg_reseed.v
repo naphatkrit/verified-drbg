@@ -172,7 +172,7 @@ Proof.
   {
     forward.
     unfold hmac_drbg_update_post, get_stream_result, hmac256drbg_relate.
-    Exists seed (HMAC256DRBGabs key V reseed_counter entropy_len prediction_resistance reseed_interval) (Vint (Int.neg (Int.repr 5))) (md_ctx',
+    Exists seed (Vint (Int.neg (Int.repr 5))) (md_ctx',
         (map Vint (map Int.repr V),
         (Vint (Int.repr reseed_counter),
         (Vint (Int.repr entropy_len),
@@ -272,7 +272,7 @@ Proof.
     (* != 0 case *)
     forward.
     unfold hmac_drbg_update_post.
-    Exists seed (HMAC256DRBGabs key V reseed_counter entropy_len prediction_resistance reseed_interval) (Vint (Int.neg (Int.repr (9)))) (md_ctx',
+    Exists seed (Vint (Int.neg (Int.repr (9)))) (md_ctx',
         (map Vint (map Int.repr V),
         (Vint (Int.repr reseed_counter),
         (Vint (Int.repr entropy_len),
@@ -642,7 +642,7 @@ Proof.
     }
   }
   unfold hmac_drbg_update_post; normalize.
-  Intros final_state_abs final_state.
+  Intros final_state.
 
   gather_SEP 3 5.
   replace_SEP 0 (data_at Tsh (tarray tuchar 384) ((map Vint
@@ -671,10 +671,9 @@ Proof.
   (* return 0 *)
   forward.
 
-  destruct final_state_abs.
   destruct final_state as [md_ctx0' [V0' [reseed_counter0' [entropy_len0' [prediction_resistance0' reseed_interval0']]]]].
   unfold hmac_drbg_update_post.
-  Exists seed (HMAC256DRBGabs key0 V0 1 entropy_len0 prediction_resistance0 reseed_interval0) (Vint (Int.repr 0)) (md_ctx0',
+  Exists seed (Vint (Int.repr 0)) (md_ctx0',
              (V0',
              (Vone,
              (entropy_len0', (prediction_resistance0', reseed_interval0'))))).
@@ -693,21 +692,29 @@ Proof.
   unfold get_stream_result.
   unfold entropy.get_entropy.
   rewrite <- Heqentropy_result.
-  entailer!.
-  simpl in H8; rewrite <- H8. (* rewrite V0 *)
-  unfold entropy.get_entropy.
-  unfold hmac256drbgabs_relate_reseed_result.
-  unfold HMAC256_DRBG_functional_prog.HMAC256_DRBG_update.
-  remember (entropy_bytes ++ contents) as seedContents.
-  destruct seedContents as [|hdSeed tlSeed].
+  assert (Hnonempty_seed: exists hdSeed tlSeed, (entropy_bytes ++ contents) = hdSeed::tlSeed).
   {
-    (* this case can't be true. case: seedContents = [] *)
-    simpl in H2; subst entropy_len.
-    assert (contra: Zlength (entropy_bytes ++ contents) = 0) by (rewrite <- HeqseedContents; reflexivity).
-    rewrite Zlength_app in contra.
-    repeat rewrite Zlength_map in Hentropy_bytes_length; rewrite Hentropy_bytes_length in contra.
-    omega.
+    remember (entropy_bytes ++ contents) as seedContents.
+    destruct seedContents as [|hdSeed tlSeed].
+    {
+      (* this case can't be true. case: seedContents = [] *)
+      simpl in H2; subst entropy_len.
+      assert (contra: Zlength (entropy_bytes ++ contents) = 0) by (rewrite <- HeqseedContents; reflexivity).
+      rewrite Zlength_app in contra.
+      repeat rewrite Zlength_map in Hentropy_bytes_length; rewrite Hentropy_bytes_length in contra.
+      omega.
+    }
+    exists hdSeed. exists tlSeed.
+    reflexivity.
   }
-  destruct H9 as [H9' [H9'' [H9''' H9'''']]]. (* metadata *)
-  repeat split; auto.
+  entailer!.
+  simpl in H7; rewrite <- H7. (* rewrite V0 *)
+  destruct Hnonempty_seed as [hdSeed [tlSeed Hnonempty_seed]];
+  rewrite Hnonempty_seed.
+  split; [reflexivity| apply hmac_common_lemmas.isbyte_hmac].
+  unfold HMAC256_DRBG_functional_prog.HMAC256_DRBG_update.
+  unfold HMAC_DRBG_update.HMAC_DRBG_update.
+  destruct Hnonempty_seed as [hdSeed [tlSeed Hnonempty_seed]];
+  rewrite Hnonempty_seed.
+  entailer!.
 Qed.
