@@ -33,8 +33,8 @@ Definition convert_abs (h: HABS): UNDER_SPEC.HABS :=
 Definition md_relate (h: HABS) (r:mdstate) :=
   UNDER_SPEC.REP (convert_abs h) (snd (snd r)).
 
-Definition md_full (h: HABS) (r:mdstate) :=
-  match h with hABS key _ => UNDER_SPEC.FULL key (snd (snd r)) end.
+Definition md_full (key: list Z) (r:mdstate) :=
+  UNDER_SPEC.FULL key (snd (snd r)).
 
 Definition md_get_size_spec :=
   DECLARE _mbedtls_md_get_size
@@ -129,14 +129,14 @@ Definition md_final_spec :=
 (* end mocked_md *)
 
 Inductive hmac256drbgabs :=
-  HMAC256DRBGabs: forall (md_ctx: HABS) (V: list Z) (reseed_counter entropy_len: Z) (prediction_resistance: bool) (reseed_interval: Z), hmac256drbgabs.
+  HMAC256DRBGabs: forall (key: list Z) (V: list Z) (reseed_counter entropy_len: Z) (prediction_resistance: bool) (reseed_interval: Z), hmac256drbgabs.
 
 Definition hmac256drbgstate: Type := (mdstate * (list val * (val * (val * (val * val)))))%type.
 
 Definition hmac256drbg_relate (a: hmac256drbgabs) (r: hmac256drbgstate) : mpred :=
-  match a with HMAC256DRBGabs md_ctx V reseed_counter entropy_len prediction_resistance reseed_interval =>
+  match a with HMAC256DRBGabs key V reseed_counter entropy_len prediction_resistance reseed_interval =>
                match r with (md_ctx', (V', (reseed_counter', (entropy_len', (prediction_resistance', reseed_interval'))))) =>
-                            md_full md_ctx md_ctx'
+                            md_full key md_ctx'
                                       && !! (
                                         map Vint (map Int.repr V) = V'
                                         /\ Vint (Int.repr reseed_counter) = reseed_counter'
@@ -148,7 +148,7 @@ Definition hmac256drbg_relate (a: hmac256drbgabs) (r: hmac256drbgstate) : mpred 
   end.
 
 Definition hmac256drbgstate_md_FULL key (r: hmac256drbgstate) : mpred :=
-  UNDER_SPEC.FULL key (snd (snd (fst r))).
+  md_full key (fst r).
 
 Definition hmac256drbgabs_entropy_len (a: hmac256drbgabs): Z :=
   match a with HMAC256DRBGabs _ _ _ entropy_len _ _ => entropy_len end.
@@ -157,28 +157,19 @@ Definition hmac256drbgabs_value (a: hmac256drbgabs): list Z :=
   match a with HMAC256DRBGabs _ V _ _ _ _ => V end.
 
 Definition hmac256drbgabs_key (a: hmac256drbgabs): list Z :=
-  match a with HMAC256DRBGabs (hABS key _) _ _ _ _ _ => key end.
+  match a with HMAC256DRBGabs key _ _ _ _ _ => key end.
 
 Definition hmac256drbgabs_reseed_interval (a: hmac256drbgabs): Z :=
   match a with HMAC256DRBGabs _ _ _ _ _ reseed_interval => reseed_interval end.
 
 Definition hmac256drbgabs_update_value (a: hmac256drbgabs) (new_value: list Z): hmac256drbgabs :=
-  match a with HMAC256DRBGabs (hABS key data) _ reseed_counter entropy_len prediction_resistance reseed_interval => HMAC256DRBGabs (hABS key data) new_value reseed_counter entropy_len prediction_resistance reseed_interval end.
+  match a with HMAC256DRBGabs key _ reseed_counter entropy_len prediction_resistance reseed_interval => HMAC256DRBGabs key new_value reseed_counter entropy_len prediction_resistance reseed_interval end.
 
 Definition hmac256drbgabs_update_key (a: hmac256drbgabs) (new_key: list Z): hmac256drbgabs :=
-  match a with HMAC256DRBGabs (hABS _ data) V reseed_counter entropy_len prediction_resistance reseed_interval => HMAC256DRBGabs (hABS new_key data) V reseed_counter entropy_len prediction_resistance reseed_interval end.
+  match a with HMAC256DRBGabs _ V reseed_counter entropy_len prediction_resistance reseed_interval => HMAC256DRBGabs new_key V reseed_counter entropy_len prediction_resistance reseed_interval end.
 
 Definition hmac256drbgabs_update_reseed_counter (a: hmac256drbgabs) (new_counter: Z): hmac256drbgabs :=
-  match a with HMAC256DRBGabs (hABS key data) V _ entropy_len prediction_resistance reseed_interval => HMAC256DRBGabs (hABS key data) V new_counter entropy_len prediction_resistance reseed_interval end.
-
-Definition hmac256drbgabs_empty_md (a: hmac256drbgabs): Prop :=
-  match a with
-    | HMAC256DRBGabs (hABS _ nil) _ _ _ _ _ => True
-    | HMAC256DRBGabs _ _ _ _ _ _ => False
-  end.
-
-Definition hmac256drbgabs_make_empty_md (a: hmac256drbgabs): hmac256drbgabs :=
-  match a with HMAC256DRBGabs (hABS key _) V reseed_counter entropy_len prediction_resistance reseed_interval => HMAC256DRBGabs (hABS key nil) V reseed_counter entropy_len prediction_resistance reseed_interval end.
+  match a with HMAC256DRBGabs key V _ entropy_len prediction_resistance reseed_interval => HMAC256DRBGabs key V new_counter entropy_len prediction_resistance reseed_interval end.
 
 Definition hmac256drbgabs_metadata_same (a: hmac256drbgabs) (b: hmac256drbgabs): Prop :=
   match a with HMAC256DRBGabs _ _ reseed_counter entropy_len prediction_resistance reseed_interval =>
@@ -190,9 +181,14 @@ Definition hmac256drbgabs_metadata_same (a: hmac256drbgabs) (b: hmac256drbgabs):
                end
   end.
 
-Definition hmac256drbgabs_convert_state_handle (a: DRBG_state_handle) data entropy_len reseed_interval: hmac256drbgabs :=
+Definition hmac256drbgabs_of_state_handle (a: DRBG_state_handle) entropy_len reseed_interval: hmac256drbgabs :=
   let '((V, key, reseed_counter),_, prediction_resistance) := a in
-  HMAC256DRBGabs (hABS key data) V reseed_counter entropy_len prediction_resistance reseed_interval.
+  HMAC256DRBGabs key V reseed_counter entropy_len prediction_resistance reseed_interval.
+
+Definition hmac256drbgabs_to_state_handle (a: hmac256drbgabs): DRBG_state_handle :=
+  match a with HMAC256DRBGabs key V reseed_counter entropy_len prediction_resistance reseed_interval =>
+               ((V, key, reseed_counter), 256 (* security strength, not used *), prediction_resistance)
+  end.
 
 Definition hmac256drbgstate_md_info_pointer (a: hmac256drbgstate): val := fst (fst a).
 
@@ -248,7 +244,7 @@ Definition hmac_drbg_update_spec :=
        ).
 
 Definition mbedtls_HMAC256_DRBG_reseed_function (entropy_stream: ENTROPY.stream) (a:hmac256drbgabs) (additional_input: list Z): ENTROPY.result DRBG_state_handle :=
-  match a with HMAC256DRBGabs (hABS key _) V reseed_counter entropy_len prediction_resistance reseed_interval =>
+  match a with HMAC256DRBGabs key V reseed_counter entropy_len prediction_resistance reseed_interval =>
                HMAC256_DRBG_reseed_function entropy_len entropy_len 256 entropy_stream ((V, key, reseed_counter), 256 (* security strength, not used *), prediction_resistance) prediction_resistance additional_input
   end.
 
@@ -257,7 +253,7 @@ Definition hmac256drbgabs_relate_reseed_result (result: ENTROPY.result DRBG_stat
     | ENTROPY.error _ _ => initial_state_abs = final_state_abs
     | ENTROPY.success ((V', key', reseed_counter'), _, pr') _ =>
       match initial_state_abs with HMAC256DRBGabs _ _ _ entropy_len' _ reseed_interval' =>
-                                   match final_state_abs with HMAC256DRBGabs (hABS key _) V reseed_counter entropy_len pr reseed_interval =>
+                                   match final_state_abs with HMAC256DRBGabs key V reseed_counter entropy_len pr reseed_interval =>
                                                               key = key'/\
                                                               V = V' /\
                                                               reseed_counter = reseed_counter' /\
@@ -330,7 +326,7 @@ Definition hmac_drbg_reseed_spec :=
        ).
 
 Definition mbedtls_HMAC256_DRBG_generate_function (entropy_stream: ENTROPY.stream) (a:hmac256drbgabs) (requested_number_of_bytes: Z) (additional_input: list Z): ENTROPY.result (list Z * DRBG_state_handle) :=
-  match a with HMAC256DRBGabs (hABS key _) V reseed_counter entropy_len prediction_resistance reseed_interval =>
+  match a with HMAC256DRBGabs key V reseed_counter entropy_len prediction_resistance reseed_interval =>
                HMAC256_DRBG_generate_function (HMAC256_DRBG_reseed_function entropy_len entropy_len 256) 10000(* reseed_interval *) 1024 256 entropy_stream ((V, key, reseed_counter), 256 (* security strength, not used *), prediction_resistance) requested_number_of_bytes 0 (* security strength, not used *) prediction_resistance additional_input
   end.
 
@@ -339,7 +335,7 @@ Definition hmac256drbgabs_relate_generate_result (result: ENTROPY.result (list Z
     | ENTROPY.error _ _ => initial_state_abs = final_state_abs
     | ENTROPY.success (_, ((V', key', reseed_counter'), _, pr')) _ =>
       match initial_state_abs with HMAC256DRBGabs _ _ _ entropy_len' _ reseed_interval' =>
-                                   match final_state_abs with HMAC256DRBGabs (hABS key _) V reseed_counter entropy_len pr reseed_interval =>
+                                   match final_state_abs with HMAC256DRBGabs key V reseed_counter entropy_len pr reseed_interval =>
                                                               key = key'/\
                                                               V = V' /\
                                                               reseed_counter = reseed_counter' /\
@@ -457,7 +453,7 @@ Lemma hmac256drbgabs_update_key_ident:
   forall a key, key = hmac256drbgabs_key a -> hmac256drbgabs_update_key a key = a.
 Proof.
   intros.
-  destruct a; destruct md_ctx.
+  destruct a.
   simpl in H; subst.
   reflexivity.
 Qed.
@@ -466,7 +462,7 @@ Lemma hmac256drbgabs_update_value_ident:
   forall a value, value = hmac256drbgabs_value a -> hmac256drbgabs_update_value a value = a.
 Proof.
   intros.
-  destruct a; destruct md_ctx.
+  destruct a.
   simpl in H; subst.
   reflexivity.
 Qed.
@@ -474,46 +470,6 @@ Qed.
 Lemma hmac256drbgabs_update_key_update_value_commute:
   forall a key value, hmac256drbgabs_update_value (hmac256drbgabs_update_key a key) value = hmac256drbgabs_update_key (hmac256drbgabs_update_value a value) key.
 Proof.
-  destruct a. destruct md_ctx.
+  destruct a.
   reflexivity.
-Qed.
-
-Lemma hmac256drbgabs_update_key_value_ident:
-  forall a1 a2 key value, key = hmac256drbgabs_key a1 -> value = hmac256drbgabs_value a1 -> hmac256drbgabs_metadata_same a1 a2 -> hmac256drbgabs_empty_md a1 -> hmac256drbgabs_empty_md a2 -> hmac256drbgabs_update_key (hmac256drbgabs_update_value a2 value) key = a1.
-Proof.
-  intros.
-  destruct a1, a2. destruct md_ctx, md_ctx0.
-  simpl. hnf in H1.
-  destruct H1 as [H'  [H'' [H''' H'''']]].
-  unfold hmac256drbgabs_empty_md in H2, H3.
-  destruct data; try solve [inversion H2].
-  destruct data0; try solve [inversion H3].
-  subst.
-  reflexivity.
-Qed.
-
-Lemma hmac256drbgabs_update_key_md_empty:
-  forall a key, hmac256drbgabs_empty_md a -> hmac256drbgabs_empty_md (hmac256drbgabs_update_key a key).
-Proof.
-  intros. destruct a. destruct md_ctx.
-  auto.
-Qed.
-
-Lemma hmac256drbgabs_update_value_md_empty:
-  forall a value, hmac256drbgabs_empty_md a -> hmac256drbgabs_empty_md (hmac256drbgabs_update_value a value).
-Proof.
-  intros. destruct a. destruct md_ctx.
-  auto.
-Qed.
-
-Lemma hmac256drbgabs_update_key_make_empty_md_commute:
-  forall a key, hmac256drbgabs_update_key (hmac256drbgabs_make_empty_md a) key = hmac256drbgabs_make_empty_md (hmac256drbgabs_update_key a key).
-Proof.
-  destruct a. destruct md_ctx. reflexivity.
-Qed.
-
-Lemma hmac256drbgabs_update_value_make_empty_md_commute:
-  forall a value, hmac256drbgabs_update_value (hmac256drbgabs_make_empty_md a) value = hmac256drbgabs_make_empty_md (hmac256drbgabs_update_value a value).
-Proof.
-  destruct a. destruct md_ctx. reflexivity.
 Qed.

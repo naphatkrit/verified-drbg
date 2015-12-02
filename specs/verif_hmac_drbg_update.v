@@ -286,7 +286,7 @@ Proof.
       unfold field_address.
       destruct (field_compatible_dec t_struct_hmac256drbg_context_st); [reflexivity|contradiction].
     }
-    destruct state_abs. destruct md_ctx.
+    destruct state_abs.
     destruct state as [md_ctx [V' [reseed_counter' [entropy_len' [prediction_resistance' reseed_interval']]]]]. simpl in H7; subst key0.
     unfold hmac256drbg_relate. unfold md_full.
     Intros.
@@ -500,7 +500,7 @@ Proof.
     }
     Intros new_V.
     unfold update_relate_final_state.
-    Exists (HMAC256 (V ++ [i] ++ contents) key) (HMAC256 V (HMAC256 (V ++ [i] ++ contents) key))    (HMAC256DRBGabs (hABS (HMAC256 (V ++ [i] ++ contents) key) []) (HMAC256 V (HMAC256 (V ++ [i] ++ contents) key)) reseed_counter entropy_len prediction_resistance reseed_interval) (md_ctx, (map Vint (map Int.repr (HMAC256 V (HMAC256 (V ++ [i] ++ contents) key))), (Vint (Int.repr reseed_counter), (Vint (Int.repr entropy_len), (prediction_resistance', Vint (Int.repr reseed_interval)))))).
+    Exists (HMAC256 (V ++ [i] ++ contents) key) (HMAC256 V (HMAC256 (V ++ [i] ++ contents) key))    (HMAC256DRBGabs (HMAC256 (V ++ [i] ++ contents) key) (HMAC256 V (HMAC256 (V ++ [i] ++ contents) key)) reseed_counter entropy_len prediction_resistance reseed_interval) (md_ctx, (map Vint (map Int.repr (HMAC256 V (HMAC256 (V ++ [i] ++ contents) key))), (Vint (Int.repr reseed_counter), (Vint (Int.repr entropy_len), (prediction_resistance', Vint (Int.repr reseed_interval)))))).
     Time entailer!. (* 335 ! *)
     {
       split; [| apply hmac_common_lemmas.HMAC_Zlength].
@@ -514,6 +514,7 @@ Proof.
     rewrite (field_at_data_at _ _ [StructField _md_ctx]);
     rewrite (field_at_data_at _ _ [StructField _V]); simpl.
     repeat rewrite hmac_common_lemmas.HMAC_Zlength.
+    unfold md_full.
     Time entailer!. (* 15 *)
   }
   unfold update_relate_final_state.
