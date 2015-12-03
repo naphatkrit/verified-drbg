@@ -128,7 +128,7 @@ Proof.
     rewrite zlt_false in Heqadd_len_too_high by assumption.
     forward.
     entailer!.
-    rewrite <- H7.
+    rewrite <- H12.
     simpl in H2. subst entropy_len.
     unfold Int.ltu.
     destruct (zlt (Int.unsigned (Int.repr 384))
@@ -172,16 +172,13 @@ Proof.
   {
     forward.
     unfold hmac_drbg_update_post, get_stream_result, hmac256drbg_relate.
-    Exists seed (Vint (Int.neg (Int.repr 5))) (md_ctx',
-        (map Vint (map Int.repr V),
-        (Vint (Int.repr reseed_counter),
-        (Vint (Int.repr entropy_len),
-        (Val.of_bool prediction_resistance, Vint (Int.repr reseed_interval)))))).
+    Exists seed (Vint (Int.neg (Int.repr 5))).
     rewrite andb_negb_r.
     destruct (zlt 256 (Zlength contents)); inv Heqadd_len_too_high.
     rewrite Z.gtb_ltb.
     assert (Hlt: 256 <? Zlength contents = true) by (apply Z.ltb_lt; assumption).
     rewrite Hlt.
+    unfold hmac256drbgabs_to_state.
     entailer!.
   }
   {
@@ -190,7 +187,7 @@ Proof.
   }
   assert_PROP (0 <= Zlength contents <= 256) as HZlength.
   {
-    entailer!. destruct (zlt 256 (Zlength contents)); inv H6. omega.
+    entailer!. destruct (zlt 256 (Zlength contents)); inversion H11. omega.
   }
 
   (* memset( seed, 0, MBEDTLS_HMAC_DRBG_MAX_SEED_INPUT ); *)
@@ -272,18 +269,14 @@ Proof.
     (* != 0 case *)
     forward.
     unfold hmac_drbg_update_post.
-    Exists seed (Vint (Int.neg (Int.repr (9)))) (md_ctx',
-        (map Vint (map Int.repr V),
-        (Vint (Int.repr reseed_counter),
-        (Vint (Int.repr entropy_len),
-        (Val.of_bool prediction_resistance, Vint (Int.repr reseed_interval)))))).
+    Exists seed (Vint (Int.neg (Int.repr (9)))).
     unfold entropy.get_entropy in *.
     destruct (entropy.ENTROPY.get_bytes (Z.to_nat entropy_len) s).
     {
       (* contradiction. cannot be a success *)
-      hnf in H6.
-      inv H6.
-      inversion H7.
+      hnf in H11.
+      inv H11.
+      inversion H12.
     }
     rewrite andb_negb_r.
     destruct (zlt 256 (Zlength contents)); inv Heqadd_len_too_high.
@@ -292,6 +285,7 @@ Proof.
     rewrite Hlt.
     unfold hmac256drbg_relate, get_stream_result.
     rewrite data_at__memory_block.
+    unfold hmac256drbgabs_to_state.
     entailer!.    
     eapply derives_trans. apply sepcon_derives; [apply derives_refl | apply data_at_memory_block].
     apply derives_refl'.
@@ -302,7 +296,7 @@ Proof.
     change (1 * Z.max 0 (384 - 32))%Z with 352.
     rewrite add_repr.
     rewrite <- memory_block_split; auto.
-    clear - H9. rename H9 into Hlvar.
+    clear - H14. rename H14 into Hlvar.
     unfold lvar in Hlvar; unfold size_compatible in Hlvar.
     destruct (Map.get (ve_of rho) _seed); try solve [inversion Hlvar].
     destruct p. destruct (eqb_type (tarray tuchar 384) t); try solve [inversion Hlvar].
@@ -315,7 +309,7 @@ Proof.
     forward.
     entailer!.
     replace _id with Int.zero; [reflexivity|].
-    clear - H7. rename H7 into Hid.
+    clear - H12. rename H12 into Hid.
     pose proof (negb_sym (Int.eq _id (Int.repr 0)) false).
     symmetry in Hid; apply H in Hid.
     simpl in Hid.
@@ -325,12 +319,12 @@ Proof.
 
   (* now that we know entropy call succeeded, use that fact to simplify the SEP clause *)
   remember (entropy.ENTROPY.get_bytes (Z.to_nat entropy_len) s) as entropy_result.
-  unfold entropy.get_entropy in H6;
-  rewrite <- Heqentropy_result in H6;
+  unfold entropy.get_entropy in H11;
+  rewrite <- Heqentropy_result in H11;
   destruct entropy_result; [|
   normalize;
-  simpl in H6; destruct e; [inversion H6 |
-  assert (contra: False) by (apply H6; reflexivity); inversion contra]
+  simpl in H11; destruct e; [inversion H11 |
+  assert (contra: False) by (apply H11; reflexivity); inversion contra]
   ].
 
   rename l into entropy_bytes.
@@ -406,9 +400,9 @@ Proof.
   {
     forward.
     entailer!.
-    rewrite <- H9.
+    rewrite <- H14.
     destruct (eq_dec additional' nullval) as [additional_pos | additional_neg].
-    subst additional'; assert (contra: False) by (apply H7; reflexivity); inversion contra.
+    subst additional'; assert (contra: False) by (apply H12; reflexivity); inversion contra.
     destruct (eq_dec (Zlength contents) 0) as [Zlength_pos | Zlength_neg].
     rewrite Zlength_pos. reflexivity.
     rewrite Int.eq_false. reflexivity.
@@ -503,11 +497,11 @@ Proof.
     forward_call ((Tsh, Tsh), (Vptr b (Int.add i (Int.repr entropy_len))), additional, Zlength contents, map Int.repr contents).
     {
       (* type checking *)
-      unfold lvar in H10.
+      unfold lvar in H15.
       unfold eval_var.
-      destruct (Map.get (ve_of rho) _seed); [|inversion H10].
+      destruct (Map.get (ve_of rho) _seed); [|inversion H15].
       destruct p.
-      destruct (eqb_type (tarray tuchar 384)); [|inversion H10].
+      destruct (eqb_type (tarray tuchar 384)); [|inversion H15].
       simpl. constructor.
     }
     {
@@ -578,9 +572,9 @@ Proof.
     forward.
     assert_PROP (contents = []).
     {
-      destruct (eq_dec additional nullval). entailer!. destruct H15 as [contra H15']; inversion contra.
+      destruct (eq_dec additional nullval). entailer!. destruct H20 as [contra H20']; inversion contra.
       destruct (eq_dec add_len 0). entailer!. destruct contents; [reflexivity|]. rewrite Zlength_correct in e; simpl in e. inversion e.
-      rewrite H7 in Heqnon_empty_additional. inversion Heqnon_empty_additional.
+      rewrite H12 in Heqnon_empty_additional. inversion Heqnon_empty_additional.
     }
     subst contents.
     change (Zlength []) with 0.
@@ -642,7 +636,6 @@ Proof.
     }
   }
   unfold hmac_drbg_update_post; normalize.
-  Intros final_state.
 
   gather_SEP 3 5.
   replace_SEP 0 (data_at Tsh (tarray tuchar 384) ((map Vint
@@ -671,12 +664,9 @@ Proof.
   (* return 0 *)
   forward.
 
-  destruct final_state as [md_ctx0' [V0' [reseed_counter0' [entropy_len0' [prediction_resistance0' reseed_interval0']]]]].
   unfold hmac_drbg_update_post.
-  Exists seed (Vint (Int.repr 0)) (md_ctx0',
-             (V0',
-             (Vone,
-             (entropy_len0', (prediction_resistance0', reseed_interval0'))))).
+  unfold hmac256drbgabs_to_state.
+  Exists seed (Vint (Int.repr 0)).
   rewrite andb_negb_r.
   assert (HcontentsLength: Zlength contents >? 256 = false).
   {
@@ -686,8 +676,8 @@ Proof.
   }
   rewrite HcontentsLength.
   unfold HMAC_DRBG_update.HMAC_DRBG_update.
+  idtac.
   replace (map (fun x : Z => Vint (Int.repr x)) contents) with (map Vint (map Int.repr contents)) by (rewrite map_map; auto).
-  cancel.
   unfold hmac256drbg_relate.
   unfold get_stream_result.
   unfold entropy.get_entropy.
@@ -707,14 +697,10 @@ Proof.
     exists hdSeed. exists tlSeed.
     reflexivity.
   }
-  entailer!.
-  simpl in H7; rewrite <- H7. (* rewrite V0 *)
-  destruct Hnonempty_seed as [hdSeed [tlSeed Hnonempty_seed]];
-  rewrite Hnonempty_seed.
-  split; [reflexivity| apply hmac_common_lemmas.isbyte_hmac].
   unfold HMAC256_DRBG_functional_prog.HMAC256_DRBG_update.
   unfold HMAC_DRBG_update.HMAC_DRBG_update.
   destruct Hnonempty_seed as [hdSeed [tlSeed Hnonempty_seed]];
   rewrite Hnonempty_seed.
   entailer!.
+  split; [apply hmac_common_lemmas.HMAC_Zlength| apply hmac_common_lemmas.isbyte_hmac].
 Qed.

@@ -35,13 +35,6 @@ Qed.
 Definition update_rounds (non_empty_additional: bool): Z :=
   if non_empty_additional then 2 else 1.
 
-Definition update_relate_final_state (ctx: val) (final_state_abs: hmac256drbgabs) (info_contents: md_info_state) :mpred :=
-  EX final_state: hmac256drbgstate,
-  (data_at Tsh t_struct_hmac256drbg_context_st final_state ctx) *
-  (data_at Tsh t_struct_mbedtls_md_info info_contents
-           (hmac256drbgstate_md_info_pointer final_state)) *
-  (hmac256drbg_relate final_state_abs final_state).
-
 Lemma HMAC_DRBG_update_round_incremental:
   forall key V initial_state_abs contents n,
     (key, V) = HMAC_DRBG_update_round HMAC256 contents
@@ -239,7 +232,7 @@ Proof.
               /\ Zlength value = Z.of_nat SHA256.DigestLength
               /\ Forall general_lemmas.isbyteZ value
             ) &&
-           (update_relate_final_state ctx final_state_abs info_contents)
+           (hmac_drbg_update_post final_state_abs initial_state ctx info_contents)
          );
         (* `(update_relate_final_state ctx final_state_abs); *)
         (data_at_ Tsh (tarray tuchar 32) K);
@@ -258,16 +251,18 @@ Proof.
   }
   {
     (* pre conditions imply loop invariant *)
-    unfold update_relate_final_state.
-    Exists (hmac256drbgabs_key initial_state_abs) (hmac256drbgabs_value initial_state_abs) initial_state_abs initial_state.
+    unfold hmac_drbg_update_post.
+    Exists (hmac256drbgabs_key initial_state_abs) (hmac256drbgabs_value initial_state_abs) initial_state_abs.
     destruct initial_state_abs.
+    destruct initial_state as [md_ctx0' [V0' [reseed_counter0' [entropy_len0' [prediction_resistance0' reseed_interval0']]]]].
+    unfold hmac256drbgabs_to_state.
     entailer!.
   }
   {
     (* loop body *)
     change (`(eq (Vint (Int.repr rounds))) (eval_expr (Etempvar _rounds tint))) with (temp _rounds (Vint (Int.repr rounds))).
-    unfold update_relate_final_state.
-    Intros key value state_abs state.
+    unfold hmac_drbg_update_post. unfold hmac256drbgabs_to_state.
+    Intros key value state_abs.
     unfold_data_at 1%nat.
     rewrite (field_at_data_at _ _ [StructField _md_ctx]); simpl.
     rewrite (field_at_data_at _ _ [StructField _V]); simpl.
@@ -287,7 +282,7 @@ Proof.
       destruct (field_compatible_dec t_struct_hmac256drbg_context_st); [reflexivity|contradiction].
     }
     destruct state_abs.
-    destruct state as [md_ctx [V' [reseed_counter' [entropy_len' [prediction_resistance' reseed_interval']]]]]. simpl in H7; subst key0.
+    destruct initial_state as [md_ctx [V' [reseed_counter' [entropy_len' [prediction_resistance' reseed_interval']]]]]. simpl in H7; subst key0.
     unfold hmac256drbg_relate. unfold md_full.
     Intros.
     simpl in H8.
@@ -312,7 +307,7 @@ Proof.
     }
     {
       rewrite H10.
-      rewrite H7.
+      change (Z.of_nat SHA256.DigestLength) with 32.
       cancel.
     }
     {
@@ -370,7 +365,7 @@ Proof.
       (field_at Tsh t_struct_hmac256drbg_context_st
           [StructField _entropy_len] (Vint (Int.repr entropy_len)) ctx);
       (field_at Tsh t_struct_hmac256drbg_context_st
-          [StructField _prediction_resistance] prediction_resistance' ctx);
+          [StructField _prediction_resistance] (Val.of_bool prediction_resistance) ctx);
       (field_at Tsh t_struct_hmac256drbg_context_st
           [StructField _reseed_interval] (Vint (Int.repr reseed_interval))
           ctx);
@@ -379,12 +374,13 @@ Proof.
              (md_ctx,
          (V',
          (reseed_counter',
-         (entropy_len', (prediction_resistance', reseed_interval')))))));
+         (entropy_len', (Val.of_bool prediction_resistance, reseed_interval')))))));
       (data_at_ Tsh (tarray tuchar (Zlength V)) K);
       (data_at Tsh (tarray tuchar (Zlength contents))
           (map Vint (map Int.repr contents)) additional)) 
     ). (* 42 *)
     {
+      
       (* rounds = 2 case *)
       rewrite H1.
 
@@ -421,7 +417,7 @@ Proof.
       entailer!.
 
       (* contents not empty, which is a contradiction *)
-      rewrite Zlength_cons in H8.
+      rewrite Zlength_cons in H7.
       destruct (eq_dec (Z.succ (Zlength contents)) 0) as [Zlength_eq | Zlength_neq].
       assert (0 <= Zlength contents) by (apply Zlength_nonneg).
       destruct (Zlength contents); [inversion Zlength_eq| omega | omega].
@@ -429,7 +425,7 @@ Proof.
       assert (Hisptr: isptr additional') by auto.
       destruct (eq_dec additional' nullval) as [additional_null | additional_not_null].
       subst. inversion Hisptr.
-      assert (contra: False) by (apply H8; reflexivity); inversion contra.
+      assert (contra: False) by (apply H7; reflexivity); inversion contra.
     }
     rewrite H10.
 
@@ -499,8 +495,8 @@ Proof.
       entailer!.
     }
     Intros new_V.
-    unfold update_relate_final_state.
-    Exists (HMAC256 (V ++ [i] ++ contents) key) (HMAC256 V (HMAC256 (V ++ [i] ++ contents) key))    (HMAC256DRBGabs (HMAC256 (V ++ [i] ++ contents) key) (HMAC256 V (HMAC256 (V ++ [i] ++ contents) key)) reseed_counter entropy_len prediction_resistance reseed_interval) (md_ctx, (map Vint (map Int.repr (HMAC256 V (HMAC256 (V ++ [i] ++ contents) key))), (Vint (Int.repr reseed_counter), (Vint (Int.repr entropy_len), (prediction_resistance', Vint (Int.repr reseed_interval)))))).
+    unfold hmac_drbg_update_post, hmac256drbgabs_to_state.
+    Exists (HMAC256 (V ++ [i] ++ contents) key) (HMAC256 V (HMAC256 (V ++ [i] ++ contents) key))    (HMAC256DRBGabs (HMAC256 (V ++ [i] ++ contents) key) (HMAC256 V (HMAC256 (V ++ [i] ++ contents) key)) reseed_counter entropy_len prediction_resistance reseed_interval).
     Time entailer!. (* 335 ! *)
     {
       split; [| apply hmac_common_lemmas.HMAC_Zlength].
@@ -517,7 +513,6 @@ Proof.
     unfold md_full.
     Time entailer!. (* 15 *)
   }
-  unfold update_relate_final_state.
   (* return *)
   forward.
 
@@ -539,8 +534,6 @@ Proof.
     simpl;
     split; try apply hmac_common_lemmas.HMAC_Zlength; try apply hmac_common_lemmas.isbyte_hmac.
   }
-  unfold hmac_drbg_update_post.
-  Exists final_state.
   rename H1 into Hupdate_rounds.
   rename H6 into Hmetadata.
   destruct final_state_abs; unfold hmac256drbgabs_metadata_same in Hmetadata.
