@@ -366,7 +366,7 @@ Definition hmac_drbg_generate_spec :=
        )
        LOCAL (temp _p_rng ctx; temp _output output; temp _out_len (Vint (Int.repr out_len)); temp _additional additional; temp _add_len (Vint (Int.repr add_len)); gvar sha._K256 kv)
        SEP (
-         (memory_block Tsh out_len output);
+         (data_at_ Tsh (tarray tuchar out_len) output);
          (data_at Tsh (tarray tuchar add_len) (map Vint (map Int.repr contents)) additional);
          (data_at Tsh t_struct_hmac256drbg_context_st initial_state ctx);
          (hmac256drbg_relate initial_state_abs initial_state);
@@ -386,7 +386,7 @@ Definition hmac_drbg_generate_spec :=
        LOCAL (temp ret_temp ret_value)
        SEP (
          (match mbedtls_HMAC256_DRBG_generate_function s initial_state_abs out_len contents with
-            | ENTROPY.error _ _ => (memory_block Tsh out_len output)
+            | ENTROPY.error _ _ => (data_at_ Tsh (tarray tuchar out_len) output)
             | ENTROPY.success (bytes, _) _ => (data_at Tsh (tarray tuchar out_len) (map Vint (map Int.repr bytes)) output)
           end
          );
