@@ -1283,15 +1283,23 @@ Definition f_mbedtls_hmac_drbg_random_with_add := {|
                                (Etempvar _additional (tptr tuchar)) ::
                                (Etempvar _add_len tuint) :: nil))
                             (Ssequence
-                              (Sassign
+                              (Sset _reseed_counter
                                 (Efield
                                   (Ederef
                                     (Etempvar _ctx (tptr (Tstruct _mbedtls_hmac_drbg_context noattr)))
                                     (Tstruct _mbedtls_hmac_drbg_context noattr))
-                                  _reseed_counter tint)
-                                (Ebinop Oadd (Etempvar _reseed_counter tint)
-                                  (Econst_int (Int.repr 1) tint) tint))
-                              (Sreturn (Some (Econst_int (Int.repr 0) tint))))))))))))))))))
+                                  _reseed_counter tint))
+                              (Ssequence
+                                (Sassign
+                                  (Efield
+                                    (Ederef
+                                      (Etempvar _ctx (tptr (Tstruct _mbedtls_hmac_drbg_context noattr)))
+                                      (Tstruct _mbedtls_hmac_drbg_context noattr))
+                                    _reseed_counter tint)
+                                  (Ebinop Oadd
+                                    (Etempvar _reseed_counter tint)
+                                    (Econst_int (Int.repr 1) tint) tint))
+                                (Sreturn (Some (Econst_int (Int.repr 0) tint)))))))))))))))))))
 |}.
 
 Definition f_mbedtls_hmac_drbg_random := {|
