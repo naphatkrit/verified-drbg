@@ -4,6 +4,7 @@ Local Open Scope logic.
 
 Require Import hmac_drbg.
 Require Import HMAC256_DRBG_functional_prog.
+Require Import HMAC_DRBG_update.
 Require Import entropy.
 Require Import DRBG_reseed_function.
 Require Import DRBG_state_handle.
@@ -226,6 +227,64 @@ Definition hmac256drbgabs_hmac_drbg_update (a:hmac256drbgabs) (additional_data: 
   end
 .
 
+Lemma hmac256drbgabs_hmac_drbg_update_any_prop_key:
+  forall (P: list Z -> Prop) a additional_data,
+    (forall x y, P (HMAC256 x y)) ->
+    P (hmac256drbgabs_key (hmac256drbgabs_hmac_drbg_update a additional_data)).
+Proof.
+  intros.
+  destruct a; simpl.
+  unfold HMAC256_DRBG_update, HMAC_DRBG_update.
+  destruct additional_data; apply H.  
+Qed.
+
+Lemma hmac256drbgabs_hmac_drbg_update_any_prop_V:
+  forall (P: list Z -> Prop) a additional_data,
+    (forall x y, P (HMAC256 x y)) ->
+    P (hmac256drbgabs_value (hmac256drbgabs_hmac_drbg_update a additional_data)).
+Proof.
+  intros.
+  destruct a; simpl.
+  unfold HMAC256_DRBG_update, HMAC_DRBG_update.
+  destruct additional_data; apply H.  
+Qed.
+
+Lemma hmac256drbgabs_hmac_drbg_update_Zlength_key:
+  forall a additional_data,
+    Zlength (hmac256drbgabs_key (hmac256drbgabs_hmac_drbg_update a additional_data)) = Z.of_nat SHA256.DigestLength.
+Proof.
+  intros.
+  apply hmac256drbgabs_hmac_drbg_update_any_prop_key.
+  apply hmac_common_lemmas.HMAC_Zlength.
+Qed.
+
+Lemma hmac256drbgabs_hmac_drbg_update_Zlength_V:
+  forall a additional_data,
+    Zlength (hmac256drbgabs_value (hmac256drbgabs_hmac_drbg_update a additional_data)) = Z.of_nat SHA256.DigestLength.
+Proof.
+  intros.
+  apply hmac256drbgabs_hmac_drbg_update_any_prop_V.
+  apply hmac_common_lemmas.HMAC_Zlength.
+Qed.
+
+Lemma hmac256drbgabs_hmac_drbg_update_isbyteZ_key:
+  forall a additional_data,
+    Forall isbyteZ (hmac256drbgabs_key (hmac256drbgabs_hmac_drbg_update a additional_data)).
+Proof.
+  intros.
+  apply hmac256drbgabs_hmac_drbg_update_any_prop_key.
+  apply hmac_common_lemmas.isbyte_hmac.
+Qed.
+
+Lemma hmac256drbgabs_hmac_drbg_update_isbyteZ_V:
+  forall a additional_data,
+    Forall isbyteZ (hmac256drbgabs_value (hmac256drbgabs_hmac_drbg_update a additional_data)).
+Proof.
+  intros.
+  apply hmac256drbgabs_hmac_drbg_update_any_prop_V.
+  apply hmac_common_lemmas.isbyte_hmac.
+Qed.
+
 Definition hmac_drbg_update_spec :=
   DECLARE _mbedtls_hmac_drbg_update
    WITH contents: list Z,
@@ -277,6 +336,78 @@ Definition hmac256drbgabs_reseed (a: hmac256drbgabs) (s: ENTROPY.stream) (additi
                end
   end
 .
+
+Lemma hmac256drbgabs_reseed_any_prop_key:
+  forall (P: list Z -> Prop) a s additional_data,
+    P (hmac256drbgabs_key a) ->
+    (forall x y, P (HMAC256 x y)) ->
+    P (hmac256drbgabs_key (hmac256drbgabs_reseed a s additional_data)).
+Proof.
+  intros.
+  destruct a; simpl.
+  destruct ((prediction_resistance && negb prediction_resistance)%bool); auto.
+  destruct (Zlength additional_data >? 256); auto.
+  destruct (get_entropy 256 entropy_len entropy_len prediction_resistance s); auto.
+  unfold HMAC_DRBG_update.
+  unfold hmac256drbgabs_key.
+  destruct (l ++ additional_data); auto.
+Qed.
+
+Lemma hmac256drbgabs_reseed_any_prop_V:
+  forall (P: list Z -> Prop) a s additional_data,
+    P (hmac256drbgabs_value a) ->
+    (forall x y, P (HMAC256 x y)) ->
+    P (hmac256drbgabs_value (hmac256drbgabs_reseed a s additional_data)).
+Proof.
+  intros.
+  destruct a; simpl.
+  destruct ((prediction_resistance && negb prediction_resistance)%bool); auto.
+  destruct (Zlength additional_data >? 256); auto.
+  destruct (get_entropy 256 entropy_len entropy_len prediction_resistance s); auto.
+  unfold HMAC_DRBG_update.
+  unfold hmac256drbgabs_value.
+  destruct (l ++ additional_data); auto.
+Qed.
+
+Lemma hmac256drbgabs_reseed_Zlength_key:
+  forall a s additional_data,
+    Zlength (hmac256drbgabs_key a) = Z.of_nat SHA256.DigestLength ->
+    Zlength (hmac256drbgabs_key (hmac256drbgabs_reseed a s additional_data)) = Z.of_nat SHA256.DigestLength.
+Proof.
+  intros.
+  apply hmac256drbgabs_reseed_any_prop_key; auto.
+  apply hmac_common_lemmas.HMAC_Zlength.
+Qed.
+
+Lemma hmac256drbgabs_reseed_Zlength_V:
+  forall a s additional_data,
+    Zlength (hmac256drbgabs_value a) = Z.of_nat SHA256.DigestLength ->
+    Zlength (hmac256drbgabs_value (hmac256drbgabs_reseed a s additional_data)) = Z.of_nat SHA256.DigestLength.
+Proof.
+  intros.
+  apply hmac256drbgabs_reseed_any_prop_V; auto.
+  apply hmac_common_lemmas.HMAC_Zlength.
+Qed.
+
+Lemma hmac256drbgabs_reseed_isbyteZ_key:
+  forall a s additional_data,
+    Forall isbyteZ (hmac256drbgabs_key a) ->
+    Forall isbyteZ (hmac256drbgabs_key (hmac256drbgabs_reseed a s additional_data)).
+Proof.
+  intros.
+  apply hmac256drbgabs_reseed_any_prop_key; auto.
+  apply hmac_common_lemmas.isbyte_hmac.
+Qed.
+
+Lemma hmac256drbgabs_reseed_isbyteZ_V:
+  forall a s additional_data,
+    Forall isbyteZ (hmac256drbgabs_value a) ->
+    Forall isbyteZ (hmac256drbgabs_value (hmac256drbgabs_reseed a s additional_data)).
+Proof.
+  intros.
+  apply hmac256drbgabs_reseed_any_prop_V; auto.
+  apply hmac_common_lemmas.isbyte_hmac.
+Qed.
 
 Definition get_stream_result {X} (result: ENTROPY.result X): ENTROPY.stream :=
   match result with

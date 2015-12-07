@@ -32,63 +32,6 @@ Lemma sepcon_weak_valid_pointer1
 Proof. Admitted.
 Hint Resolve sepcon_weak_valid_pointer1 sepcon_weak_valid_pointer2 data_at_weak_valid_ptr: valid_pointer.
 
-Function generate_while_loop_V (HMAC: list Z -> list Z -> list Z) (key v: list Z) (requested_number_of_bytes: Z) {measure Z.to_nat requested_number_of_bytes}: list Z :=
-  if Z.geb 0 requested_number_of_bytes then v
-  else
-    let len := 32%nat in (* TODO get this from property of HMAC *)
-    let v := generate_while_loop_V HMAC key v (requested_number_of_bytes - (Z.of_nat len)) in
-    let v := HMAC v key in
-    v.
-Proof.
-  intros. rewrite Z2Nat.inj_sub by omega.
-  rewrite Nat2Z.id.
-  assert ((0 <? requested_number_of_bytes) = true).
-  * 
-    rewrite Z.ltb_antisym.
-    rewrite <- Z.geb_leb.
-    rewrite teq.
-    auto.
-  *
-  apply Zlt_is_lt_bool in H.
-  apply Z2Nat.inj_lt in H; omega.
-Defined.
-
-Lemma generate_while_loop_V_correct:
-  forall HMAC key v z,
-    generate_while_loop_V HMAC key v z = fst (HMAC_DRBG_generate_helper_Z HMAC key v z).
-Proof.
-  intros.
-  admit (* TODO *).
-Qed.
-
-Lemma HMAC_DRBG_generate_helper_Z_0:
-  forall HMAC key v,
-    (v, []) = HMAC_DRBG_generate_helper_Z HMAC key v 0.
-Proof.
-  intros. reflexivity.
-Qed.
-
-Lemma HMAC256_DRBG_generate_helper_Z_Zlength':
-  forall key v z,
-    z > 0 -> Zlength (fst (HMAC_DRBG_generate_helper_Z HMAC256 key v z)) = Z.of_nat SHA256.DigestLength.
-Admitted (* TODO *).    
-
-Lemma HMAC256_DRBG_generate_helper_Z_Zlength:
-  forall key v z,
-    z >= 0 -> Zlength v = Z.of_nat SHA256.DigestLength -> Zlength (fst (HMAC_DRBG_generate_helper_Z HMAC256 key v z)) = 32.
-Proof.
-  intros.
-  destruct (Z_le_gt_dec z 0).
-  {
-    assert (z = 0) by omega.
-    subst.
-    assumption.
-  }
-  {
-    apply HMAC256_DRBG_generate_helper_Z_Zlength'; assumption.
-  }
-Qed.
-
 Lemma sublist_app_exact1:
   forall X (A B: list X), sublist 0 (Zlength A) (A ++ B) = A.
 Proof.
@@ -1260,6 +1203,29 @@ Proof.
 
   remember (hmac256drbgabs_key after_update_state_abs) as after_update_key.
   remember (hmac256drbgabs_value after_update_state_abs) as after_update_value.
+  assert (HZlength_after_update_value: Zlength after_update_value = Z.of_nat SHA256.DigestLength).
+  {
+    subst after_update_value after_update_state_abs.
+    destruct non_empty_additional.
+    {
+      apply hmac256drbgabs_hmac_drbg_update_Zlength_V.
+    }
+    subst after_reseed_state_abs.
+    destruct should_reseed;[
+      apply hmac256drbgabs_reseed_Zlength_V|]; apply H1.
+  }
+  assert (HisbyteZ_after_update_value: Forall isbyteZ after_update_value).
+  {
+    subst after_update_value after_update_state_abs.
+    destruct non_empty_additional.
+    {
+      apply hmac256drbgabs_hmac_drbg_update_isbyteZ_V.
+    }
+    subst after_reseed_state_abs.
+    destruct should_reseed;[
+      apply hmac256drbgabs_reseed_isbyteZ_V|]; apply H5.
+  }
+
   (*
   assert_PROP (isptr output) as Hisptr_output by entailer!.
   destruct output; try solve [inversion Hisptr_output].
@@ -1945,7 +1911,25 @@ Proof.
     admit (* TODO *).
   }
   {
-    admit (* Zlength, isbyte on fst HMAC_DRBG_generate_helper *).
+    subst after_reseed_add_len; split.
+    destruct should_reseed; omega.
+    replace (hmac256drbgabs_value
+        (hmac256drbgabs_update_value after_update_state_abs
+           (fst
+              (HMAC_DRBG_generate_helper_Z HMAC256 after_update_key
+                 after_update_value out_len)))) with (fst
+              (HMAC_DRBG_generate_helper_Z HMAC256 after_update_key
+                 after_update_value out_len)) by (
+      destruct after_update_state_abs; unfold hmac256drbgabs_value; unfold hmac256drbgabs_update_value; reflexivity).
+    repeat split; try now (destruct should_reseed; auto).
+    {
+      rewrite HMAC_DRBG_generate_helper_Z_Zlength_fst; auto; try omega.
+      apply hmac_common_lemmas.HMAC_Zlength.
+    }
+    {
+      apply HMAC_DRBG_generate_helper_Z_isbyteZ_fst; auto; try omega.
+      apply hmac_common_lemmas.isbyte_hmac.
+    }
   }
 
   gather_SEP 1 4.
