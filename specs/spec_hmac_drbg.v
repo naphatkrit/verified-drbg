@@ -159,8 +159,17 @@ Definition hmac256drbgabs_value (a: hmac256drbgabs): list Z :=
 Definition hmac256drbgabs_key (a: hmac256drbgabs): list Z :=
   match a with HMAC256DRBGabs key _ _ _ _ _ => key end.
 
+Definition hmac256drbgabs_prediction_resistance (a: hmac256drbgabs): bool :=
+  match a with HMAC256DRBGabs _ _ _ _ pr _ => pr end.
+
+Definition hmac256drbgabs_reseed_counter (a: hmac256drbgabs): Z :=
+  match a with HMAC256DRBGabs _ _ reseed_counter _ _ _ => reseed_counter end.
+
 Definition hmac256drbgabs_reseed_interval (a: hmac256drbgabs): Z :=
   match a with HMAC256DRBGabs _ _ _ _ _ reseed_interval => reseed_interval end.
+
+Definition hmac256drbgabs_increment_reseed_counter (a: hmac256drbgabs): hmac256drbgabs :=
+  match a with HMAC256DRBGabs key V reseed_counter entropy_len prediction_resistance reseed_interval => HMAC256DRBGabs key V (reseed_counter + 1) entropy_len prediction_resistance reseed_interval end.
 
 Definition hmac256drbgabs_update_value (a: hmac256drbgabs) (new_value: list Z): hmac256drbgabs :=
   match a with HMAC256DRBGabs key _ reseed_counter entropy_len prediction_resistance reseed_interval => HMAC256DRBGabs key new_value reseed_counter entropy_len prediction_resistance reseed_interval end.
@@ -273,6 +282,12 @@ Definition get_stream_result {X} (result: ENTROPY.result X): ENTROPY.stream :=
   match result with
     | ENTROPY.success _ s => s
     | ENTROPY.error _ s => s
+  end.
+
+Definition result_success {X} (result: ENTROPY.result X): Prop :=
+  match result with
+    | ENTROPY.success _ _ => True
+    | ENTROPY.error _ _ => False
   end.
 
 Definition return_value_relate_result {X} (result: ENTROPY.result X) (ret_value: val): Prop :=
