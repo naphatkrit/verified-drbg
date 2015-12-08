@@ -305,6 +305,74 @@ Proof.
   }
 Qed.
 
+Lemma HMAC_DRBG_generate_helper_Z_incremental_equiv:
+  forall HMAC key v z incr,
+    0 <= z ->
+    0 < incr <= 32 ->
+    (exists n, z = n * 32) ->
+    HMAC_DRBG_generate_helper_Z HMAC key v (z + incr) = HMAC_DRBG_generate_helper_Z HMAC key v (z + 32).
+Proof.
+  intros HMAC key v z incr Hz Hlength Hn.
+  destruct Hn as [n Hn].
+  rewrite <- (Z2Nat.id n) in Hn by omega.
+  generalize dependent z.
+  induction (Z.to_nat n); intros.
+  {
+    (* base case *)
+    change ((Z.of_nat 0) * 32) with 0 in Hn.
+    subst z; simpl.
+    rewrite HMAC_DRBG_generate_helper_Z_equation.
+    assert (Hf: 0 >=? incr = false).
+    {
+      rewrite Z.geb_leb.
+      apply Z.leb_gt; omega.
+    }
+    rewrite Hf.
+    rewrite HMAC_DRBG_generate_helper_Z_equation.
+    assert (Hf2: 0 >=? incr - Z.of_nat 32 = true).
+    {
+      change (Z.of_nat 32) with 32.
+      rewrite Z.geb_leb.
+      apply Z.leb_le; omega.
+    }
+    rewrite Hf2.
+    reflexivity.
+  }
+  {
+    (* inductive case *)
+    assert (Hn': z = Z.of_nat n0 * 32 + 32).
+    {
+      rewrite Nat2Z.inj_succ in Hn.
+      rewrite <- Zmult_succ_l_reverse in Hn.
+      auto.
+    }
+    clear Hn; rename Hn' into Hn.
+    subst z.
+    rewrite HMAC_DRBG_generate_helper_Z_equation.
+    assert (Hf: 0 >=? Z.of_nat n0 * 32 + 32 + incr = false).
+    {
+      rewrite Z.geb_leb.
+      apply Z.leb_gt; omega.
+    }
+    rewrite Hf.
+    change (Z.of_nat 32) with 32.
+    replace (Z.of_nat n0 * 32 + 32 + incr - 32) with (Z.of_nat n0 * 32 + incr) by omega.
+    rewrite IHn0; try omega.
+    remember (let (v0, rest) :=
+        HMAC_DRBG_generate_helper_Z HMAC key v (Z.of_nat n0 * 32 + 32) in
+    (HMAC v0 key, rest ++ HMAC v0 key)) as saved; rewrite HMAC_DRBG_generate_helper_Z_equation; subst saved.
+    assert (Hf2: 0 >=? Z.of_nat n0 * 32 + 32 + 32 = false).
+    {
+      rewrite Z.geb_leb.
+      apply Z.leb_gt; omega.
+    }
+    rewrite Hf2.
+    change (Z.of_nat 32) with 32.
+    replace (Z.of_nat n0 * 32 + 32 + 32 - 32) with (Z.of_nat n0 * 32 + 32) by omega.
+    reflexivity.
+  }
+Qed.
+
 Fixpoint HMAC_DRBG_generate_helper_rounds (HMAC: list Z -> list Z -> list Z) (key v: list Z) (rounds: nat): (list Z * list Z) :=
   match rounds with
     | O => (v, [])
