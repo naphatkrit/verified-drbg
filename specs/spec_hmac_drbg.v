@@ -507,6 +507,7 @@ Definition hmac_drbg_generate_spec :=
          add_len = Zlength contents;
          hmac256drbgabs_entropy_len initial_state_abs = 32;
          hmac256drbgabs_reseed_interval initial_state_abs = 10000;
+         0 <= hmac256drbgabs_reseed_counter initial_state_abs <= Int.max_signed;
          Forall isbyteZ (hmac256drbgabs_value initial_state_abs);
          Forall isbyteZ contents
        )

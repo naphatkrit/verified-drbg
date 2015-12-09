@@ -843,6 +843,8 @@ Proof.
   name out_len' _out_len.
   name output' _output.
   name out' _out.
+
+  rename H5 into Hreseed_counter_in_range.
   
   destruct initial_state_abs.
   destruct initial_state as [md_ctx' [V' [reseed_counter' [entropy_len' [prediction_resistance' reseed_interval']]]]].
@@ -1042,17 +1044,24 @@ Proof.
     
     rewrite Z.gtb_ltb.
     unfold Int.lt.
+      unfold hmac256drbgabs_reseed_counter in Hreseed_counter_in_range.
     destruct (zlt reseed_interval reseed_counter) as [Hlt | Hlt].
     {
       (* reseed_interval < reseed_counter *)
       assert (Hltb: reseed_interval <? reseed_counter = true) by (rewrite Z.ltb_lt; assumption).
       rewrite Hltb.
-      (* TODO *) admit.
+      rewrite zlt_true; [reflexivity | ].
+      unfold hmac256drbgabs_reseed_interval in H4; rewrite H4.
+      change (Int.signed (Int.repr 10000)) with 10000.
+      rewrite Int.signed_repr; change Int.min_signed with (-2147483648); change Int.max_signed with (2147483647) in *; try omega.
     }
     {
       assert (Hltb: reseed_interval <? reseed_counter = false) by (rewrite Z.ltb_nlt; assumption).
       rewrite Hltb.
-      (* TODO *) admit.
+      rewrite zlt_false; [reflexivity | ].
+      unfold hmac256drbgabs_reseed_interval in H4; rewrite H4.
+      change (Int.signed (Int.repr 10000)) with 10000.
+      rewrite Int.signed_repr; change Int.min_signed with (-2147483648); change Int.max_signed with (2147483647) in *; try omega.
     }
   }
 
@@ -1327,7 +1336,17 @@ Proof.
     destruct (eq_dec (Zlength contents) 0).
     rewrite e.
     reflexivity.
-    admit (* TODO *).
+    unfold Int.eq, zeq.
+    destruct (Z.eq_dec (Int.unsigned (Int.repr (Zlength contents)))
+                    (Int.unsigned (Int.repr 0))).
+    {
+      rewrite Int.unsigned_repr in e; try omega.
+      change (Int.unsigned (Int.repr 0)) with 0 in e.
+      omega.
+    }
+    {
+      reflexivity.
+    }
   }
   {
     clear Hnon_empty_additional_contents.
@@ -1412,7 +1431,7 @@ Proof.
     }
     subst after_reseed_state_abs.
     destruct should_reseed;[
-      apply hmac256drbgabs_reseed_isbyteZ_V|]; apply H5.
+      apply hmac256drbgabs_reseed_isbyteZ_V|]; auto.
   }
 
   (*
