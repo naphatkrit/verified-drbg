@@ -1554,16 +1554,15 @@ Proof.
       (* md_len < left *)
       assert (Hmin: 32 < out_len - done).
       {
-        admit (* TODO *). (*
-        destruct (Z_le_gt_dec (out_len - done) (Z.of_nat SHA256.DigestLength)) as [Hmin | Hmin].
-        {
-          assumption.
-        }
-        {
-          (* contradiction *)
-          admit (* TODO *).
-        }
-*)
+        subst md_len.
+        simpl in H16.
+        unfold Int.ltu in H16.
+        destruct (Z_lt_ge_dec 32 (out_len - done)) as [Hmin | Hmin].
+        assumption.
+        rewrite zlt_false in H16;[ inversion H16|].
+        SearchAbout Int.unsigned Int.repr.
+        change (Int.unsigned (Int.repr 32)) with 32.
+        rewrite (Int.unsigned_repr (out_len - done)); try omega.
       }
       forward.
       subst md_len.
@@ -1574,7 +1573,14 @@ Proof.
       (* md_len >= left *)
       assert (Hmin: 32 >= out_len - done).
       {
-        admit (* TODO *).
+        subst md_len.
+        simpl in H16.
+        unfold Int.ltu in H16.
+        destruct (Z_lt_ge_dec 32 (out_len - done)) as [Hmin | Hmin].
+        rewrite zlt_true in H16;[ inversion H16|].
+        change (Int.unsigned (Int.repr 32)) with 32.
+        rewrite (Int.unsigned_repr (out_len - done)); try omega.
+        assumption.
       }
       forward.
       subst md_len.
@@ -2105,7 +2111,20 @@ Proof.
 
   assert (Hdone: done = out_len).
   {
-    admit (* TODO *).
+    clear - HRE H15 Hout_len.
+    assert (Hdiff: out_len - done = 0).
+    {
+      unfold Int.eq in HRE.
+      SearchAbout zeq.
+      unfold zeq in HRE.
+      destruct (Z.eq_dec (Int.unsigned (Int.repr (out_len - done)))
+                (Int.unsigned (Int.repr 0))).
+      rewrite (Int.unsigned_repr (out_len - done)) in e.
+      rewrite e; reflexivity.
+      change (Int.max_unsigned) with 4294967295; omega.
+      inversion HRE.
+    }
+    omega.
   }
   rewrite Hdone.
   replace (out_len - out_len) with 0 by omega.
