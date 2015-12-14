@@ -232,7 +232,7 @@ Proof.
               /\ Zlength value = Z.of_nat SHA256.DigestLength
               /\ Forall general_lemmas.isbyteZ value
             ) &&
-           (hmac_drbg_update_post final_state_abs initial_state ctx info_contents)
+           (hmac256drbgabs_common_mpreds final_state_abs initial_state ctx info_contents)
          );
         (* `(update_relate_final_state ctx final_state_abs); *)
         (data_at_ Tsh (tarray tuchar 32) K);
@@ -251,7 +251,7 @@ Proof.
   }
   {
     (* pre conditions imply loop invariant *)
-    unfold hmac_drbg_update_post.
+    unfold hmac256drbgabs_common_mpreds.
     Exists (hmac256drbgabs_key initial_state_abs) (hmac256drbgabs_value initial_state_abs) initial_state_abs.
     destruct initial_state_abs.
     destruct initial_state as [md_ctx0' [V0' [reseed_counter0' [entropy_len0' [prediction_resistance0' reseed_interval0']]]]].
@@ -261,7 +261,7 @@ Proof.
   {
     (* loop body *)
     change (`(eq (Vint (Int.repr rounds))) (eval_expr (Etempvar _rounds tint))) with (temp _rounds (Vint (Int.repr rounds))).
-    unfold hmac_drbg_update_post. unfold hmac256drbgabs_to_state.
+    unfold hmac256drbgabs_common_mpreds. unfold hmac256drbgabs_to_state.
     Intros key value state_abs.
     unfold_data_at 1%nat.
     rewrite (field_at_data_at _ _ [StructField _md_ctx]); simpl.
@@ -495,7 +495,7 @@ Proof.
       entailer!.
     }
     Intros new_V.
-    unfold hmac_drbg_update_post, hmac256drbgabs_to_state.
+    unfold hmac256drbgabs_common_mpreds, hmac256drbgabs_to_state.
     Exists (HMAC256 (V ++ [i] ++ contents) key) (HMAC256 V (HMAC256 (V ++ [i] ++ contents) key))    (HMAC256DRBGabs (HMAC256 (V ++ [i] ++ contents) key) (HMAC256 V (HMAC256 (V ++ [i] ++ contents) key)) reseed_counter entropy_len prediction_resistance reseed_interval).
     Time entailer!. (* 335 ! *)
     {

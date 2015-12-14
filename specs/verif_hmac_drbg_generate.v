@@ -917,7 +917,7 @@ Proof.
     forward.
 
     (* prove post condition of the function *)
-    unfold hmac_drbg_update_post, get_stream_result, hmac256drbg_relate.
+    unfold hmac256drbgabs_common_mpreds, get_stream_result, hmac256drbg_relate.
     unfold hmac256drbgabs_generate, hmac256drbgabs_to_state.
     Exists (Vint (Int.repr (-3))).
     unfold mbedtls_HMAC256_DRBG_generate_function.
@@ -971,7 +971,7 @@ Proof.
     forward.
 
     (* prove function post condition *)
-    unfold hmac_drbg_update_post, get_stream_result, hmac256drbg_relate.
+    unfold hmac256drbgabs_common_mpreds, get_stream_result, hmac256drbg_relate.
     unfold hmac256drbgabs_generate, hmac256drbgabs_to_state.
     Exists (Vint (Int.repr (-5))).
     unfold mbedtls_HMAC256_DRBG_generate_function.
@@ -1083,7 +1083,7 @@ Proof.
       temp 159%positive (Val.of_bool should_reseed))
       SEP  (
         Stream after_reseed_s;
-        hmac_drbg_update_post after_reseed_state_abs initial_state ctx info_contents
+        hmac256drbgabs_common_mpreds after_reseed_state_abs initial_state ctx info_contents
         ; (* ADDED *)
         data_at_ Tsh (tarray tuchar out_len) output;
       data_at Tsh (tarray tuchar add_len) (map Vint (map Int.repr contents))
@@ -1120,7 +1120,7 @@ Proof.
       temp _add_len (Vint (Int.repr add_len)); gvar sha._K256 kv;
       temp 159%positive (Val.of_bool should_reseed))
       SEP 
-      (hmac_drbg_update_post
+      (hmac256drbgabs_common_mpreds
          (hmac256drbgabs_reseed initial_state_abs s contents) initial_state
          ctx info_contents;
       data_at Tsh (tarray tuchar add_len) (map Vint (map Int.repr contents))
@@ -1141,7 +1141,7 @@ Proof.
         inversion H18.
       }
 
-      unfold hmac_drbg_update_post, get_stream_result, hmac256drbg_relate.
+      unfold hmac256drbgabs_common_mpreds, get_stream_result, hmac256drbg_relate.
       unfold hmac256drbgabs_generate, hmac256drbgabs_reseed, hmac256drbgabs_to_state.
       Exists (Vint _id0).
       apply orb_true_iff in Hshould_reseed.
@@ -1202,7 +1202,7 @@ Proof.
         rewrite Heqi_0; reflexivity.
       }
       subst return_value.
-      unfold hmac_drbg_update_post.
+      unfold hmac256drbgabs_common_mpreds.
       entailer!.
     }
 
@@ -1234,7 +1234,7 @@ Proof.
 
     subst after_reseed_state_abs after_reseed_add_len.
     rewrite H15.
-    unfold hmac_drbg_update_post, hmac256drbgabs_to_state.
+    unfold hmac256drbgabs_common_mpreds, hmac256drbgabs_to_state.
     subst initial_state_abs initial_state.
     entailer!.
     rewrite H15; apply derives_refl.
@@ -1303,7 +1303,7 @@ Proof.
              )
       SEP 
       (Stream after_reseed_s;
-      hmac_drbg_update_post after_reseed_state_abs initial_state ctx
+      hmac256drbgabs_common_mpreds after_reseed_state_abs initial_state ctx
         info_contents; data_at_ Tsh (tarray tuchar out_len) output;
       data_at Tsh (tarray tuchar add_len) (map Vint (map Int.repr contents))
         additional; K_vector kv)).
@@ -1374,7 +1374,7 @@ Proof.
       temp 160%positive (Val.of_bool non_empty_additional))
       SEP  (
         Stream after_reseed_s;
-        hmac_drbg_update_post after_update_state_abs initial_state ctx info_contents; (* ADDED *)
+        hmac256drbgabs_common_mpreds after_update_state_abs initial_state ctx info_contents; (* ADDED *)
       data_at Tsh (tarray tuchar add_len) (map Vint (map Int.repr contents))
         additional; data_at_ Tsh (tarray tuchar out_len) output; K_vector kv)).
   {
@@ -1384,7 +1384,7 @@ Proof.
       apply Hnon_empty_additional_should_reseed; assumption.
     }
     rewrite Hshould_reseed_false in *.
-    unfold hmac_drbg_update_post.
+    unfold hmac256drbgabs_common_mpreds.
     rewrite Heqafter_reseed_add_len, Heqafter_reseed_state_abs.
     forward_call (contents, additional, add_len, ctx,
                  initial_state,
@@ -1455,7 +1455,7 @@ Proof.
       gvar sha._K256 kv
       )
       SEP  (Stream after_reseed_s;
-      hmac_drbg_update_post (hmac256drbgabs_update_value after_update_state_abs (fst (HMAC_DRBG_generate_helper_Z HMAC256 after_update_key after_update_value done))) initial_state ctx
+      hmac256drbgabs_common_mpreds (hmac256drbgabs_update_value after_update_state_abs (fst (HMAC_DRBG_generate_helper_Z HMAC256 after_update_key after_update_value done))) initial_state ctx
         info_contents;
       data_at Tsh (tarray tuchar add_len) (map Vint (map Int.repr contents))
         additional; data_at Tsh (tarray tuchar out_len) ((map Vint (map Int.repr (sublist 0 done (snd (HMAC_DRBG_generate_helper_Z HMAC256 after_update_key after_update_value done))))) ++ list_repeat (Z.to_nat (out_len - done)) Vundef) output; 
@@ -1494,7 +1494,7 @@ Proof.
     idtac.
     destruct H16 as [Hmultiple | Hcontra]; [| subst done; omega].
     destruct Hmultiple as [n Hmultiple].
-    unfold hmac_drbg_update_post.
+    unfold hmac256drbgabs_common_mpreds.
     normalize.
     assert (Hfield_md_ctx: forall ctx', isptr ctx' -> field_compatible t_struct_hmac256drbg_context_st [StructField _md_ctx] ctx' -> ctx' = field_address t_struct_hmac256drbg_context_st [StructField _md_ctx] ctx').
     {
@@ -2046,7 +2046,7 @@ Proof.
 
     
     Exists (done + use_len).
-    unfold hmac_drbg_update_post; normalize.
+    unfold hmac256drbgabs_common_mpreds; normalize.
 
     unfold_data_at 4%nat.
     rewrite (field_at_data_at _ _ [StructField _md_ctx]);
@@ -2149,11 +2149,11 @@ Proof.
   replace (out_len - out_len) with 0 by omega.
   change (list_repeat (Z.to_nat 0) Vundef) with (@nil val).
   rewrite app_nil_r.
-  unfold hmac_drbg_update_post.
+  unfold hmac256drbgabs_common_mpreds.
   normalize.
 
   assert_PROP (isptr additional) as Hisptr_add by entailer!.
-  
+  assert_PROP (field_compatible (tarray tuchar add_len) [] additional) as Hfield_add by entailer!.
   replace_SEP 4 (mpred_passed_to_function (data_at Tsh (tarray tuchar add_len) (map Vint (map Int.repr contents))
         additional) should_reseed * mpred_passed_to_frame (data_at Tsh (tarray tuchar add_len) (map Vint (map Int.repr contents))
         additional) should_reseed).
@@ -2187,9 +2187,23 @@ Proof.
                     after_update_value out_len))))) output |-- fold_right sepcon emp Frame)
     by cancel.
     subst after_reseed_add_len.
-    unfold mpred_passed_to_function; destruct should_reseed; cancel.
-    entailer!.
-    admit (* TODO *).
+    assert (Hadd_0: (data_at Tsh (tarray tuchar add_len) (map Vint (map Int.repr contents))
+        additional) = (data_at Tsh (tarray tuchar 0) []
+        additional) * (data_at Tsh (tarray tuchar add_len) (map Vint (map Int.repr contents))
+        (offset_val (Int.repr 0) additional))).
+    {
+      apply data_at_complete_split; repeat rewrite Zlength_map; try rewrite H2; auto; try omega.
+      change (Zlength (@nil Z) + Zlength contents) with (Zlength contents); rewrite <- H2; assumption.
+    }
+    rewrite Hadd_0.
+    subst Frame.
+    unfold mpred_passed_to_function, mpred_passed_to_frame, fold_right; destruct should_reseed; entailer!.
+    eapply derives_trans.
+    apply data_at_memory_block.
+    simpl.
+    destruct additional; try solve [inversion Hisptr_add].
+    apply derives_refl'.
+    apply memory_block_zero_Vptr.
   }
   {
     subst after_reseed_add_len; split.
@@ -2237,7 +2251,7 @@ Proof.
                  (HMAC_DRBG_generate_helper_Z HMAC256 after_update_key
                     after_update_value out_len)))
            (if should_reseed then [] else contents)) as semi_final_state_abs.
-  replace_SEP 1 (hmac_drbg_update_post semi_final_state_abs
+  replace_SEP 1 (hmac256drbgabs_common_mpreds semi_final_state_abs
         initial_state ctx
         info_contents).
   {
@@ -2246,12 +2260,12 @@ Proof.
             (fst
                (HMAC_DRBG_generate_helper_Z HMAC256 after_update_key
                   after_update_value out_len))).
-    unfold hmac_drbg_update_post, hmac256drbgabs_to_state.
+    unfold hmac256drbgabs_common_mpreds, hmac256drbgabs_to_state.
     entailer!.
     entailer!.
   }
   
-  unfold hmac_drbg_update_post. normalize.
+  unfold hmac256drbgabs_common_mpreds. normalize.
   forward.
   idtac.
   {
@@ -2430,7 +2444,7 @@ Proof.
   clear Heqgenerate_output_bytes Heqsemi_final_state_abs.
   unfold return_value_relate_result.
   unfold get_stream_result.
-  unfold hmac_drbg_update_post, hmac256drbgabs_to_state_handle, hmac256drbgabs_increment_reseed_counter.
+  unfold hmac256drbgabs_common_mpreds, hmac256drbgabs_to_state_handle, hmac256drbgabs_increment_reseed_counter.
   unfold hmac256drbgabs_to_state, hmac256drbg_relate.
   unfold hmac256drbgstate_md_info_pointer.
   entailer!.

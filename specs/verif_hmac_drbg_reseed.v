@@ -171,7 +171,7 @@ Proof.
   ).
   {
     forward.
-    unfold hmac_drbg_update_post, get_stream_result, hmac256drbg_relate.
+    unfold hmac256drbgabs_common_mpreds, get_stream_result, hmac256drbg_relate.
     Exists seed (Vint (Int.neg (Int.repr 5))).
     rewrite andb_negb_r.
     destruct (zlt 256 (Zlength contents)); inv Heqadd_len_too_high.
@@ -268,7 +268,7 @@ Proof.
   {
     (* != 0 case *)
     forward.
-    unfold hmac_drbg_update_post.
+    unfold hmac256drbgabs_common_mpreds.
     Exists seed (Vint (Int.neg (Int.repr (9)))).
     unfold entropy.get_entropy in *.
     destruct (entropy.ENTROPY.get_bytes (Z.to_nat entropy_len) s).
@@ -635,7 +635,7 @@ Proof.
       eapply entropy.ENTROPY.get_bytes_isbyteZ; eauto. assumption.
     }
   }
-  unfold hmac_drbg_update_post; normalize.
+  unfold hmac256drbgabs_common_mpreds; normalize.
 
   gather_SEP 3 5.
   replace_SEP 0 (data_at Tsh (tarray tuchar 384) ((map Vint
@@ -664,7 +664,7 @@ Proof.
   (* return 0 *)
   forward.
 
-  unfold hmac_drbg_update_post.
+  unfold hmac256drbgabs_common_mpreds.
   unfold hmac256drbgabs_to_state.
   Exists seed (Vint (Int.repr 0)).
   rewrite andb_negb_r.
