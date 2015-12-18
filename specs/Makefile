@@ -1,14 +1,12 @@
 SHAPATH=~/VST/sha
 LIBROOT=~
 COQC=coqc -I $(LIBROOT)/VST -R $(LIBROOT)/compcert -as compcert
-VOFILES=DRBG_functions.vo HMAC_DRBG_algorithms.vo HMAC_DRBG_general_lemmas.vo HMAC256_DRBG_functional_prog.vo HMAC256_DRBG_tests_no_reseed.vo HMAC256_DRBG_tests_pr_false.vo HMAC256_DRBG_tests_pr_true.vo hmac_drbg.vo spec_hmac_drbg.vo verif_hmac_drbg_update.vo verif_hmac_drbg_reseed.vo verif_mocked_md.vo hmac_drbg_compspecs.vo entropy.vo
-GLOBFILES=$(VOFILES:.vo=.glob)
 
 all: verifications
 
 clean:
-	rm -f $(VOFILES)
-	rm -f $(GLOBFILES)
+	rm -f *.vo
+	rm -f *.glob
 
 shafiles:
 	(cd sha && rm -f *.vo && for i in $(SHAPATH)/*.vo; do ln -s $$i; done)
@@ -19,6 +17,8 @@ verifications: verif_hmac_drbg_update.vo verif_mocked_md.vo verif_hmac_drbg_rese
 
 %.vo : %.v
 	$(COQC) $<
+
+entropy_lemmas.vo: entropy.vo
 
 verif_mocked_md.vo: hmac_drbg.vo spec_hmac_drbg.vo
 
