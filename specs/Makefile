@@ -34,7 +34,7 @@ DRBG_functions.vo: entropy.vo
 
 HMAC_DRBG_algorithms.vo: DRBG_functions.vo
 
-HMAC_DRBG_general_lemmas.vo: DRBG_functions.vo HMAC_DRBG_algorithms.vo
+HMAC_DRBG_pure_lemmas.vo: DRBG_functions.vo HMAC_DRBG_algorithms.vo
 
 HMAC256_DRBG_functional_prog.vo: HMAC_DRBG_algorithms.vo DRBG_functions.vo
 
