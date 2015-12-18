@@ -30,6 +30,8 @@ hmac_drbg_compspecs.vo: hmac_drbg.vo
 
 spec_hmac_drbg.vo: hmac_drbg.vo HMAC256_DRBG_functional_prog.vo hmac_drbg_compspecs.vo entropy.vo DRBG_functions.vo HMAC_DRBG_algorithms.vo
 
+spec_hmac_drbg_pure_lemmas.vo: hmac_drbg.vo HMAC256_DRBG_functional_prog.vo hmac_drbg_compspecs.vo entropy.vo DRBG_functions.vo HMAC_DRBG_algorithms.vo spec_hmac_drbg.vo
+
 DRBG_functions.vo: entropy.vo
 
 HMAC_DRBG_algorithms.vo: DRBG_functions.vo
