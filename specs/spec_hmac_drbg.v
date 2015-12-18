@@ -4,10 +4,9 @@ Local Open Scope logic.
 
 Require Import hmac_drbg.
 Require Import HMAC256_DRBG_functional_prog.
-Require Import HMAC_DRBG_update.
+Require Import DRBG_functions.
+Require Import HMAC_DRBG_algorithms.
 Require Import entropy.
-Require Import DRBG_reseed_function.
-Require Import DRBG_state_handle.
 Require Import sha.spec_hmacNK.
 Require Import sha.funspec_hmacNK.
 Require Import sha.general_lemmas.
