@@ -7,15 +7,15 @@ Require Import sha.HMAC256_functional_prog.
 Require Import sha.general_lemmas.
 Require Import sha.spec_sha.
 
-Require Import HMAC_DRBG_reseed_algorithm.
 Require Import HMAC256_DRBG_functional_prog.
-Require Import HMAC_DRBG_generate_algorithm.
 Require Import hmac_drbg.
+Require Import DRBG_functions.
+Require Import HMAC_DRBG_algorithms.
+Require Import HMAC_DRBG_pure_lemmas.
 Require Import spec_hmac_drbg.
-Require Import DRBG_generate_function.
-Require Import DRBG_reseed_function.
-Require Import HMAC_DRBG_update.
+Require Import spec_hmac_drbg_pure_lemmas.
 Require Import entropy.
+Require Import entropy_lemmas.
 
 Lemma data_at_weak_valid_ptr: forall (sh : Share.t) (t : type) (v : reptype t) (p : val),
        sepalg.nonidentity sh ->
@@ -734,7 +734,7 @@ Proof.
       (* contradiction, can't get 0 bytes back as entropy *)
       assert (contra: Zlength (@nil Z) = 32).
       {
-        eapply ENTROPY.get_bytes_Zlength.
+        eapply get_bytes_Zlength.
         omega.
         unfold get_entropy in Hget_entropy.
         subst.
@@ -778,7 +778,7 @@ Proof.
       (* contradiction, can't get 0 bytes back as entropy *)
       assert (contra: Zlength (@nil Z) = 32).
       {
-        eapply ENTROPY.get_bytes_Zlength.
+        eapply get_bytes_Zlength.
         omega.
         unfold get_entropy in Hget_entropy.
         subst.
@@ -1136,9 +1136,9 @@ Proof.
       rename H15 into Hreturn_value; simpl in Hreturn_value.
       assert (Hret_not_0: _id0 <> Int.zero).
       {
-        clear - H18.
+        clear - H16.
         intros contra. subst.
-        inversion H18.
+        inversion H16.
       }
 
       unfold hmac256drbgabs_common_mpreds, get_stream_result, hmac256drbg_relate.
@@ -1152,7 +1152,7 @@ Proof.
       unfold DRBG_generate_function_helper.
       unfold mbedtls_HMAC256_DRBG_reseed_function.
       unfold HMAC256_DRBG_reseed_function.
-      unfold DRBG_reseed_function.DRBG_reseed_function.
+      unfold DRBG_reseed_function.
       replace (Z.of_nat (length contents)) with (Zlength contents) by (rewrite Zlength_correct; reflexivity).
       rewrite Hout_lenb in *. rewrite Hadd_lenb in *.
       rewrite andb_negb_r in *.
@@ -1195,8 +1195,8 @@ Proof.
 
       assert (Hret_eq_0: return_value = Vzero).
       {
-        clear - H18.
-        destruct return_value; inv H18.
+        clear - H16.
+        destruct return_value; inv H16.
         remember (Int.eq i (Int.repr 0)) as i_0; destruct i_0; inv H0.
         apply binop_lemmas2.int_eq_true in Heqi_0.
         rewrite Heqi_0; reflexivity.

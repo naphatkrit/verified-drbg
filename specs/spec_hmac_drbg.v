@@ -252,8 +252,6 @@ Definition hmac_drbg_update_spec :=
            )
     POST [ tvoid ]
        PROP (
-           Zlength (hmac256drbgabs_value (hmac256drbgabs_hmac_drbg_update initial_state_abs contents)) = Z.of_nat SHA256.DigestLength;
-           Forall isbyteZ (hmac256drbgabs_value (hmac256drbgabs_hmac_drbg_update initial_state_abs contents))
          )
        LOCAL ()
        SEP (
@@ -329,9 +327,7 @@ Definition hmac_drbg_reseed_spec :=
     POST [ tint ]
        EX ret_value:_,
        PROP (
-           return_value_relate_result (mbedtls_HMAC256_DRBG_reseed_function s initial_state_abs contents) ret_value;
-           Zlength (hmac256drbgabs_value (hmac256drbgabs_reseed initial_state_abs s contents)) = Z.of_nat SHA256.DigestLength;
-           Forall isbyteZ (hmac256drbgabs_value (hmac256drbgabs_reseed initial_state_abs s contents))
+           return_value_relate_result (mbedtls_HMAC256_DRBG_reseed_function s initial_state_abs contents) ret_value
          )
        LOCAL (temp ret_temp ret_value)
        SEP (
@@ -390,9 +386,7 @@ Definition hmac_drbg_generate_spec :=
     POST [ tint ]
        EX ret_value:_,
        PROP (
-           return_value_relate_result (mbedtls_HMAC256_DRBG_generate_function s initial_state_abs out_len contents) ret_value;
-           Zlength (hmac256drbgabs_value (hmac256drbgabs_generate initial_state_abs s out_len contents)) = Z.of_nat SHA256.DigestLength;
-           Forall isbyteZ (hmac256drbgabs_value (hmac256drbgabs_generate initial_state_abs s out_len contents))
+           return_value_relate_result (mbedtls_HMAC256_DRBG_generate_function s initial_state_abs out_len contents) ret_value
          )
        LOCAL (temp ret_temp ret_value)
        SEP (

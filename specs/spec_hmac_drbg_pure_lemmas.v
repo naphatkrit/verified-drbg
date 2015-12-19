@@ -141,3 +141,28 @@ Proof.
   apply hmac256drbgabs_reseed_any_prop_V; auto.
   apply hmac_common_lemmas.isbyte_hmac.
 Qed.
+
+Lemma hmac256drbgabs_update_key_ident:
+  forall a key, key = hmac256drbgabs_key a -> hmac256drbgabs_update_key a key = a.
+Proof.
+  intros.
+  destruct a.
+  simpl in H; subst.
+  reflexivity.
+Qed.
+
+Lemma hmac256drbgabs_update_value_ident:
+  forall a value, value = hmac256drbgabs_value a -> hmac256drbgabs_update_value a value = a.
+Proof.
+  intros.
+  destruct a.
+  simpl in H; subst.
+  reflexivity.
+Qed.
+
+Lemma hmac256drbgabs_update_key_update_value_commute:
+  forall a key value, hmac256drbgabs_update_value (hmac256drbgabs_update_key a key) value = hmac256drbgabs_update_key (hmac256drbgabs_update_value a value) key.
+Proof.
+  destruct a.
+  reflexivity.
+Qed.

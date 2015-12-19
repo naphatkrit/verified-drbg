@@ -4,6 +4,11 @@ Local Open Scope logic.
 
 Require Import hmac_drbg.
 Require Import spec_hmac_drbg.
+Require Import spec_hmac_drbg_pure_lemmas.
+Require Import DRBG_functions.
+Require Import HMAC_DRBG_algorithms.
+Require Import entropy.
+Require Import entropy_lemmas.
 
 Lemma sublist_app_exact1:
   forall X (A B: list X), sublist 0 (Zlength A) (A ++ B) = A.
@@ -332,7 +337,7 @@ Proof.
   assert (Hentropy_bytes_length: Zlength (map Vint (map Int.repr entropy_bytes)) = 32).
   {
     repeat rewrite Zlength_map.
-    eapply entropy.ENTROPY.get_bytes_Zlength.
+    eapply get_bytes_Zlength.
     omega.
     simpl in H2; subst entropy_len.
     eassumption.
@@ -632,7 +637,7 @@ Proof.
     }
     {
       apply isbyteZ_app.
-      eapply entropy.ENTROPY.get_bytes_isbyteZ; eauto. assumption.
+      eapply get_bytes_isbyteZ; eauto. assumption.
     }
   }
   unfold hmac256drbgabs_common_mpreds; normalize.
@@ -675,7 +680,7 @@ Proof.
     omega.
   }
   rewrite HcontentsLength.
-  unfold HMAC_DRBG_update.HMAC_DRBG_update.
+  unfold HMAC_DRBG_update.
   idtac.
   replace (map (fun x : Z => Vint (Int.repr x)) contents) with (map Vint (map Int.repr contents)) by (rewrite map_map; auto).
   unfold hmac256drbg_relate.
@@ -698,9 +703,8 @@ Proof.
     reflexivity.
   }
   unfold HMAC256_DRBG_functional_prog.HMAC256_DRBG_update.
-  unfold HMAC_DRBG_update.HMAC_DRBG_update.
+  unfold HMAC_DRBG_update.
   destruct Hnonempty_seed as [hdSeed [tlSeed Hnonempty_seed]];
   rewrite Hnonempty_seed.
   entailer!.
-  split; [apply hmac_common_lemmas.HMAC_Zlength| apply hmac_common_lemmas.isbyte_hmac].
 Qed.

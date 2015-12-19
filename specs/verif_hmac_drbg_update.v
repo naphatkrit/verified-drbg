@@ -4,7 +4,7 @@ Local Open Scope logic.
 
 Require Import hmac_drbg.
 Require Import spec_hmac_drbg.
-Require Import HMAC_DRBG_update.
+Require Import HMAC_DRBG_algorithms.
 Require Import sha.HMAC256_functional_prog.
 Require Import sha.spec_sha.
 
@@ -523,17 +523,6 @@ Proof.
   destruct initial_state_abs.
   rewrite HMAC_DRBG_update_concrete_correct.
   Time entailer!. (* 29 *)
-  {
-    (*
-    rename H1 into Hupdate_rounds.
-    rename H6 into Hmetadata.
-    destruct final_state_abs; unfold hmac256drbgabs_metadata_same in Hmetadata.
-    destruct Hmetadata as [Hreseed_counter [Hentropy_len [Hpr Hrseed_interval]]]; subst.
-*)
-    destruct contents; unfold HMAC_DRBG_update_concrete;
-    simpl;
-    split; try apply hmac_common_lemmas.HMAC_Zlength; try apply hmac_common_lemmas.isbyte_hmac.
-  }
   rename H1 into Hupdate_rounds.
   rename H6 into Hmetadata.
   destruct final_state_abs; unfold hmac256drbgabs_metadata_same in Hmetadata.
