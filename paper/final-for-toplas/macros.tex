@@ -1,0 +1,145 @@
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%% Rustan wants the letters in his math formulas to be spaced
+%% as in running italic text.  So we here redefine each letter,
+%% in its role as a MathSymbol, to come from the symbol font
+%% named "italics", rather than from the one named "letters".
+
+% The following line is needed to make this file work with certain
+% fonts, include the standard Computer Modern fonts.
+\DeclareSymbolFont{italics}{OT1}{cmr}{m}{it}
+
+\DeclareMathSymbol{a}{\mathalpha}{italics}{"61}
+\DeclareMathSymbol{b}{\mathalpha}{italics}{"62}
+\DeclareMathSymbol{c}{\mathalpha}{italics}{"63}
+\DeclareMathSymbol{d}{\mathalpha}{italics}{"64}
+\DeclareMathSymbol{e}{\mathalpha}{italics}{"65}
+\DeclareMathSymbol{f}{\mathalpha}{italics}{"66}
+\DeclareMathSymbol{g}{\mathalpha}{italics}{"67}
+\DeclareMathSymbol{h}{\mathalpha}{italics}{"68}
+\DeclareMathSymbol{i}{\mathalpha}{italics}{"69}
+\DeclareMathSymbol{j}{\mathalpha}{italics}{"6A}
+\DeclareMathSymbol{k}{\mathalpha}{italics}{"6B}
+\DeclareMathSymbol{l}{\mathalpha}{italics}{"6C}
+\DeclareMathSymbol{m}{\mathalpha}{italics}{"6D}
+\DeclareMathSymbol{n}{\mathalpha}{italics}{"6E}
+\DeclareMathSymbol{o}{\mathalpha}{italics}{"6F}
+\DeclareMathSymbol{p}{\mathalpha}{italics}{"70}
+\DeclareMathSymbol{q}{\mathalpha}{italics}{"71}
+\DeclareMathSymbol{r}{\mathalpha}{italics}{"72}
+\DeclareMathSymbol{s}{\mathalpha}{italics}{"73}
+\DeclareMathSymbol{t}{\mathalpha}{italics}{"74}
+\DeclareMathSymbol{u}{\mathalpha}{italics}{"75}
+\DeclareMathSymbol{v}{\mathalpha}{italics}{"76}
+\DeclareMathSymbol{w}{\mathalpha}{italics}{"77}
+\DeclareMathSymbol{x}{\mathalpha}{italics}{"78}
+\DeclareMathSymbol{y}{\mathalpha}{italics}{"79}
+\DeclareMathSymbol{z}{\mathalpha}{italics}{"7A}
+
+\DeclareMathSymbol{A}{\mathalpha}{italics}{"41}
+\DeclareMathSymbol{B}{\mathalpha}{italics}{"42}
+\DeclareMathSymbol{C}{\mathalpha}{italics}{"43}
+\DeclareMathSymbol{D}{\mathalpha}{italics}{"44}
+\DeclareMathSymbol{E}{\mathalpha}{italics}{"45}
+\DeclareMathSymbol{F}{\mathalpha}{italics}{"46}
+\DeclareMathSymbol{G}{\mathalpha}{italics}{"47}
+\DeclareMathSymbol{H}{\mathalpha}{italics}{"48}
+\DeclareMathSymbol{I}{\mathalpha}{italics}{"49}
+\DeclareMathSymbol{J}{\mathalpha}{italics}{"4A}
+\DeclareMathSymbol{K}{\mathalpha}{italics}{"4B}
+\DeclareMathSymbol{L}{\mathalpha}{italics}{"4C}
+\DeclareMathSymbol{M}{\mathalpha}{italics}{"4D}
+\DeclareMathSymbol{N}{\mathalpha}{italics}{"4E}
+\DeclareMathSymbol{O}{\mathalpha}{italics}{"4F}
+\DeclareMathSymbol{P}{\mathalpha}{italics}{"50}
+\DeclareMathSymbol{Q}{\mathalpha}{italics}{"51}
+\DeclareMathSymbol{R}{\mathalpha}{italics}{"52}
+\DeclareMathSymbol{S}{\mathalpha}{italics}{"53}
+\DeclareMathSymbol{T}{\mathalpha}{italics}{"54}
+\DeclareMathSymbol{U}{\mathalpha}{italics}{"55}
+\DeclareMathSymbol{V}{\mathalpha}{italics}{"56}
+\DeclareMathSymbol{W}{\mathalpha}{italics}{"57}
+\DeclareMathSymbol{X}{\mathalpha}{italics}{"58}
+\DeclareMathSymbol{Y}{\mathalpha}{italics}{"59}
+\DeclareMathSymbol{Z}{\mathalpha}{italics}{"5A}
+%% end Rustan's math fonts
+
+%-----------------compact itemization ------------------------------------
+\newenvironment{ditemize}{%   itemized lists w/o interline space
+\begin{list}{$\bullet$}{%
+\setlength{\itemsep}{0pt}\setlength{\rightmargin}{0pt}%
+\setlength{\leftmargin}{1em}\setlength{\parsep}{0ex}}}{
+\end{list}}
+%-------------------------------------------------------------------------
+
+% GS macros
+
+\newcommand{\bigsepcon}{\overlay{\bigodot}{*}}
+\newcommand{\ccoresem}[4]{(#1, #2, #3, #4)} %compcert coresem
+\newcommand{\ecoresem}[4]{(\mathbb{#1}, \mathbb{#2}, \mathbb{#3}, \mathbb{#4})} %extended coresem
+\renewcommand{\to}{\rightarrow}
+\newcommand{\topart}{\rightharpoonup}
+\newcommand{\defeq}{\triangleq}
+
+\newcommand{\injects}[3]{#2 \rightarrowtail_{#1} #3}
+
+\newcommand{\upd}[3]{#1[#2\mapsto #3]}
+\newcommand{\eval}[6]{#1 \vdash #5 \Downarrow_{#2, #3, #4} #6}
+\newcommand{\step}[5]{
+  #1 \vdash \langle #2, #3\rangle \longmapsto \langle #4, #5\rangle
+}
+\newcommand{\twostep}[5]{
+  #1 \vdash \!\!\!\begin{array}{l}
+               \langle #2, #3\rangle \longmapsto \\ 
+               \langle #4, #5\rangle
+            \end{array}
+}
+\newcommand{\csemstep}[6]{
+  #1 \vdash_{#6} \langle #2, #3\rangle \longmapsto \langle #4, #5\rangle
+}
+\newcommand{\twolinestep}[5]{
+  \begin{array}{rl} #1 \vdash\!\!\!\!\!\! & \langle #2, #3\rangle \longmapsto \\ 
+                              & \langle #4, #5\rangle 
+  \end{array}
+}
+\newcommand{\twolinestepplus}[5]{
+  \begin{array}{rl} #1 \vdash\!\!\!\!\!\! & \langle #2, #3\rangle \longmapsto^{+} \\ 
+                              & \langle #4, #5\rangle 
+  \end{array}
+}
+\newcommand{\stepplus}[5]{
+  #1 \vdash \langle #2, #3\rangle \longmapsto^{+} \langle #4, #5\rangle
+}
+\newcommand{\stepstar}[5]{
+  #1 \vdash \langle #2, #3\rangle \longmapsto^{*} \langle #4, #5\rangle
+}
+
+%%% Syntax
+\newcommand{\keyw}[1]{\mathsf{#1}}
+\newcommand{\option}[1]{\keyw{option}\;#1}
+\newcommand{\List}[1]{\keyw{list}\;#1}
+\newcommand{\Type}{\keyw{Type}}
+\newcommand{\Prop}{\mathbb{T}}
+\newcommand{\Some}[1]{\keyw{Some}\ #1}
+
+\newcommand{\state}[3]{\keyw{RunState}(#1, #2, #3)}
+
+\newcommand{\fsim}[2]{#1 \preceq #2}
+\newcommand{\match}[6]{
+  \langle #3, #4\rangle \sim_{#2; #1} \langle #5, #6\rangle
+}
+\newcommand{\matchnoo}[5]{
+  \langle #2, #3\rangle \sim_{#1} \langle #4, #5\rangle
+}
+\newcommand{\matchi}[7]{
+  \langle #4, #5\rangle \sim^{#1}_{#3; #2} \langle #6, #7\rangle
+}
+
+%types
+\newcommand{\valtype}{\mathcal{V}}
+\newcommand{\eftype}{\mathcal{F}}
+
+\newcommand{\sequent}[4]{#1 \land \,#2\ \vdash\ #3 \land \,#4}
+\newcommand{\simplesequent}[2]{#1\ \vdash\ #2}
+
+\newcommand{\triple}[3]{\{#1\}\,#2\,\{#3\}}
