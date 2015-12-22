@@ -49,7 +49,7 @@ Proof.
   forward_call (key, internal_r, d, data, data1, kv).
   {
     entailer!.
-    destruct input'; try solve [inversion TC0]; reflexivity.
+    destruct input'; try solve [inversion TC1]; reflexivity.
   }
   {
     unfold spec_sha.data_block.
