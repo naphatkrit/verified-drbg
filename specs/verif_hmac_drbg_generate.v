@@ -567,7 +567,6 @@ Proof.
   rewrite <- HlengthB in *.
   clear - H HlengthB.
   rewrite sublist_same; auto.
-  SearchAbout sublist.  
   rewrite sublist_app; try now (
     rewrite Zmin_spec;
     destruct (Z_lt_ge_dec (Zlength B) (out_len - (Zlength A))) as [Hmin | Hmin]; [rewrite zlt_true by assumption| rewrite zlt_false by assumption]; omega).
@@ -1265,7 +1264,6 @@ Proof.
       }
       {
         (* contents is not empty *)
-        SearchAbout Zlength Z.succ.
         rewrite Zlength_cons.
         destruct (eq_dec (Z.succ (Zlength contents)) 0); try reflexivity.
         pose proof (Zlength_nonneg contents); omega.
@@ -1579,7 +1577,6 @@ Proof.
         destruct (Z_lt_ge_dec 32 (out_len - done)) as [Hmin | Hmin].
         assumption.
         rewrite zlt_false in H16;[ inversion H16|].
-        SearchAbout Int.unsigned Int.repr.
         change (Int.unsigned (Int.repr 32)) with 32.
         rewrite (Int.unsigned_repr (out_len - done)); try omega.
       }
@@ -1795,7 +1792,6 @@ Proof.
       {
         rewrite zlt_true by assumption.
         apply data_at_complete_split; repeat rewrite Zlength_sublist; repeat rewrite Zlength_map; repeat rewrite hmac_common_lemmas.HMAC_Zlength; auto; try omega.
-        SearchAbout sublist.
         rewrite sublist_nil.
         rewrite app_nil_r.
         symmetry; apply sublist_same.
@@ -2134,7 +2130,6 @@ Proof.
     assert (Hdiff: out_len - done = 0).
     {
       unfold Int.eq in HRE.
-      SearchAbout zeq.
       unfold zeq in HRE.
       destruct (Z.eq_dec (Int.unsigned (Int.repr (out_len - done)))
                 (Int.unsigned (Int.repr 0))).
