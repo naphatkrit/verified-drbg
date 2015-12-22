@@ -6,11 +6,11 @@ Definition DRBG_working_state: Type := (list Z * list Z * Z)%type. (* value * ke
 Definition DRBG_state_handle: Type := (DRBG_working_state * Z * bool)%type. (* state, security_strength, prediction_resistance_flag *)
 
 Definition DRBG_instantiate_function (instantiate_algorithm: list Z -> list Z -> list Z -> Z -> DRBG_working_state) (min_entropy_length max_entropy_length: Z) (get_nonce: unit -> list Z) (highest_supported_security_strength: Z) (max_personalization_string_length: Z) (prediction_resistance_supported: bool) (entropy_stream: ENTROPY.stream) (requested_instantiation_security_strength: Z) (prediction_resistance_flag: bool) (personalization_string: list Z): ENTROPY.result DRBG_state_handle :=
-  if Z.gtb requested_instantiation_security_strength highest_supported_security_strength then ENTROPY.error ENTROPY.generic_error entropy_stream
+  if requested_instantiation_security_strength >? highest_supported_security_strength then ENTROPY.error ENTROPY.generic_error entropy_stream
   else match prediction_resistance_flag, prediction_resistance_supported with
          | true, false => ENTROPY.error ENTROPY.generic_error entropy_stream
          | _,_ =>
-           if Z.gtb (Zlength personalization_string) max_personalization_string_length then ENTROPY.error ENTROPY.generic_error entropy_stream
+           if (Zlength personalization_string) >? max_personalization_string_length then ENTROPY.error ENTROPY.generic_error entropy_stream
            else
              let security_strength := if requested_instantiation_security_strength <=? 14 then Some 14
                                       else if requested_instantiation_security_strength <=? 16 then Some 16
@@ -76,17 +76,17 @@ Fixpoint DRBG_generate_function_helper (generate_algorithm: DRBG_working_state -
 
 Definition DRBG_generate_function (generate_algorithm: Z -> DRBG_working_state -> Z -> list Z -> DRBG_generate_algorithm_result) (reseed_function: ENTROPY.stream -> DRBG_state_handle -> bool -> list Z -> ENTROPY.result DRBG_state_handle) (reseed_interval: Z) (max_number_of_bytes_per_request: Z) (max_additional_input_length: Z) (entropy_stream: ENTROPY.stream) (state_handle: DRBG_state_handle) (requested_number_of_bytes requested_security_strength: Z) (prediction_resistance_request: bool) (additional_input: list Z): ENTROPY.result (list Z * DRBG_state_handle) :=
   match state_handle with (working_state, security_strength, prediction_resistance_flag) =>
-    if Z.gtb requested_number_of_bytes max_number_of_bytes_per_request then ENTROPY.error ENTROPY.generic_error entropy_stream
+    if requested_number_of_bytes >? max_number_of_bytes_per_request then ENTROPY.error ENTROPY.generic_error entropy_stream
     else
-      if Z.gtb requested_security_strength security_strength then ENTROPY.error ENTROPY.generic_error entropy_stream
+      if requested_security_strength >? security_strength then ENTROPY.error ENTROPY.generic_error entropy_stream
       else
-        if Z.gtb (Zlength additional_input) max_additional_input_length then ENTROPY.error ENTROPY.generic_error entropy_stream
+        if (Zlength additional_input) >? max_additional_input_length then ENTROPY.error ENTROPY.generic_error entropy_stream
         else
           if prediction_resistance_request && (negb prediction_resistance_flag) then ENTROPY.error ENTROPY.generic_error entropy_stream
           else
             match DRBG_generate_function_helper (generate_algorithm reseed_interval) reseed_function entropy_stream state_handle requested_number_of_bytes prediction_resistance_request additional_input prediction_resistance_request 1%nat with
               | ENTROPY.error e s => ENTROPY.error e s
-                                                   | ENTROPY.success (output, new_working_state) entropy_stream =>
-                                                     ENTROPY.success (output, (new_working_state, security_strength, prediction_resistance_flag)) entropy_stream
+              | ENTROPY.success (output, new_working_state) entropy_stream =>
+                  ENTROPY.success (output, (new_working_state, security_strength, prediction_resistance_flag)) entropy_stream
             end
   end.

@@ -41,9 +41,9 @@ Definition HMAC_DRBG_reseed_algorithm (HMAC: list Z -> list Z -> list Z) (workin
   end.
 
 Function HMAC_DRBG_generate_helper_Z (HMAC: list Z -> list Z -> list Z) (key v: list Z) (requested_number_of_bytes: Z) {measure Z.to_nat requested_number_of_bytes}: (list Z * list Z) :=
-  if (0 >=? requested_number_of_bytes) then (v, [])
+  if 0 >=? requested_number_of_bytes then (v, [])
   else
-    let len := 32%nat in (* TODO get this from property of HMAC *)
+    let len := 32%nat in
     let (v, rest) := HMAC_DRBG_generate_helper_Z HMAC key v (requested_number_of_bytes - (Z.of_nat len)) in
     let v := HMAC v key in
     let temp := v in
@@ -64,7 +64,7 @@ Defined.
 
 Definition HMAC_DRBG_generate_algorithm (HMAC: list Z -> list Z -> list Z) (reseed_interval: Z) (working_state: DRBG_working_state) (requested_number_of_bytes: Z) (additional_input: list Z): DRBG_generate_algorithm_result :=
   match working_state with (v, key, reseed_counter) =>
-    if Z.gtb reseed_counter reseed_interval then generate_algorithm_reseed_required
+    if reseed_counter >? reseed_interval then generate_algorithm_reseed_required
     else
       let (key, v) := match additional_input with
                         | [] => (key, v)
