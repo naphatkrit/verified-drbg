@@ -407,6 +407,217 @@ A \lstinline{Function} is the general form of a recursive function, and unlike \
 
 The \lstinline{generate} algorithm first checks if the number of times \lstinline{generate} has been called (\lstinline{reseed_counter}) is too high, and if so, returns a flag saying a reseed is needed. Otherwise, it repeatedly HMACs the current \lstinline{value} with the current \lstinline{key}, append the result to the output, and store the result as the new \lstinline{value}. This is why the \lstinline{value} part of the DRBG state is not considered secret, and is really the output of the DRBG. The output is then trimmed down to the requested number of bytes, and \lstinline{reseed_counter} is incremented by \lstinline{1}.
 
+\section{Verification}
+\subsection{HMAC Interface}
+In this section, I explain the (pre-existing) interface of HMAC, of which the DRBG specification is a client of.
+
+The HMAC context is represented as a state machine with three states: \lstinline{EMPTY}, \lstinline{FULL key}, and \lstinline{REP key data}. \lstinline{EMPTY} refers to an uninitialized context. \lstinline{FULL key} means the context has been used to digest some data with the key \lstinline{key}, but it must be reset before it can be used again. That is, the difference between \lstinline{EMPTY} and \lstinline{FULL} is that \lstinline{FULL} remembers the key the context was previously associated with. Lastly, \lstinline{REP key data} means that the context is in the middle of digesting bytes \lstinline{data} with the key \lstinline{key}.
+
+There are four functions associated with HMAC: \lstinline{reset}, \lstinline{start}, \lstinline{update}, and \lstinline{final}. \lstinline{reset} takes a HMAC context in \lstinline{FULL key} and turns it into \lstinline{REP key []}, where \lstinline{[]} is the empty byte sequence. \lstinline{start} takes a HMAC context \lstinline{EMPTY} and an additional parameter \lstinline{key} and turns it into \lstinline{REP key []}. \lstinline{update} takes a HMAC context in \lstinline{REP key data} and an additional parameter \lstinline{data1} and turns it into \lstinline{REP key (data ++ data1)}, where \lstinline{++} is the list concatenation. Lastly, \lstinline{final} takes a HMAC context in \lstinline{REP key data} and a pointer to a space in memory \lstinline{out} and turns the context into \lstinline{FULL key} and deposits the output of \lstinline{HMAC data key} into \lstinline{out}.
+
+The state machine representation of HMAC was created for this project. \cite{hmac} describes the previous verification effort on HMAC, but it represented HMAC in a more low-level format. See section \ref{oldhmac} for more details.
+
+Even though I am verifying \stdtitle{mbedTLS} implementation of DRBG, the pre-existing verifications and specifications of SHA256 and HMAC are for the \stdtitle{OpenSSL} version. To make the two versions work with each other, I created a thin wrapper on the \stdtitle{mbedTLS} HMAC interface. For example, take the \lstinline{final} function. \stdtitle{mbedTLS} and \stdtitle{OpenSSL} have similar APIs for the \lstinline{final} function, and I connect them with this wrapper function:
+
+\begin{lstlisting}[language=C]
+    int mbedtls_md_hmac_finish( mbedtls_md_context_t *ctx, unsigned char *output) {
+        HMAC_Final(ctx->hmac_ctx, output);
+        return 0;
+    }
+\end{lstlisting}
+
+
+Here, \lstinline{HMAC_Final} is the name of the \lstinline{final} function verified by previous efforts, and \lstinline{mbedtls_md_hmac_finish} is the name mbedTLS expects. The API specification (how the function interacts with local variable and memory) for this function is almost a complete copy of the specification defined by the previous HMAC verification efforts.
+
+For more details on how mbedTLS and OpenSSL APIs are bridged, see Appendix \ref{appendix_hmac}.
+
+
+\subsection{The \textit{Functional}, \textit{Abstract}, and \textit{Concrete} DRBG States}
+
+Recall that in the functional specification, I chose to represent the DRBG state as the following:
+
+\begin{lstlisting}
+    Definition DRBG_working_state :=
+      (list Z * list Z * Z). (* value * key * reseed_counter *)
+    Definition DRBG_state_handle :=
+      (DRBG_working_state * Z * bool). (* state, security_strength, prediction_resistance_flag *)
+\end{lstlisting}
+
+
+From here onwards, I will refer to this representation as the \textit{functional} DRBG state.
+
+When writing the API specification, I chose a representation that more closely resembles what is in \stdtitle{mbedTLS}. Naturally, \stdtitle{mbedTLS} represents the DRBG state as a struct. Note that the original \stdtitle{mbedTLS} code includes a function pointer for the entropy function as well as context to pass to the entropy function. As noted earlier, for the purposes of this project, I made the modifications to remove this function pointer.
+
+\begin{lstlisting}[language=C]
+    typedef struct mbedtls_hmac_drbg_context
+    {
+        mbedtls_md_context_t md_ctx;
+        unsigned char V[32];
+        int reseed_counter;
+        size_t entropy_len;
+        int prediction_resistance;
+        int reseed_interval;
+    } mbedtls_hmac_drbg_context;
+\end{lstlisting}
+
+The \lstinline{key} in the functional DRBG state is implicitly represented in the HMAC context, \lstinline{md_ctx}. Notice a couple differences from the functional DRBG state.
+
+
+\begin{enumerate}
+\item The field \lstinline{entropy_len} in the C struct is equivalent to \lstinline{security_strength} defined in the functional state.
+\item The field \lstinline{reseed_interval} are stored explicitly in the C struct but are treated as a global constant in NIST SP 800-90A and so in the functional specification.
+\end{enumerate}
+
+
+There are two Coq representations for this C struct. The first, which I will call the \textit{abstract} DRBG state, represents the mathematical equivalent of the C struct.
+
+\begin{lstlisting}
+    Inductive hmac256drbgabs :=
+      HMAC256DRBGabs: forall (key: list Z) (V: list Z) (reseed_counter entropy_len: Z) (prediction_resistance: bool) (reseed_interval: Z), hmac256drbgabs.
+\end{lstlisting}
+
+What I meant by “mathematical equivalent” is perhaps best demonstrated in the field \\ \lstinline{prediction_resistance}. In C, \lstinline{prediction_resistance} is an \lstinline{int}, meaning it can take any value between $-2^{31}$ and $2^{31} - 1$. However, logically, \lstinline{prediction_resistance} is a boolean value, and there are two possible values: true and false. This is represented by Coq’s \lstinline{bool} datatype.
+
+Other differences include the key being stored explicitly (instead of being part of a context) and \lstinline{Z} being used to represent mathematical values. The abstract state is defined as an \lstinline{Inductive} data type instead of a tuple merely to influence the names that Coq assigns to the individual components in proofs.
+
+The other representation will be called the \textit{concrete} DRBG state. The concrete DRBG state will model the exact bytes in the C struct:
+
+\begin{lstlisting}
+    Definition hmac256drbgstate :=
+      (mdstate * (list val * (val * (val * (val * val))))).
+\end{lstlisting}
+
+The concrete state is required to be a tuple of this type by the VST framework; I just gave it a convenient name. Here, \lstinline{mdstate} is the byte value of the struct representing the HMAC context. \lstinline{val} is used to represent the bytes representation of the fields in the C struct.
+
+I defined the equivalence between an abstract state and a concrete state:
+
+\begin{lstlisting}
+    Definition hmac256drbg_relate (a: hmac256drbgabs) (r: hmac256drbgstate) : mpred :=
+      match a with HMAC256DRBGabs key V reseed_counter entropy_len prediction_resistance reseed_interval =>
+        match r with (md_ctx', (V', (reseed_counter', (entropy_len', (prediction_resistance', reseed_interval'))))) =>
+          md_full key md_ctx'
+            && !! (
+               map Vint (map Int.repr V) = V'
+               /\ Vint (Int.repr reseed_counter) = reseed_counter'
+               /\ Vint (Int.repr entropy_len) = entropy_len'
+               /\ Vint (Int.repr reseed_interval) = reseed_interval'
+               /\ Val.of_bool prediction_resistance = prediction_resistance'
+                )
+         end
+      end.
+\end{lstlisting}
+
+Notice that I require the HMAC context to be in the \lstinline{FULL} state, which means that the HMAC context has previously been initialized with some key, and it has to be reset before digesting more data, necessarily throwing away any data that may have been digested before.
+
+Lastly, I define the conversions between the abstract state and the functional state:
+
+\begin{lstlisting}
+    Definition hmac256drbgabs_of_state_handle (a: DRBG_state_handle) entropy_len reseed_interval: hmac256drbgabs :=
+      match a with ((V, key, reseed_counter),_, prediction_resistance) =>
+        HMAC256DRBGabs key V reseed_counter entropy_len prediction_resistance reseed_interval
+      end.
+
+    Definition hmac256drbgabs_to_state_handle (a: hmac256drbgabs): DRBG_state_handle :=
+      match a with HMAC256DRBGabs key V reseed_counter entropy_len prediction_resistance reseed_interval =>
+        ((V, key, reseed_counter), 256 (* security strength, not used *), prediction_resistance)
+      end.
+\end{lstlisting}
+
+\subsection{A Description of an API Specification}
+
+The functional specification is a mathematical description of a function; it describes, logically, what the output should be given the input. C programs, however, are all about local variables and memory. In order to specify the behavior of a C program, there needs to be a way to describe how the local variables and memory are changed by the program. This is where the API specification comes in.
+
+(As a side note, everything up to this point is in vanilla Coq. The VST framework only comes in when writing the API specification and verifying the C program.)
+
+To write an API specification, the VST framework uses separation logic, a variant of Hoare logic that is better at dealing with pointers. An API specification is of the form:
+
+\begin{lstlisting}
+    DECLARE function_name
+       WITH variables_list
+       PRE [ parameters_list ]
+           PROP ()
+           LOCAL ()
+           SEP ()
+      POST [ return_type ]
+           PROP ()
+           LOCAL ()
+           SEP ()
+\end{lstlisting}
+
+This is a custom notation defined by the VST framework. Roughly, the API specification states that for all \lstinline{variables_list}, if the precondition is satisfied, then the function pointed to by \lstinline{function_name} is allowed to run. If the function terminates, then the postcondition will be satisfied.
+
+Both the pre- and post-conditions are of the form \lstinline{PROP () LOCAL () SEP ()}. This is separation logic. As an example, take the following:
+
+\begin{lstlisting}
+    ...
+       WITH length: Z, buffer: val
+       PRE [ _buffer_length OF tuint; _buffer OF tptr tvoid ]
+           PROP (0 <= length <= Int.max_unsigned)
+           LOCAL (temp _buffer_length (Vint (Int.repr length)); temp _buffer buffer)
+           SEP (memory_block Tsh length buffer)
+    ...
+\end{lstlisting}
+
+
+Here, \lstinline{length} and \lstinline{buffer} are Coq (logical) variables, while \lstinline{_buffer_length} and \lstinline{_buffer} are predefined identifiers. Note that identifiers are just unique positive integers.
+
+The \lstinline{PROP} part contains logical statements, in this case saying that the integer \lstinline{length} is in range for a C unsigned integer. The \lstinline{LOCAL} part relates identifiers to logical variables. In this case, the \lstinline{LOCAL} part states that the function parameter \lstinline{_buffer_length} contains a C unsigned integer equal to the integer \lstinline{length}. It also relates the function parameter \lstinline{_buffer} to some bytes \lstinline{buffer}. The \lstinline{SEP} part deals with memory, stating that at the area of memory pointed to by \lstinline{buffer}, \lstinline{length} bytes have been allocated. Note that an invariant enforced by separation logic is that different clauses in \lstinline{SEP} always refers to disjoint parts in memory.
+
+As an example, here is the API specification of the HMAC DRBG \lstinline{update} function, with the less important parts truncated. For a full description of this API specification along with the API specification of other HMAC DRBG functions, please see Appendix \ref{appendix_api}.
+
+\begin{lstlisting}
+    Definition hmac_drbg_update_spec :=
+      DECLARE _mbedtls_hmac_drbg_update
+       WITH contents: list Z,
+            additional: val, add_len: Z,
+            ctx: val, initial_state: hmac256drbgstate,
+            initial_state_abs: hmac256drbgabs,
+            ...
+        PRE [ _ctx OF (tptr t_struct_hmac256drbg_context_st), _additional OF (tptr tuchar), _add_len OF tuint ]
+           PROP (...)
+           LOCAL (temp _ctx ctx; ...)
+           SEP (
+             (data_at Tsh (tarray tuchar add_len) (map Vint (map Int.repr contents)) additional);
+             (data_at Tsh t_struct_hmac256drbg_context_st initial_state ctx);
+             ...
+               )
+        POST [ tvoid ]
+           PROP ()
+           LOCAL ()
+           SEP (
+             (hmac256drbgabs_common_mpreds (hmac256drbgabs_hmac_drbg_update initial_state_abs contents) initial_state ctx info_contents);
+             ...
+           ).
+\end{lstlisting}
+
+The DRBG state is pointed to by the pointer value \lstinline{ctx}. By running this function, assuming the preconditions hold, the state is updated by replacing the \lstinline{key} and \lstinline{value} components with the new values obtained by calling \lstinline{update}, which is what the definition \\ \lstinline{hmac256drbgabs_hmac_drbg_update} does.
+
+\subsection{Verification Statistics}
+
+I verified the \stdtitle{mbedTLS} implementations of \lstinline{update}, \lstinline{reseed}, and \lstinline{generate} correct with respect to their API specifications. The actual proof is long and tedious. Fortunately, the proof is machine-checked in Coq, and so can be trusted to be correct. I will not present the proof here. Instead, I will provide some statistics.
+
+\begin{table}[h!]
+  \centering
+  \begin{tabular}{|l|l|l|l|l|}
+    \hline
+    \textbf{Function} & \textbf{C (lines)} & \textbf{API Spec. (lines)} & \textbf{Proof (lines)} & \textbf{Proof (compilation time)}\\
+    \hline
+    \hline
+    \lstinline{update} & 32 & 32 & 552 & 28 minutes \\
+    \hline
+    \lstinline{reseed} & 41 & 38 & 710 & 18 minutes \\
+    \hline
+    \lstinline{generate} & 69 & 48 & 2456 & 35 minutes \\
+    \hline
+  \end{tabular}
+  \caption{Verification Statistics}
+  \label{table:stats}
+\end{table}
+
+Note that line counts include empty lines as well as comments. The compilation time was measured on a Macbook Pro with Intel Core i7, 2.5 GHz, 16 gigabytes of memory.
+
+The actual verifications are significantly longer than the C counterpart. Fortunately, they are machine-checked, and as long as they compile successfully, it is unlikely that clients of my project would need to take a look at the actual verifications. Instead, the API specifications will be of more interest to potential clients.
+
 \section{Preparation Instructions}
 
 \subsection{Paper Formatting}
