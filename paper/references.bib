@@ -11,25 +11,78 @@
   CTLname_url_prefix = {Available: },
 }
 
-@book{lamport94,
-    author    = "Leslie Lamport",
-    title     = "{\LaTeX: A Document Preparation System}",
-    year      = "1994",
-    publisher = "Addison-Wesley",
-    edition = "2nd",
-    address   = "Reading, Massachusetts"
+@Article{sha,
+  author =	"Andrew W. Appel",
+  title =	"Verification of a Cryptographic Primitive: {SHA-256}",
+  journal =	"ACM Transactions on Programming Languages and
+		 Systems",
+  volume =	"37",
+  number =	"2",
+  pages =	"7:1--7:31",
+  month =	apr,
+  year = 	"2015",
+  CODEN =	"ATPSDT",
+  doi =  	"http://dx.doi.org/10.1145/2701415",
+  ISSN = 	"0164-0925 (print), 1558-4593 (electronic)",
+  issn-l =	"0164-0925",
+  bibdate =	"Thu Apr 16 18:32:12 MDT 2015",
+  bibsource =	"http://www.acm.org/pubs/contents/journals/toplas/;
+		 http://www.math.utah.edu/pub/tex/bib/cryptography2010.bib;
+		 http://www.math.utah.edu/pub/tex/bib/toplas.bib",
+  abstract =	"This article presents a full formal machine-checked
+		 verification of a C program: the OpenSSL implementation
+		 of SHA-256. This is an interactive proof of functional
+		 correctness in the Coq proof assistant, using the
+		 Verifiable C program logic. Verifiable C is a
+		 separation logic for the C language, proved sound with
+		 respect to the operational semantics for C, connected
+		 to the CompCert verified optimizing C compiler.",
+  acknowledgement = "Nelson H. F. Beebe, University of Utah, Department
+		 of Mathematics, 110 LCB, 155 S 1400 E RM 233, Salt Lake
+		 City, UT 84112-0090, USA, Tel: +1 801 581 5254, FAX: +1
+		 801 581 4148, e-mail: \path|beebe@math.utah.edu|,
+		 \path|beebe@acm.org|, \path|beebe@computer.org|
+		 (Internet), URL:
+		 \path|http://www.math.utah.edu/~beebe/|",
+  articleno =	"7",
+  fjournal =	"ACM Transactions on Programming Languages and
+		 Systems",
+  journal-url =  "http://portal.acm.org/browse_dl.cfm?idx=J783",
+  doi-url =	"http://dx.doi.org/10.1145/2701415",
 }
 
-@inproceedings{nicepaper,
-  author = "Firstname1 Lastname1 and Firstname2 Lastname2",
-  title = "A Very Nice Paper To Cite",
-  year = "2000",
-  booktitle = "International Symposium on Computer Architecture"
+@InProceedings{hmac,
+  title =	"Verified Correctness and Security of Open{SSL}
+		 {HMAC}",
+  author =	"Lennart Beringer and Adam Petcher and Katherine Q. Ye
+		 and Andrew W. Appel",
+  bibdate =	"2015-08-20",
+  bibsource =	"DBLP,
+		 http://dblp.uni-trier.de/https://www.usenix.org/conference/usenixsecurity15/technical-sessions/presentation/beringer;
+		 DBLP,
+		 http://dblp.uni-trier.de/db/conf/uss/uss2015.html#BeringerPYA15",
+  booktitle =	"USENIX Security",
+  booktitle =	"24th {USENIX} Security Symposium, {USENIX} Security
+		 15, Washington, {D}.{C}, {USA}, August 12-14, 2015",
+  publisher =	"USENIX Association",
+  year = 	"2015",
+  editor =	"Jaeyeon Jung and Thorsten Holz",
+  pages =	"207--221",
 }
 
-@inproceedings{nicepaper2,
-  author = "Firstname1 Lastname1 and Firstname2 Lastname2",
-  title = "Another Very Nice Paper To Cite",
-  year = "2001",
-  booktitle = "International Symposium on Computer Architecture"
+@InProceedings{prg,
+  author        = {Felix D{\"o}rre and Vladimir Klebanov},
+  title         = {Pseudo-Random Number Generator Verification: A Case Study},
+  booktitle     = {Proceedings, Verified Software: Theories, Tools, and Experiments (VSTTE)},
+  editor        = {Arie Gurfinkel and Sanjit A. Seshia},
+  year          = 2015,
+  note          = {To appear},
+}
+
+@techreport{nist,
+ author = {Barker, Elaine B. and Kelsey, John M.},
+ title = {SP 800-90A. Recommendation for Random Number Generation Using Deterministic Random Bit Generators},
+ year = {2012},
+ publisher = {National Institute of Standards \& Technology},
+ address = {Gaithersburg, MD, United States},
 }
