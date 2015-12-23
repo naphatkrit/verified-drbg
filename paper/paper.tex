@@ -117,6 +117,294 @@ I also defined a \lstinline{get_bits} function that, if possible, get the consec
 
 This stream representation of entropy is a specialized case of the \lstinline{Get_entropy_input} function from \stdtitle{NIST SP 800-90A}, with each bit of the stream representing a bit of entropy, therefore setting \lstinline{min_entropy = min_length = max_length}, with prediction resistance always on. In the language of \stdtitle{NIST SP 800-90A}, this entropy representation is an “ideal random bitstring”.
 
+\section{DRBG Algorithm}
+The DRBG algorithm contains four public functions: \lstinline{instantiate}, \lstinline{reseed}, \lstinline{generate}, and \lstinline{uninstantiate}. I will focus on the first three, as \lstinline{uninstantiate} simply involves freeing memory.
+
+\subsection{The DRBG State}
+
+\stdtitle{NIST SP 800-90A \S 10.1.2.1} describes the HMAC DRBG state. In the functional specification, I chose to represent the HMAC DRBG state as the following, which closely resembles the NIST specifications.
+
+\begin{lstlisting}
+    Definition DRBG_working_state :=
+      (list Z * list Z * Z). (* value * key * reseed_counter *)
+    Definition DRBG_state_handle :=
+      (DRBG_working_state * Z * bool). (* state, security_strength, prediction_resistance_flag *)
+\end{lstlisting}
+
+The two most important fields here are \lstinline{key} and \lstinline{value}. The \lstinline{key} is the secret internal state, used in conjunction with HMAC, while the \lstinline{value} is the “output” of the DRBG. I will explain what “output” means when I explain the \lstinline{generate} function (\S \ref{funcgenerate}).
+
+The distinction between a “working state” and a “state handle” is \stdtitle{NIST SP 800-90A} presents each of the function as first doing error checking then calling an inner algorithm. The error checking part is common to all types of DRBG, not just the HMAC-based one. The inner algorithm is specific to each type of DRBG, and the algorithm only needs the information stored in the working state (and the working state type does not need to be the same for each type of DRBG). See \stdtitle{NIST SP 800-90A \S 8.3} for more details.
+
+Note that \lstinline{Z} is Coq’s representation of arbitrary-precision integers, and is used here to represent a byte. That is, the value of the integer must be between $0$ and $255$, inclusive. I could have represented each byte as a tuple of a \lstinline{Z} and a proof that the value of that \lstinline{Z} is in the byte range, keeping that fact separate allowed me to write a functional specification that closely resembles \stdtitle{NIST SP 800-90A}, and the fact that if the input state contains bytes, then the output will also contain bytes can easily be provided as separate lemmas about the individual functions.
+
+\subsection{The Update Function}
+Before showing any of the public function, I must first define a helper function, the \lstinline{HMAC_DRBG_Update} function,  or the \lstinline{update} function. See \stdtitle{NIST SP 800-90A \S 10.1.2.2} for the corresponding NIST specification. The \lstinline{update} function takes a \lstinline{key}, a \lstinline{value}, and an optional nonce and returns a new \lstinline{key} and a new \lstinline{value}. This function will be called at least once in each of the public functions, and the goal is to provide backtracking resistance. What this means is that the original \lstinline{key} cannot be computed from the new \lstinline{key} (note that the \lstinline{value}(s) is public anyways; see \ref{funcgenerate}).
+
+\begin{lstlisting}
+    Definition HMAC_DRBG_update (HMAC: list Z -> list Z -> list Z) (provided_data K V: list Z): (list Z * list Z) :=
+      let K := HMAC (V ++ [0] ++ provided_data) K in
+      let V := HMAC V K in
+      match provided_data with
+        | [] => (K, V)
+        | _::_ =>
+          let K := HMAC (V ++ [1] ++ provided_data) K in
+          let V := HMAC V K in
+          (K, V)
+      end.
+\end{lstlisting}
+
+Here, \lstinline{provided_data} is the aforementioned optional nonce.
+
+Notice that the backtracking resistance property follows directly from the property of HMAC (that the key cannot be computed).
+
+\subsection{The Instantiate Function}
+
+The \lstinline{instantiate} function initializes the DRBG state with randomness from a source of entropy. The caller is responsible for specifying the minimum security strength for this DRBG, which for an HMAC-based DRBG translates to “how many bits of entropy should be requested?”. In addition to entropy, the DRBG also asks for a nonce, which is roughly defined as a string of bits with at least \lstinline{1/2 security_strength} bits of entropy. In fact, this nonce can even be taken form the same source of entropy. For the purposes of this project, I am choosing to specialize the specification so that the nonce is \textit{always} taken from the same source of entropy. This is compatible with \stdtitle{mbedTLS}.
+
+Here is the functional specification I wrote for the \lstinline{instantiate} function (See \stdtitle{NIST SP 800-90A \S 9.1} for the corresponding NIST specification):
+
+\begin{lstlisting}
+    Definition DRBG_instantiate_function
+      (instantiate_algorithm: list Z -> list Z -> list Z -> Z -> DRBG_working_state)
+      (min_entropy_length max_entropy_length: Z)
+      (get_nonce: unit -> list Z)
+      (highest_supported_security_strength: Z)
+      (max_personalization_string_length: Z)
+      (prediction_resistance_supported: bool)
+      (entropy_stream: ENTROPY.stream)
+      (requested_instantiation_security_strength: Z)
+      (prediction_resistance_flag: bool)
+      (personalization_string: list Z)
+      : ENTROPY.result DRBG_state_handle :=
+      if requested_instantiation_security_strength >? highest_supported_security_strength
+        then ENTROPY.error ENTROPY.generic_error entropy_stream
+      else match prediction_resistance_flag, prediction_resistance_supported with
+             | true, false => ENTROPY.error ENTROPY.generic_error entropy_stream
+             | _,_ =>
+               if (Zlength personalization_string) >? max_personalization_string_length
+                 then ENTROPY.error ENTROPY.generic_error entropy_stream
+               else
+                 let security_strength := if requested_instantiation_security_strength <=? 14 then Some 14
+                                      else if requested_instantiation_security_strength <=? 16 then Some 16
+                                      else if requested_instantiation_security_strength <=? 24 then Some 24
+                                      else if requested_instantiation_security_strength <=? 32 then Some 32
+                                      else None in
+                 match security_strength with
+                   | None => ENTROPY.error ENTROPY.generic_error entropy_stream
+                   | Some security_strength =>
+                   match (get_entropy security_strength min_entropy_length max_entropy_length
+                         prediction_resistance_flag entropy_stream) with
+                     | ENTROPY.error e s' => ENTROPY.error ENTROPY.catastrophic_error s'
+                     | ENTROPY.success entropy_input entropy_stream =>
+                       match (get_entropy (security_strength/2) (min_entropy_length/2)
+                             (max_entropy_length/2) prediction_resistance_flag entropy_stream) with
+                         | ENTROPY.error e s' => ENTROPY.error ENTROPY.catastrophic_error s'
+                         | ENTROPY.success nonce entropy_stream =>
+                           let initial_working_state := instantiate_algorithm entropy_input nonce
+                             personalization_string security_strength in
+                           ENTROPY.success (initial_working_state, security_strength,
+                             prediction_resistance_flag) entropy_stream
+                       end
+                   end
+                 end
+           end.
+\end{lstlisting}
+
+Note that this is just the “outer” function that does error checking on the parameters, as mentioned earlier. Again, this is purely generic; different types of DRBG can share this piece of code. The actual algorithm for computing an initial working state is left as a dependency in the first parameter. All parameters before \lstinline{entropy_stream} are implementation specific constants. For example, \lstinline{prediction_resistance_supported} is a flag denoting whether or not this particular implementation can provide prediction resistance.
+
+Of the actual parameters of this function (everything from and including \lstinline{entropy_stream}), \lstinline{security_strength} has already been explained. \lstinline{prediction_resistance_flag} is used to indicate whether this particular instantiation of DRBG will provide prediction resistance. \lstinline{personalization_string} is expected to be unique, and can include things like the device identifier, timestamp, etc. The idea is not to provide more randomness but to ensure that this particular instantiation will be different from any other instantiations.
+
+The HMAC-based algorithm for instantiation is as follows (See \stdtitle{NIST SP 800-90A \S 10.1.2.3} for the corresponding NIST specification):
+
+\begin{lstlisting}
+    Definition HMAC_DRBG_instantiate_algorithm (HMAC: list Z -> list Z -> list Z)
+      (entropy_input nonce personalization_string: list Z) (security_strength: Z)
+      : DRBG_working_state :=
+      let seed_material := entropy_input ++ nonce ++ personalization_string in
+      let key := initial_key in
+      let value := initial_value in
+      let (key, value) := HMAC_DRBG_update HMAC seed_material key value in
+      let reseed_counter := 1 in
+      (value, key, reseed_counter).
+\end{lstlisting}
+
+
+\lstinline{initial_key} and \lstinline{initial_value} are globally defined constants of length equal to the length of the HMAC output. \lstinline{initial_key} is a string of all byte $0$, while \lstinline{initial_value} is a string of all byte $1$.
+
+I chose to leave the actual HMAC function as a parameter, to allow different implementations to be swapped in (the NIST specification works for all approved HMAC functions).
+
+\subsection{The Reseed Function}
+There are times when the DRBG state must be reseeded with new bits of entropy. This can happen because too many bytes have been generated from the current bits of entropy, or because prediction resistance is requested. Reseeding with fresh entropy automatically provides prediction resistance, as the state at time $t + 1$ cannot be computed from the state at time $t$ alone - entropy is also needed. Note that reseeding is preferred over simply instantiating a new DRBG state because if the source of entropy fails silently (supposed the bits of entropy returned are not actually random), at least the DRBG still has some randomness left over from the old entropy.
+
+The functional specification for the “outer” reseed function follows. Again, remember that this is the part that does error checking and is common among all types of DRBG. See \stdtitle{NIST SP 800-90A \S 9.2} for the corresponding NIST specification.
+
+\begin{lstlisting}
+    Definition DRBG_reseed_function
+      (reseed_algorithm: DRBG_working_state -> list Z -> list Z -> DRBG_working_state)
+      (min_entropy_length max_entropy_length: Z)
+      (max_additional_input_length: Z)
+      (entropy_stream: ENTROPY.stream)
+      (state_handle: DRBG_state_handle)
+      (prediction_resistance_request: bool)
+      (additional_input: list Z)
+      : ENTROPY.result DRBG_state_handle :=
+      match state_handle with (working_state, security_strength, prediction_resistance_flag) =>
+      if prediction_resistance_request && (negb prediction_resistance_flag)
+        then ENTROPY.error ENTROPY.generic_error entropy_stream
+      else
+        if (Zlength additional_input) >? max_additional_input_length
+          then ENTROPY.error ENTROPY.generic_error entropy_stream
+        else
+          match (get_entropy security_strength min_entropy_length max_entropy_length
+                prediction_resistance_flag entropy_stream) with
+            | ENTROPY.error _ s => ENTROPY.error ENTROPY.catastrophic_error s
+            | ENTROPY.success entropy_input entropy_stream =>
+              let new_working_state := reseed_algorithm working_state entropy_input additional_input in
+              ENTROPY.success (new_working_state, security_strength,
+                prediction_resistance_flag) entropy_stream
+          end
+      end.
+\end{lstlisting}
+
+As with \lstinline{instantiate}, the parameters up to but excluding \lstinline{entropy_stream} are implementation specific constants.
+
+Note that both the \lstinline{reseed} and \lstinline{generate} functions allow users to pass in an additional stream of bytes. Users do not need to provide this (and implementations can choose to omit this feature), but it is meant to provide any additional bits of entropy or to provide personalization of this specific call.
+
+The HMAC-based reseed algorithm follows (See \stdtitle{NIST SP 800-90A \S 10.1.2.4} for the corresponding NIST specification):
+
+\begin{lstlisting}
+    Definition HMAC_DRBG_reseed_algorithm (HMAC: list Z -> list Z -> list Z)
+      (working_state: DRBG_working_state) (entropy_input additional_input: list Z)
+      : DRBG_working_state :=
+      match working_state with (v, key, _) =>
+        let seed_material := entropy_input ++ additional_input in
+        let (key, v) := HMAC_DRBG_update HMAC seed_material key v in
+        let reseed_counter := 1 in
+        (v, key, reseed_counter)
+      end.
+\end{lstlisting}
+
+\subsection{The Generate Function} \label{funcgenerate}
+The \lstinline{generate} function is used to generate an arbitrary number of pseudorandom bytes, automatically calling \lstinline{reseed} first if necessary. A reseed is necessary if the caller asks for prediction resistance or if the inner (HMAC-based) \lstinline{generate} algorithm returns a flag saying a reseed is necessary. Note that the DRBG state has to have been initialized with prediction resistance capability if the caller wants prediction resistance.
+
+The outer function body for \lstinline{generate} follows. See \stdtitle{NIST SP 800-90A \S 9.3} for the corresponding NIST specification. Unlike with the previous functions, a recursive helper function is needed to specify this function body because of the use of a \lstinline{goto} statement in \stdtitle{NIST SP 800-90A}. The recursive helper function captures the “reseed if required” logic.
+
+\begin{lstlisting}
+    Fixpoint DRBG_generate_function_helper
+      (generate_algorithm: DRBG_working_state -> Z -> list Z -> DRBG_generate_algorithm_result)
+      (reseed_function: ENTROPY.stream -> DRBG_state_handle -> bool -> list Z
+        -> ENTROPY.result DRBG_state_handle)
+      (entropy_stream: ENTROPY.stream)
+      (state_handle: DRBG_state_handle)
+      (requested_number_of_bytes: Z)
+      (prediction_resistance_request: bool)
+      (additional_input: list Z)
+      (should_reseed: bool)
+      (count: nat)
+      : ENTROPY.result (list Z * DRBG_working_state) :=
+      let result := if should_reseed then
+                      match (reseed_function entropy_stream state_handle prediction_resistance_request
+                        additional_input) with
+                        | ENTROPY.success x entropy_stream => ENTROPY.success (x, []) entropy_stream
+                        | ENTROPY.error e entropy_stream => ENTROPY.error e entropy_stream
+                      end
+                    else ENTROPY.success (state_handle, additional_input) entropy_stream in
+      match result with
+        | ENTROPY.error e s => ENTROPY.error e s
+        | ENTROPY.success (state_handle, additional_input) entropy_stream =>
+          match state_handle with (working_state, security_strength, prediction_resistance_flag) =>
+            match generate_algorithm working_state requested_number_of_bytes additional_input with
+              | generate_algorithm_reseed_required =>
+                match count with
+                  | O => ENTROPY.error ENTROPY.generic_error entropy_stream (* impossible *)
+                  | S count' => (DRBG_generate_function_helper generate_algorithm reseed_function
+                    entropy_stream state_handle requested_number_of_bytes prediction_resistance_request
+                    additional_input true count')
+                end
+              | generate_algorithm_success x y => ENTROPY.success (x, y) entropy_stream
+            end
+          end
+        end.
+
+    Definition DRBG_generate_function
+      (generate_algorithm: Z -> DRBG_working_state -> Z -> list Z -> DRBG_generate_algorithm_result)
+      (reseed_function: ENTROPY.stream -> DRBG_state_handle -> bool -> list Z
+        -> ENTROPY.result DRBG_state_handle)
+      (reseed_interval: Z)
+      (max_number_of_bytes_per_request: Z)
+      (max_additional_input_length: Z)
+      (entropy_stream: ENTROPY.stream)
+      (state_handle: DRBG_state_handle)
+      (requested_number_of_bytes requested_security_strength: Z)
+      (prediction_resistance_request: bool)
+      (additional_input: list Z)
+      : ENTROPY.result (list Z * DRBG_state_handle) :=
+      match state_handle with (working_state, security_strength, prediction_resistance_flag) =>
+        if requested_number_of_bytes >? max_number_of_bytes_per_request
+          then ENTROPY.error ENTROPY.generic_error entropy_stream
+        else
+          if requested_security_strength >? security_strength
+            then ENTROPY.error ENTROPY.generic_error entropy_stream
+          else
+            if (Zlength additional_input) >? max_additional_input_length
+              then ENTROPY.error ENTROPY.generic_error entropy_stream
+            else
+              if prediction_resistance_request && (negb prediction_resistance_flag)
+                then ENTROPY.error ENTROPY.generic_error entropy_stream
+              else
+                match (DRBG_generate_function_helper (generate_algorithm reseed_interval)
+                reseed_function entropy_stream state_handle requested_number_of_bytes
+                prediction_resistance_request additional_input prediction_resistance_request 1%nat) with
+                  | ENTROPY.error e s => ENTROPY.error e s
+                  | ENTROPY.success (output, new_working_state) entropy_stream =>
+                      ENTROPY.success (output, (new_working_state, security_strength,
+                        prediction_resistance_flag)) entropy_stream
+                end
+      end.
+\end{lstlisting}
+
+
+Note that \lstinline{Fixpoint} is a recursive function where at least one parameter is structurally getting smaller. In this case, it is the last parameter, the natural number \lstinline{count}, which is initialized with \lstinline{1}, meaning that this recursive function is only allowed to go one level deep.
+
+As usual, the \lstinline{generate} algorithm is left as a dependency. Also left as a dependency is the \lstinline{reseed} function. The signature matches the \lstinline{reseed} function shown earlier, albeit with the dependencies and implementation constants filled in.
+
+The HMAC-based \lstinline{generate} algorithm follows. See \stdtitle{NIST SP 800-90A \S 10.1.2.5} for the corresponding NIST specification. A recursive function is also needed to specify the algorithm, due to the use of a \lstinline{while} loop in \stdtitle{NIST SP 800-90A}.
+
+
+\begin{lstlisting}
+    Function HMAC_DRBG_generate_helper_Z (HMAC: list Z -> list Z -> list Z) (key v: list Z)
+      (requested_number_of_bytes: Z) {measure Z.to_nat requested_number_of_bytes}: (list Z * list Z) :=
+        if 0 >=? requested_number_of_bytes then (v, [])
+        else
+          let len := 32%nat in
+          let (v, rest) := HMAC_DRBG_generate_helper_Z HMAC key v
+            (requested_number_of_bytes - (Z.of_nat len)) in
+          let v := HMAC v key in
+          let temp := v in
+          (v, rest ++ temp).
+
+    Definition HMAC_DRBG_generate_algorithm (HMAC: list Z -> list Z -> list Z) (reseed_interval: Z)
+      (working_state: DRBG_working_state) (requested_number_of_bytes: Z) (additional_input: list Z)
+      : DRBG_generate_algorithm_result :=
+        match working_state with (v, key, reseed_counter) =>
+          if reseed_counter >? reseed_interval then generate_algorithm_reseed_required
+          else
+            let (key, v) := match additional_input with
+                              | [] => (key, v)
+                              | _::_ => HMAC_DRBG_update HMAC additional_input key v
+                            end in
+            let (v, temp) := HMAC_DRBG_generate_helper_Z HMAC key v requested_number_of_bytes in
+            let returned_bits := firstn (Z.to_nat requested_number_of_bytes) temp in
+            let (key, v) := HMAC_DRBG_update HMAC additional_input key v in
+            let reseed_counter := reseed_counter + 1 in
+            generate_algorithm_success returned_bits (v, key, reseed_counter)
+        end.
+\end{lstlisting}
+
+A \lstinline{Function} is the general form of a recursive function, and unlike \lstinline{Fixpoint}, typically requires a proof that the function does terminate. In this case, the argument \lstinline{requested_number_of_bytes} is decreasing, but in a nonobvious way (not structurally). The proof is simple, but long (about as long as the function body). Luckily, it is machine-checked, so I will not present it here.
+
+The \lstinline{generate} algorithm first checks if the number of times \lstinline{generate} has been called (\lstinline{reseed_counter}) is too high, and if so, returns a flag saying a reseed is needed. Otherwise, it repeatedly HMACs the current \lstinline{value} with the current \lstinline{key}, append the result to the output, and store the result as the new \lstinline{value}. This is why the \lstinline{value} part of the DRBG state is not considered secret, and is really the output of the DRBG. The output is then trimmed down to the requested number of bytes, and \lstinline{reseed_counter} is incremented by \lstinline{1}.
+
 \section{Preparation Instructions}
 
 \subsection{Paper Formatting}
