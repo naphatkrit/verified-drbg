@@ -408,7 +408,7 @@ A \lstinline{Function} is the general form of a recursive function, and unlike \
 The \lstinline{generate} algorithm first checks if the number of times \lstinline{generate} has been called (\lstinline{reseed_counter}) is too high, and if so, returns a flag saying a reseed is needed. Otherwise, it repeatedly HMACs the current \lstinline{value} with the current \lstinline{key}, append the result to the output, and store the result as the new \lstinline{value}. This is why the \lstinline{value} part of the DRBG state is not considered secret, and is really the output of the DRBG. The output is then trimmed down to the requested number of bytes, and \lstinline{reseed_counter} is incremented by \lstinline{1}.
 
 \section{Verification}
-\subsection{HMAC Interface}
+\subsection{HMAC Interface}\label{hmac_interface}
 In this section, I explain the (pre-existing) interface of HMAC, of which the DRBG specification is a client of.
 
 The HMAC context is represented as a state machine with three states: \lstinline{EMPTY}, \lstinline{FULL key}, and \lstinline{REP key data}. \lstinline{EMPTY} refers to an uninitialized context. \lstinline{FULL key} means the context has been used to digest some data with the key \lstinline{key}, but it must be reset before it can be used again. That is, the difference between \lstinline{EMPTY} and \lstinline{FULL} is that \lstinline{FULL} remembers the key the context was previously associated with. Lastly, \lstinline{REP key data} means that the context is in the middle of digesting bytes \lstinline{data} with the key \lstinline{key}.
@@ -618,134 +618,26 @@ Note that line counts include empty lines as well as comments. The compilation t
 
 The actual verifications are significantly longer than the C counterpart. Fortunately, they are machine-checked, and as long as they compile successfully, it is unlikely that clients of my project would need to take a look at the actual verifications. Instead, the API specifications will be of more interest to potential clients.
 
-\section{Preparation Instructions}
+\section{Difficulties}
 
-\subsection{Paper Formatting}
+One of the goals of my project is to serve as a bleeding-edge adopter of the VST framework and the HMAC API specification. As is the nature of bleeding-edge adoption, I encountered many difficulties, such as a proof tactic failing silently and not providing sufficient error messages. These difficulties are fixed as they get reported back to the developers of VST. In this section, I highlight one particular difficulty with the HMAC API specification.
 
-There are no minimum or maximum length limits on IW reports.
-We are including this template because we think it will be helpful
-for citing things properly and for including figures into formatted
-text.  If you are using \LaTeX~\cite{lamport94}
-to typeset your paper, then we strongly suggest
-that you start from the template available at
-http://iw.cs.princeton.edu -- this
-document was prepared with that template.
-If you are using a different software package to typeset your paper,
-then you can still use this document as a reasonable sample of
-how your report might look.  Table~\ref{table:formatting} is a suggestion
-of some formatting guidelines, as well as being an example of how to
-include a table in a Latex document.
 
-\begin{table}[h!]
-  \centering
-  \begin{tabular}{|l|l|}
-    \hline
-    \textbf{Field} & \textbf{Value}\\
-    \hline
-    \hline
-    Paper size & US Letter 8.5in $\times$ 11in\\
-    \hline
-    Top margin & 1in\\
-    \hline
-    Bottom margin & 1in\\
-    \hline
-    Left margin & 1in\\
-    \hline
-    Right margin & 1in\\
-    \hline
-    Body font & 12pt\\
-    \hline
-    Abstract font & 12pt, italicized\\
-    \hline
-    Section heading font & 14pt, bold\\
-    \hline
-    Subsection heading font & 12pt, bold\\
-    \hline
-  \end{tabular}
-  \caption{Formatting guidelines. }
-  \label{table:formatting}
-\end{table}
+\subsection{HMAC API Specification}
 
-\textbf{Please ensure that you include page numbers with your
-submission}. This makes it easier for readers to refer to
-different parts of your paper when they provide comments.
+The C (\stdtitle{OpenSSL}) implementation of SHA-256 HMAC defines the HMAC context as a struct with three SHA-256 contexts. The original API specification of HMAC \cite{hmac} uses this same representation as the abstract state of HMAC.
 
-We highly recommend you use bibtex for managing your references and citations.  You can add bib entries to a references.bib file throughout the semester (e.g. as you read papers) and then they will be ready for you to cite when you start writing the report.  If you use bibtex, please note that the references.bib file provided in the template example includes some format-specific incantations at the top of the file.  If you substitute your own bib file, you will probably want to include these
-incantations at the top of it.
+\begin{lstlisting}
+    Inductive hmacabs :=
+       HMACabs: forall (ctx iSha oSha: s256abs) hmacabs.
+\end{lstlisting}
 
-\subsection{Citations}
+This representation works in the sense that the verification of the \stdtitle{OpenSSL} functions went through. Unfortunately, for clients of this API specification, this representation is often not good enough. The biggest issue is that this representation is too low-level; it does not keep track of the key. Upon notified of this issue, the developers of the HMAC API specification were quickly able to provide a more abstract representation of the HMAC state, leading to the state machine representation shown earlier in section \ref{hmac_interface}. The core of the verification code did not need to be changed, with some book-keeping added at the ends of translate between the new, more abstract representation to the more low-level implementation. While this issue was easily fixed, it would have been very hard to discover this issue without actually being clients of the API specification. This highlights the importance of having being the first client of the HMAC API specification.
 
-There are various reasons to cite prior work and include it as references in your bibliography.  For example, If you are improving upon
-prior work, you should include
-a full citation for the work in the bibliography \cite{nicepaper,nicepaper2}.
-You can also cite information that is used as background or explanation.  In addition to citing scholarly papers or books, you can also create bibtex entries for webpages or other sources.  Many online databases allow you to download a premade bibtex entry for each paper you access.  You can simply copy-paste these into your references.bib file.
 
-\noindent\textbf{Figures and Tables.} Ensure that the figures and
-tables are legible.  Please also ensure that you refer to your
-figures in the main text. Make sure that your figures will be legible
-in the expected forms that the report will be read.  If you expect someone
-to print it out in gray-scale, then make sure the figures are legible
-when printed that way.
+\section{Conclusion}
 
-\noindent\textbf{Main Body.} Avoid bad page or column breaks in
-your main text, i.e., last line of a paragraph at the top of a
-column or first line of a paragraph at the end of a column. If you
-begin a new section or sub-section near the end of a column,
-ensure that you have at least 2 lines of body text on the same
-column.
-
-\subsection{Ethics}
-
-Your independent work report should abide by the basic standards of scholarly ethics and by the Princeton Honor Code. If you have any doubts about how to cite
-other work, how to quote or include text or images from other works, or other issues, please discuss them with your project adviser or with the IW coordinators.
-
-\section{Outline}
-The following is a possible outline for your paper.
-\subsection{Introduction}
-\begin{itemize}
-\item Problem statement
-\item Motivation and goal...The goal of this project is...
-\item Roadmap: The remainder of this paper is organized as follows....
-\end{itemize}
-
-\subsection{Related Work}
-\begin{itemize}
-\item Survey of prior work with similar goals
-\item Comparison to your project
-\end{itemize}
-
-\subsection{Approach}
-\begin{itemize}
-\item Key novel idea
-\end{itemize}
-
-\subsection{Implementation}
-\begin{itemize}
-\item Things you implemented.  How you did it?
-\end{itemize}
-
-\subsection{Evaluation}
-\begin{itemize}
-\item Experiment design...
-\item Data...
-\item Metrics...
-\item Comparisons...
-\item Qualitative results...
-\item Quantitative results...
-\item Further results needed...
-\end{itemize}
-
-\subsection{Summary}
-\begin{itemize}
-\item Conclusions...
-\item Limitations...
-\item Future work...
-\end{itemize}
-
-\cite{sha}
-\cite{hmac}
-\cite{prg}
-\cite{nist}
+I verified the \stdtitle{mbedTLS} implementations of HMAC DRBG \lstinline{update}, \lstinline{reseed}, and \lstinline{generate}. I wrote functional specifications of these functions, describing mathematically what the functions do as functional programs. Using the functional specifications, I wrote the API specifications to describe how C implementations of these functions are required to interact with local variables and memory. I then verified the \stdtitle{mbedTLS} implementations correct with respect to the API specifications. While the verifications themselves were long and unwieldy, they are machine-checked and so are not part of the code that needs to be trusted. While the functional specifications must still be trusted, they will not have to be once Katherine Ye’s parallel project on proving cryptographic properties of the functional specifications complete in the spring of 2016. Along the way, I identified some issues with the VST framework and the HMAC API specifications, and those issues are now fixed by the relevant parties. My project, along with the verification of the HMAC DRBG \lstinline{instantiate} function, will serve as one of the building blocks that future verification tasks can use.
 
 \bstctlcite{bstctl:etal, bstctl:nodash, bstctl:simpurl}
 \bibliographystyle{IEEEtranS}
