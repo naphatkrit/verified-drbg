@@ -31,7 +31,7 @@ In this project, I formally verified the \stdtitle{mbedTLS} implementation of a 
 \end{abstract}
 
 \section{Introduction}
-A DRBG is a program that takes a source of randomness, or entropy, and stretches it out into a string of pseudorandom bits. \stdtitle{NIST SP 800-90A} DRBG provides backtracking resistance and, optionally, prediction resistance. Backtracking resistance means that even if the whole (secret) state of the DRBG is known at time $t$, the state at time $t - 1$ cannot be computed. Note that this implies the state at time $t - i$ cannot be computed for all $i \geq 1$. Prediction resistance means that even if the whole (secret) state of the DRBG is known at time $t$, the state at time $t + 1$ cannot be computed. Again, note that this implies the state at time $t + i$ cannot be computed for all $i \geq 1$. Here, “time” is counted in terms of calls to the \lstinline{generate} function.
+A DRBG is a program that takes a source of randomness, or entropy, and stretches it out into a string of pseudorandom bits. \stdtitle{NIST SP 800-90A} \cite{nist} DRBG provides backtracking resistance and, optionally, prediction resistance. Backtracking resistance means that even if the whole (secret) state of the DRBG is known at time $t$, the state at time $t - 1$ cannot be computed. Note that this implies the state at time $t - i$ cannot be computed for all $i \geq 1$. Prediction resistance means that even if the whole (secret) state of the DRBG is known at time $t$, the state at time $t + 1$ cannot be computed. Again, note that this implies the state at time $t + i$ cannot be computed for all $i \geq 1$. Here, “time” is counted in terms of calls to the \lstinline{generate} function.
 
 \stdtitle{NIST SP 800-90A} specifies different types of DRBG. The version I verified in this project is the one based on the key-hashed message authentication code, or HMAC. HMAC takes a (secret) key and a message and computes a fixed-length message authentication code. In theory, someone with only the message will not be able to compute the message authentication code, and someone with both the message and the message authentication code will not be able to compute the key.
 
@@ -71,6 +71,51 @@ to this:
 \end{lstlisting}
 
 The other modification I had to make was to eliminate the use of function pointers when dealing with entropy.
+
+\section{A Functional Representation of Entropy} \label{entropy}
+Before even understanding what a DRBG does, I need to explain how entropy is represented.
+
+A DRBG needs some entropy input to act as a source of randomness. According to \stdtitle{NIST SP 800-90A}, the source of entropy input can be either an approved entropy source, a nondeterministic random bits generator (NRBG), or another DRBG. The entropy API used in NIST is the following:
+
+\begin{lstlisting}
+    (status, entropy_input) = Get_entropy_input(min_entropy, min_length, max_length, prediction_resistance_request)
+\end{lstlisting}
+
+\lstinline{min_entropy} refers to how many bits of entropy to use. \lstinline{min_length} and \lstinline{max_length} bounds the length of the output string of bits. If \lstinline{prediction_resistance_request} is set, then fresh bits of entropy are used.
+
+For this project, I wanted a simple entropy representation that still satisfies \stdtitle{NIST SP 800-90A}. A flawed idea is to represent entropy as an infinite stream of \lstinline{bool}, each \lstinline{bool} representing a bit. This does not model real-life entropy. Entropy is expensive; if it was not, there would be no need for a DRBG to begin with! Requesting too many bits of entropy when there is insufficient supply can cause a failure. To capture this behavior, I chose to model entropy as an infinite stream of \lstinline{option bool}.
+
+Note that in Coq, as well as many typed programming languages, an \lstinline{option} type is a type that can simply not exist (\lstinline{null} in the language of C and Java). It is effectively equivalent to this:
+
+\begin{lstlisting}
+    Inductive option (T: Type) :=
+    | Some: T -> option T
+    | None: option T.
+\end{lstlisting}
+
+A \lstinline{None} value means that the entropy bit is not yet available, and so the call to get entropy should fail. An infinite stream of entropy can be defined as follows:
+
+\begin{lstlisting}
+    Definition stream: Type := nat -> option bool.
+\end{lstlisting}
+
+The \lstinline{nat} (natural number) argument is used to index into the stream. Note that a simple \lstinline{list} would not work here, because we need the stream to have infinite size.
+
+Any functions that consume entropy will need to return a new entropy stream. Furthermore, because calls to get entropy can fail, such functions have to be able to handle failures. For this reason, I defined a general \lstinline{result} datatype:
+
+\begin{lstlisting}
+    Inductive error_code: Type :=
+    | catastrophic_error
+    | generic_error.
+
+    Inductive result (X: Type): Type :=
+    | success: X -> stream -> result X
+    | error : error_code -> stream -> result X.
+\end{lstlisting}
+
+I also defined a \lstinline{get_bits} function that, if possible, get the consecutive requested number of bits from the stream and returns a new stream that advances the index by the requested number of bits. If \lstinline{get_bits} encounters an error (a \lstinline{None} value), it returns a new stream that skips this error the next time it is called, symbolizing a movement forward in time resulting in more entropy being available.
+
+This stream representation of entropy is a specialized case of the \lstinline{Get_entropy_input} function from \stdtitle{NIST SP 800-90A}, with each bit of the stream representing a bit of entropy, therefore setting \lstinline{min_entropy = min_length = max_length}, with prediction resistance always on. In the language of \stdtitle{NIST SP 800-90A}, this entropy representation is an “ideal random bitstring”.
 
 \section{Preparation Instructions}
 
