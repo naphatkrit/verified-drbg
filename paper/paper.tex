@@ -2,13 +2,11 @@
 
 \newcommand{\IWreport}{2015}
 
-%correct bad hyphenation here
-\hyphenation{Comp-Cert}
-\hyphenation{Comp-Cert-TSO}
 \usepackage{courier}
 \usepackage[normalem]{ulem}
 \usepackage{listings}
 \usepackage{lstlangcoq}
+\usepackage{appendix}
 
 \lstset{language=Coq,basicstyle=\ttfamily,mathescape=true,columns=fullflexible,breaklines=true,breakatwhitespace=true}
 
@@ -643,5 +641,107 @@ I verified the \stdtitle{mbedTLS} implementations of HMAC DRBG \lstinline{update
 \bibliographystyle{IEEEtranS}
 \bibliography{references}
 
+\clearpage
+\appendix
+\appendixpage
+\section{Bridging OpenSSL’s HMAC with mbedTLS’s Message Digest Interface} \label{appendix_hmac}
+
+As previously mentioned in section \ref{hmac_interface}, previous verification efforts on HMAC and SHA are done on \stdtitle{OpenSSL}. Therefore, the \stdtitle{mbedTLS} DRBG implementation must somehow call into the \stdtitle{OpenSSL} HMAC implementation, so that the API specifications for HMAC can be used. To do this, I wrote a thin wrapper around the \stdtitle{mbedTLS} message digest interface. In this section, I show exactly how I did that.
+
+Note that the \stdtitle{mbedTLS} message digest interface declares the following functions:
+
+\begin{lstlisting}[language=C]
+    unsigned char mbedtls_md_get_size( const mbedtls_md_info_t *md_info );
+
+    int mbedtls_md_setup( mbedtls_md_context_t *ctx, const mbedtls_md_info_t *md_info, int hmac );
+
+    int mbedtls_md_hmac_starts( mbedtls_md_context_t *ctx, const unsigned char *key, size_t keylen );
+
+    int mbedtls_md_hmac_reset( mbedtls_md_context_t *ctx );
+
+    int mbedtls_md_hmac_update( mbedtls_md_context_t *ctx, const unsigned char *input, size_t ilen );
+
+    int mbedtls_md_hmac_finish( mbedtls_md_context_t *ctx, unsigned char *output);
+
+    void mbedtls_md_free( mbedtls_md_context_t *ctx );
+\end{lstlisting}
+
+\subsection{The HMAC Context}
+
+In order for clients of the \stdtitle{mbedTLS} message digest interface to use \stdtitle{OpenSSL} HMAC implementation, the clients must somehow have access to \stdtitle{OpenSSL} HMAC context. The clients already have access to the \stdtitle{mbedTLS} message digest context, which is defined as the following struct:
+
+\begin{lstlisting}[language=C]
+    typedef struct mbedtls_md_context_t {
+        const mbedtls_md_info_t *md_info;
+        void *md_ctx;
+        void *hmac_ctx;
+    } mbedtls_md_context_t;
+\end{lstlisting}
+
+The \lstinline{md_info} field can mostly be ignored, as it is meant to be used to differentiate between the different types of message digest, and in this case, we are specializing the message digest to use HMAC and SHA-256. In order for clients of the message digest interface to have access to the \stdtitle{OpenSSL} HMAC context, I chose to have the \lstinline{hmac_ctx} pointer point to the \stdtitle{OpenSSL} HMAC context. This initialization happens in the \lstinline{mbedtls_md_setup} function:
+
+\begin{lstlisting}[language=C]
+    int mbedtls_md_setup( mbedtls_md_context_t *ctx, const mbedtls_md_info_t *md_info, int hmac ) {
+        HMAC_CTX * sha_ctx = (HMAC_CTX *) malloc(sizeof(HMAC_CTX));
+        if (sha_ctx == NULL) {
+            return MBEDTLS_ERR_MD_ALLOC_FAILED;
+        }
+        ctx->hmac_ctx = sha_ctx;
+        return 0;
+    }
+\end{lstlisting}
+
+The corresponding \lstinline{mbedtls_md_free} function is done in an obvious way:
+
+\begin{lstlisting}[language=C]
+    void mbedtls_md_free( mbedtls_md_context_t *ctx ) {
+        HMAC_CTX * hmac_ctx = ctx->hmac_ctx;
+        free(hmac_ctx);
+    }
+\end{lstlisting}
+
+
+\subsection{Other Functions}
+
+The function \lstinline{mbedtls_md_get_size} can be specialized to ignore \lstinline{md_info} and always return the length of the output of SHA-256 HMAC, which is 32 bytes.
+
+\begin{lstlisting}[language=C]
+    unsigned char mbedtls_md_get_size( const mbedtls_md_info_t *md_info ) {
+        return SHA256_DIGEST_LENGTH;
+    }
+\end{lstlisting}
+
+The functions \lstinline{mbedtls_md_hmac_starts}, \lstinline{mbedtls_md_hmac_update}, and \lstinline{mbedtls_md_hmac_finish} have counterparts in the \stdtitle{OpenSSL} library, and so can just call through to them.
+
+\begin{lstlisting}[language=C]
+    int mbedtls_md_hmac_starts( mbedtls_md_context_t *ctx, const unsigned char *key, size_t keylen ) {
+        HMAC_CTX * hmac_ctx = ctx->hmac_ctx;
+        HMAC_Init(hmac_ctx, (unsigned char*) key, keylen);
+        return 0;
+    }
+
+    int mbedtls_md_hmac_update( mbedtls_md_context_t *ctx, const unsigned char *input, size_t ilen ) {
+        HMAC_CTX * hmac_ctx = ctx->hmac_ctx;
+        HMAC_Update(hmac_ctx, (const void *) input, ilen);
+        return 0;
+    }
+
+    int mbedtls_md_hmac_finish( mbedtls_md_context_t *ctx, unsigned char *output) {
+        HMAC_CTX * hmac_ctx = ctx->hmac_ctx;
+        HMAC_Final(hmac_ctx, output);
+        return 0;
+    }
+\end{lstlisting}
+
+\stdtitle{OpenSSL} does not have an explicit \lstinline{reset} function. Recall that the \lstinline{reset} function takes a HMAC context \lstinline{FULL key} and takes it to \lstinline{REP key []}. That is, it makes the HMAC context ready for digesting data with the pre-existing key. In OpenSSL, this is done by passing \lstinline{NULL} as the key to \lstinline{HMAC_Init}.
+
+\begin{lstlisting}[language=C]
+    int mbedtls_md_hmac_reset( mbedtls_md_context_t *ctx ) {
+        HMAC_CTX * hmac_ctx = ctx->hmac_ctx;
+        HMAC_Init(hmac_ctx, NULL, SHA256_DIGEST_LENGTH);
+        return 0;
+    }
+\end{lstlisting}
+\section{DRBG API Specifications} \label{appendix_api}
 
 \end{document}
