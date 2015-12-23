@@ -139,7 +139,7 @@ The distinction between a “working state” and a “state handle” is \stdti
 Note that \lstinline{Z} is Coq’s representation of arbitrary-precision integers, and is used here to represent a byte. That is, the value of the integer must be between $0$ and $255$, inclusive. I could have represented each byte as a tuple of a \lstinline{Z} and a proof that the value of that \lstinline{Z} is in the byte range, keeping that fact separate allowed me to write a functional specification that closely resembles \stdtitle{NIST SP 800-90A}, and the fact that if the input state contains bytes, then the output will also contain bytes can easily be provided as separate lemmas about the individual functions.
 
 \subsection{The Update Function}
-Before showing any of the public function, I must first define a helper function, the \lstinline{HMAC_DRBG_Update} function,  or the \lstinline{update} function. See \stdtitle{NIST SP 800-90A \S 10.1.2.2} for the corresponding NIST specification. The \lstinline{update} function takes a \lstinline{key}, a \lstinline{value}, and an optional nonce and returns a new \lstinline{key} and a new \lstinline{value}. This function will be called at least once in each of the public functions, and the goal is to provide backtracking resistance. What this means is that the original \lstinline{key} cannot be computed from the new \lstinline{key} (note that the \lstinline{value}(s) is public anyways; see \ref{funcgenerate}).
+Before showing any of the public function, I must first define a helper function, the \lstinline{update} function. See \stdtitle{NIST SP 800-90A \S 10.1.2.2} for the corresponding NIST specification. The \lstinline{update} function takes a \lstinline{key}, a \lstinline{value}, and an optional nonce and returns a new \lstinline{key} and a new \lstinline{value}. This function will be called at least once in each of the public functions, and the goal is to provide backtracking resistance. What this means is that the original \lstinline{key} cannot be computed from the new \lstinline{key} (note that the \lstinline{value}(s) is public anyways; see \ref{funcgenerate}).
 
 \begin{lstlisting}
     Definition HMAC_DRBG_update (HMAC: list Z -> list Z -> list Z) (provided_data K V: list Z): (list Z * list Z) :=
@@ -214,7 +214,7 @@ Here is the functional specification I wrote for the \lstinline{instantiate} fun
 
 Note that this is just the “outer” function that does error checking on the parameters, as mentioned earlier. Again, this is purely generic; different types of DRBG can share this piece of code. The actual algorithm for computing an initial working state is left as a dependency in the first parameter. All parameters before \lstinline{entropy_stream} are implementation specific constants. For example, \lstinline{prediction_resistance_supported} is a flag denoting whether or not this particular implementation can provide prediction resistance.
 
-Of the actual parameters of this function (everything from and including \lstinline{entropy_stream}), \lstinline{security_strength} has already been explained. \lstinline{prediction_resistance_flag} is used to indicate whether this particular instantiation of DRBG will provide prediction resistance. \lstinline{personalization_string} is expected to be unique, and can include things like the device identifier, timestamp, etc. The idea is not to provide more randomness but to ensure that this particular instantiation will be different from any other instantiations.
+Of the actual parameters of this function (everything from and including \lstinline{entropy_stream}), \lstinline{security_strength} has already been explained. \lstinline{prediction_resistance_flag} is used to indicate whether this particular instantiation of DRBG will provide prediction resistance.\\ \lstinline{personalization_string} is expected to be unique, and can include things like the device identifier, timestamp, etc. The idea is not to provide more randomness but to ensure that this particular instantiation will be different from any other instantiations.
 
 The HMAC-based algorithm for instantiation is as follows (See \stdtitle{NIST SP 800-90A \S 10.1.2.3} for the corresponding NIST specification):
 
@@ -405,7 +405,7 @@ The HMAC-based \lstinline{generate} algorithm follows. See \stdtitle{NIST SP 800
 
 A \lstinline{Function} is the general form of a recursive function, and unlike \lstinline{Fixpoint}, typically requires a proof that the function does terminate. In this case, the argument \lstinline{requested_number_of_bytes} is decreasing, but in a nonobvious way (not structurally). The proof is simple, but long (about as long as the function body). Luckily, it is machine-checked, so I will not present it here.
 
-The \lstinline{generate} algorithm first checks if the number of times \lstinline{generate} has been called (\lstinline{reseed_counter}) is too high, and if so, returns a flag saying a reseed is needed. Otherwise, it repeatedly HMACs the current \lstinline{value} with the current \lstinline{key}, append the result to the output, and store the result as the new \lstinline{value}. This is why the \lstinline{value} part of the DRBG state is not considered secret, and is really the output of the DRBG. The output is then trimmed down to the requested number of bytes, and \lstinline{reseed_counter} is incremented by \lstinline{1}.
+The \lstinline{generate} algorithm first checks if the number of times \lstinline{generate} has been called\\ (\lstinline{reseed_counter}) is too high, and if so, returns a flag saying a reseed is needed. Otherwise, it repeatedly HMACs the current \lstinline{value} with the current \lstinline{key}, append the result to the output, and store the result as the new \lstinline{value}. This is why the \lstinline{value} part of the DRBG state is not considered secret, and is really the output of the DRBG. The output is then trimmed down to the requested number of bytes, and \lstinline{reseed_counter} is incremented by \lstinline{1}.
 
 \section{Verification}
 \subsection{HMAC Interface}\label{hmac_interface}
@@ -427,7 +427,7 @@ Even though I am verifying \stdtitle{mbedTLS} implementation of DRBG, the pre-ex
 \end{lstlisting}
 
 
-Here, \lstinline{HMAC_Final} is the name of the \lstinline{final} function verified by previous efforts, and \lstinline{mbedtls_md_hmac_finish} is the name mbedTLS expects. The API specification (how the function interacts with local variable and memory) for this function is almost a complete copy of the specification defined by the previous HMAC verification efforts.
+Here, \lstinline{HMAC_Final} is the name of the \lstinline{final} function verified by previous efforts, and\\ \lstinline{mbedtls_md_hmac_finish} is the name mbedTLS expects. The API specification (how the function interacts with local variable and memory) for this function is almost a complete copy of the specification defined by the previous HMAC verification efforts.
 
 For more details on how mbedTLS and OpenSSL APIs are bridged, see Appendix \ref{appendix_hmac}.
 
@@ -713,7 +713,7 @@ The function \lstinline{mbedtls_md_get_size} can be specialized to ignore \lstin
     }
 \end{lstlisting}
 
-The functions \lstinline{mbedtls_md_hmac_starts}, \lstinline{mbedtls_md_hmac_update}, and \lstinline{mbedtls_md_hmac_finish} have counterparts in the \stdtitle{OpenSSL} library, and so can just call through to them.
+The functions \lstinline{mbedtls_md_hmac_starts}, \lstinline{mbedtls_md_hmac_update}, and\\ \lstinline{mbedtls_md_hmac_finish} have counterparts in the \stdtitle{OpenSSL} library, and so can just call through to them.
 
 \begin{lstlisting}[language=C]
     int mbedtls_md_hmac_starts( mbedtls_md_context_t *ctx, const unsigned char *key, size_t keylen ) {
