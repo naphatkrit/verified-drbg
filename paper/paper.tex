@@ -413,7 +413,7 @@ The HMAC context is represented as a state machine with three states: \lstinline
 
 There are four functions associated with HMAC: \lstinline{reset}, \lstinline{start}, \lstinline{update}, and \lstinline{final}. \lstinline{reset} takes a HMAC context in \lstinline{FULL key} and turns it into \lstinline{REP key []}, where \lstinline{[]} is the empty byte sequence. \lstinline{start} takes a HMAC context \lstinline{EMPTY} and an additional parameter \lstinline{key} and turns it into \lstinline{REP key []}. \lstinline{update} takes a HMAC context in \lstinline{REP key data} and an additional parameter \lstinline{data1} and turns it into \lstinline{REP key (data ++ data1)}, where \lstinline{++} is the list concatenation. Lastly, \lstinline{final} takes a HMAC context in \lstinline{REP key data} and a pointer to a space in memory \lstinline{out} and turns the context into \lstinline{FULL key} and deposits the output of \lstinline{HMAC data key} into \lstinline{out}.
 
-The state machine representation of HMAC was created for this project. \cite{hmac} describes the previous verification effort on HMAC, but it represented HMAC in a more low-level format. See section \ref{oldhmac} for more details.
+The state machine representation of HMAC was created for this project. \cite{hmac} describes the previous verification effort on HMAC, but it represented HMAC in a more low-level format. See \S \ref{oldhmac} for more details.
 
 Even though I am verifying \stdtitle{mbedTLS} implementation of DRBG, the pre-existing verifications and specifications of SHA256 and HMAC are for the \stdtitle{OpenSSL} version. To make the two versions work with each other, I created a thin wrapper on the \stdtitle{mbedTLS} HMAC interface. For example, take the \lstinline{final} function. \stdtitle{mbedTLS} and \stdtitle{OpenSSL} have similar APIs for the \lstinline{final} function, and I connect them with this wrapper function:
 
@@ -630,7 +630,7 @@ The C (\stdtitle{OpenSSL}) implementation of SHA-256 HMAC defines the HMAC conte
        HMACabs: forall (ctx iSha oSha: s256abs) hmacabs.
 \end{lstlisting}
 
-This representation works in the sense that the verification of the \stdtitle{OpenSSL} functions went through. Unfortunately, for clients of this API specification, this representation is often not good enough. The biggest issue is that this representation is too low-level; it does not keep track of the key. Upon notified of this issue, the developers of the HMAC API specification were quickly able to provide a more abstract representation of the HMAC state, leading to the state machine representation shown earlier in section \ref{hmac_interface}. The core of the verification code did not need to be changed, with some book-keeping added at the ends of translate between the new, more abstract representation to the more low-level implementation. While this issue was easily fixed, it would have been very hard to discover this issue without actually being clients of the API specification. This highlights the importance of having being the first client of the HMAC API specification.
+This representation works in the sense that the verification of the \stdtitle{OpenSSL} functions went through. Unfortunately, for clients of this API specification, this representation is often not good enough. The biggest issue is that this representation is too low-level; it does not keep track of the key. Upon notified of this issue, the developers of the HMAC API specification were quickly able to provide a more abstract representation of the HMAC state, leading to the state machine representation shown earlier in \S \ref{hmac_interface}. The core of the verification code did not need to be changed, with some book-keeping added at the ends of translate between the new, more abstract representation to the more low-level implementation. While this issue was easily fixed, it would have been very hard to discover this issue without actually being clients of the API specification. This highlights the importance of having being the first client of the HMAC API specification.
 
 
 \section{Conclusion}
@@ -646,7 +646,7 @@ I verified the \stdtitle{mbedTLS} implementations of HMAC DRBG \lstinline{update
 \appendixpage
 \section{Bridging OpenSSL’s HMAC with mbedTLS’s Message Digest Interface} \label{appendix_hmac}
 
-As previously mentioned in section \ref{hmac_interface}, previous verification efforts on HMAC and SHA are done on \stdtitle{OpenSSL}. Therefore, the \stdtitle{mbedTLS} DRBG implementation must somehow call into the \stdtitle{OpenSSL} HMAC implementation, so that the API specifications for HMAC can be used. To do this, I wrote a thin wrapper around the \stdtitle{mbedTLS} message digest interface. In this section, I show exactly how I did that.
+As previously mentioned in \S \ref{hmac_interface}, previous verification efforts on HMAC and SHA are done on \stdtitle{OpenSSL}. Therefore, the \stdtitle{mbedTLS} DRBG implementation must somehow call into the \stdtitle{OpenSSL} HMAC implementation, so that the API specifications for HMAC can be used. To do this, I wrote a thin wrapper around the \stdtitle{mbedTLS} message digest interface. In this section, I show exactly how I did that.
 
 Note that the \stdtitle{mbedTLS} message digest interface declares the following functions:
 
