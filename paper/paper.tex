@@ -2,15 +2,24 @@
 
 \newcommand{\IWreport}{2015}
 
+%correct bad hyphenation here
+\hyphenation{Comp-Cert}
+\hyphenation{Comp-Cert-TSO}
 \usepackage[normalem]{ulem}
+\usepackage{listings}
+\usepackage{lstlangcoq}
+
+\lstset{language=Coq,basicstyle=\sffamily,mathescape=true,columns=fullflexible}
+
+\newcommand{\stdtitle}[1]{\textbf{#1}}
 
 \begin{document}
 
 \title{
-A Latex Template for Independent Work Reports\\
-Version 20151109v1}
+Verification of a Deterministic Random Bits Generator
+}
 
-\author{Firstname Surname\\Adviser: Firstname Surname}
+\author{Naphat Sanguansin\\Adviser: Andrew W. Appel}
 
 \date{}
 \maketitle
@@ -18,14 +27,50 @@ Version 20151109v1}
 \thispagestyle{empty}
 \doublespacing
 \begin{abstract}
-This document is intended to serve as a sample you can use for independent work reports.  We provide some guidelines on content and formatting.  They are not required, but they might be helpful.
+In this project, I formally verified the \stdtitle{mbedTLS} implementation of a HMAC-based deterministic random bits generator (DRBG) with respect to the standard \stdtitle{NIST SP 800-90A}. By “formal”, I mean the verification is in the machine-checked environment of Coq using the Verified Software Toolchain (VST) framework. I verified the functions \lstinline{update}, \lstinline{reseed}, and \lstinline{generate}. Due to time constraint, I was not able to verify the \lstinline{instantiate} function.
 \end{abstract}
 
 \section{Introduction}
+A DRBG is a program that takes a source of randomness, or entropy, and stretches it out into a string of pseudorandom bits. \stdtitle{NIST SP 800-90A} DRBG provides backtracking resistance and, optionally, prediction resistance. Backtracking resistance means that even if the whole (secret) state of the DRBG is known at time $t$, the state at time $t - 1$ cannot be computed. Note that this implies the state at time $t - i$ cannot be computed for all $i \geq 1$. Prediction resistance means that even if the whole (secret) state of the DRBG is known at time $t$, the state at time $t + 1$ cannot be computed. Again, note that this implies the state at time $t + i$ cannot be computed for all $i \geq 1$. Here, “time” is counted in terms of calls to the \lstinline{generate} function.
 
-This document is a sample you can use for formatting your independent work
-report.  An example template with all bib and supporting files can be downloaded
-from the IW website at {\em http://iw.cs.princeton.edu}.
+\stdtitle{NIST SP 800-90A} specifies different types of DRBG. The version I verified in this project is the one based on the key-hashed message authentication code, or HMAC. HMAC takes a (secret) key and a message and computes a fixed-length message authentication code. In theory, someone with only the message will not be able to compute the message authentication code, and someone with both the message and the message authentication code will not be able to compute the key.
+
+Why did I choose to verify an implementation of DRBG? In short, DRBG is a widely used crypto primitive. Correctly implemented crypto primitives help application programmers improve the security of their code without them having to fully understand the math behind the crypto algorithms.
+
+\subsection{Machine-Checked Proofs}
+I did the verification in Coq, an open-sourced proof assistant. The C code is compiled into its abstract syntax tree (AST) in Coq using the CompCert certified (machine-checked) compiler. I wrote functional specifications (functional programs) in Coq that closely match \stdtitle{NIST SP 800-90A}. Using the functional programs, I created API specifications using the VST framework. API specifications reason about how the AST deals with memory and local variables. I then prove the AST correct with respect to the API specifications.
+
+Of what the tasks I mentioned, the ones that must be trusted are the translation of \stdtitle{NIST SP 800-90A} into functional specifications and the creation of API specifications from those functional programs. Everything else is machine-checked. Can the functional and API specifications be trusted? For the latter, I hope to make a convincing claim by the end of this paper that as long as the functional specifications are correct, the corresponding API specifications will be, too. As for the functional specifications, first of all, they are small, easy-to-reason-about functional programs. I also ran the programs on some test inputs from NIST and verified that the output matches. While this is already a huge step forward from a C program, as a functional program in Coq is less error-prone, it is still unsatisfying that at the functional specification level, I had to resort to unit tests. Thankfully, there is a parallel project by Katherine Ye ‘16 that will prove cryptographic properties of the functional specifications. The fact that this project can be done in parallel to (and mostly independent from) the verification of the C implementation shows the power and flexibility of VST.
+
+\subsection{Related Works}
+Similar verifications have been done for SHA-256 and HMAC, see \cite{sha} and \cite{hmac} respectively. As mentioned previously, Katherine Ye ‘16 is working on proving cryptographic properties of the functional specifications.
+
+As far as I could tell, this is the first end-to-end verification of an implementation of HMAC DRBG against a functional specification. By “end-to-end” I mean that the verification builds upon an existing verification of HMAC \cite{hmac} (which is, in turn, built upon an existing verification of SHA-256 \cite{sha}).
+
+There have been some other verification efforts to verify a DRBG, albeit without using a functional specification. As an example, \cite{prng} verified Android’s pseudorandom number generator. This verification is done on a Java implementation, and is a verification on information flow, not on a functional specification. That is, the project proves that all the bytes of entropy are used in constructing the secret internal state. Proving an implementation against a functional specification is arguably better, as it allows the functional specification to serve as a mathematical representation of the more complex C (or Java) implementation. This functional specification can then be shown to have desired cryptographic properties, including the fact that all bytes of entropy are being properly consumed.
+
+
+\subsection{Why mbedTLS?}
+
+Previous efforts in the VST project to verify SHA-256 \cite{sha} and HMAC \cite{hmac} have done so using \stdtitle{OpenSSL 0.9.1c}. A natural choice for the DRBG verification would be to also use the same \stdtitle{OpenSSL} library. Unfortunately, the DRBG implementation in \stdtitle{OpenSSL} makes heavy use of function pointers to encapsulate the differences between each type of DRBG. While Verifiable C is capable of reasoning about function pointers, the proof automation system is not yet robust enough when dealing with function pointers and so such proofs will be more complex. \stdtitle{mbedTLS}, on the other hand, does not make use of function pointers except to deal with entropy. Therefore, I chose to use the implementation of DRBG found in \stdtitle{mbedTLS 2.1.1}.
+
+\subsection{Modifications to mbedTLS}
+I had to make a few modifications to the \stdtitile{mbedTLS} DRBG source file. Most of these transformations are obviously equivalent to the original version. For example, Verifiable C does not allow memory dereferences in function parameters or if/while/for-loop conditions.
+
+Therefore, code such as the following had to be changed:
+
+\begin{lstlisting}[language=C]
+    md_len = mbedtls_md_get_size( ctx->md_ctx.md_info );
+\end{lstlisting}
+
+to this:
+
+\begin{lstlisting}[language=C]
+    info = ctx->md_ctx.md_info;
+    md_len = mbedtls_md_get_size( info );
+\end{lstlisting}
+
+The other modification I had to make was to eliminate the use of function pointers when dealing with entropy.
 
 \section{Preparation Instructions}
 
@@ -151,9 +196,14 @@ The following is a possible outline for your paper.
 \item Future work...
 \end{itemize}
 
+\cite{sha}
+\cite{hmac}
+\cite{prg}
+\cite{nist}
 
 \bstctlcite{bstctl:etal, bstctl:nodash, bstctl:simpurl}
 \bibliographystyle{IEEEtranS}
 \bibliography{references}
+
 
 \end{document}
