@@ -39,21 +39,21 @@ A DRBG is a program that takes a source of randomness, or entropy, and stretches
 Why did I choose to verify an implementation of DRBG? In short, DRBG is a widely used crypto primitive. Correctly implemented crypto primitives help application programmers improve the security of their code without them having to fully understand the math behind the crypto algorithms.
 
 \subsection{Machine-Checked Proofs}
-I did the verification in Coq, an open-sourced proof assistant. The C code is compiled into its abstract syntax tree (AST) in Coq using the CompCert certified (machine-checked) compiler. I wrote functional specifications (functional programs) in Coq that closely match \stdtitle{NIST SP 800-90A}. Using the functional programs, I created API specifications using the VST framework. API specifications reason about how the AST deals with memory and local variables. I then prove the AST correct with respect to the API specifications.
+I did the verification in Coq, an open-sourced proof assistant. The C code is compiled into its abstract syntax tree (AST) in Coq using the CompCert certified (machine-checked) compiler. I wrote functional specifications (functional programs) in Coq that closely match \stdtitle{NIST SP 800-90A}. Using the functional programs, I created API specifications using the VST framework. API specifications reason about how the AST deals with memory and local variables. I then proved the AST correct with respect to the API specifications.
 
-Of what the tasks I mentioned, the ones that must be trusted are the translation of \stdtitle{NIST SP 800-90A} into functional specifications and the creation of API specifications from those functional programs. Everything else is machine-checked. Can the functional and API specifications be trusted? For the latter, I hope to make a convincing claim by the end of this paper that as long as the functional specifications are correct, the corresponding API specifications will be, too. As for the functional specifications, first of all, they are small, easy-to-reason-about functional programs. I also ran the programs on some test inputs from NIST and verified that the output matches. While this is already a huge step forward from a C program, as a functional program in Coq is less error-prone, it is still unsatisfying that at the functional specification level, I had to resort to unit tests. Thankfully, there is a parallel project by Katherine Ye ‘16 that will prove cryptographic properties of the functional specifications. The fact that this project can be done in parallel to (and mostly independent from) the verification of the C implementation shows the power and flexibility of VST.
+Of what the tasks I mentioned, the ones that must be trusted are the translation of \stdtitle{NIST SP 800-90A} into functional specifications and the creation of API specifications from those functional programs. Everything else is machine-checked. Can the functional and API specifications be trusted? For the latter, I hope to make a convincing claim by the end of this paper that as long as the functional specifications are correct, the corresponding API specifications will be, too. As for the functional specifications, first of all, they are small, easy-to-reason-about, strongly typed functional programs. I also ran the programs on some test inputs from NIST and verified that the output matches. That said, it is still unsatisfying that at the functional specification level, I had to resort to unit tests. Thankfully, there is a parallel project by Katherine Ye ‘16 that will prove cryptographic properties of the functional specifications. The fact that this parallel project can be done in concurrent to (and mostly independent from) the verification of the C implementation shows the power and flexibility of VST.
 
 \subsection{Related Works}
 Similar verifications have been done for SHA-256 and HMAC, see \cite{sha} and \cite{hmac} respectively. As mentioned previously, Katherine Ye ‘16 is working on proving cryptographic properties of the functional specifications.
 
 As far as I could tell, this is the first end-to-end verification of an implementation of HMAC DRBG against a functional specification. By “end-to-end” I mean that the verification builds upon an existing verification of HMAC \cite{hmac} (which is, in turn, built upon an existing verification of SHA-256 \cite{sha}).
 
-There have been some other verification efforts to verify a DRBG, albeit without using a functional specification. As an example, \cite{prng} verified Android’s pseudorandom number generator. This verification is done on a Java implementation, and is a verification on information flow, not on a functional specification. That is, the project proves that all the bytes of entropy are used in constructing the secret internal state. Proving an implementation against a functional specification is arguably better, as it allows the functional specification to serve as a mathematical representation of the more complex C (or Java) implementation. This functional specification can then be shown to have desired cryptographic properties, including the fact that all bytes of entropy are being properly consumed.
+There have been some other verification efforts to verify a DRBG, albeit without using a functional specification. As an example, D{\"o}rre and Klebanov \cite{prng} verified Android’s pseudorandom number generator. This verification is done on a Java implementation, and is a verification on information flow, not on a functional specification. That is, the project proves that all the bytes of entropy are used in constructing the secret internal state, but not \textit{how} the bytes are used. Proving an implementation against a functional specification is arguably better, as it allows the functional specification to serve as a mathematical representation of the more complex C (or Java) implementation. This functional specification can then be shown to have desired cryptographic properties, including the fact that all bytes of entropy are being properly consumed.
 
 
 \subsection{Why mbedTLS?}
 
-Previous efforts in the VST project to verify SHA-256 \cite{sha} and HMAC \cite{hmac} have done so using \stdtitle{OpenSSL 0.9.1c}. A natural choice for the DRBG verification would be to also use the same \stdtitle{OpenSSL} library. Unfortunately, the DRBG implementation in \stdtitle{OpenSSL} makes heavy use of function pointers to encapsulate the differences between each type of DRBG. While Verifiable C is capable of reasoning about function pointers, the proof automation system is not yet robust enough when dealing with function pointers and so such proofs will be more complex. \stdtitle{mbedTLS}, on the other hand, does not make use of function pointers except to deal with entropy. Therefore, I chose to use the implementation of DRBG found in \stdtitle{mbedTLS 2.1.1}.
+Previous efforts in the VST project to verify SHA-256 \cite{sha} and HMAC \cite{hmac} have done so using \stdtitle{OpenSSL 0.9.1c}. A natural choice for the DRBG verification would be to also use the same \stdtitle{OpenSSL} library. Unfortunately, the DRBG implementation in \stdtitle{OpenSSL} makes heavy use of function pointers to encapsulate the differences between each type of DRBG. While Verifiable C, the C program logic component of the VST framework, is capable of reasoning about function pointers, the proof automation system is not yet robust enough when dealing with function pointers and so such proofs will be more complex. \stdtitle{mbedTLS}, on the other hand, does not make use of function pointers except to deal with entropy. Therefore, I chose to use the implementation of DRBG found in \stdtitle{mbedTLS 2.1.1}.
 
 \subsection{Modifications to mbedTLS}
 I had to make a few modifications to the \stdtitile{mbedTLS} DRBG source file. Most of these transformations are obviously equivalent to the original version. For example, Verifiable C does not allow memory dereferences in function parameters or if/while/for-loop conditions.
@@ -119,9 +119,9 @@ I also defined a \lstinline{get_bits} function that, if possible, get the consec
 This stream representation of entropy is a specialized case of the \lstinline{Get_entropy_input} function from \stdtitle{NIST SP 800-90A}, with each bit of the stream representing a bit of entropy, therefore setting \lstinline{min_entropy = min_length = max_length}, with prediction resistance always on. In the language of \stdtitle{NIST SP 800-90A}, this entropy representation is an “ideal random bitstring”.
 
 \section{DRBG Algorithm}
-The DRBG algorithm contains four public functions: \lstinline{instantiate}, \lstinline{reseed}, \lstinline{generate}, and \lstinline{uninstantiate}. I will focus on the first three, as \lstinline{uninstantiate} simply involves freeing memory.
+The DRBG algorithm contains four public functions: \lstinline{instantiate}, \lstinline{reseed}, \lstinline{generate}, and \lstinline{uninstantiate}. The HMAC-based DRBG also makes use of a helper function: \lstinline{update}. I will focus on all but \lstinline{uninstantiate}, as it simply involves freeing memory.
 
-\subsection{The DRBG State}
+\subsection{The DRBG State} \label{funcstate}
 
 \stdtitle{NIST SP 800-90A \S 10.1.2.1} describes the HMAC DRBG state. In the functional specification, I chose to represent the HMAC DRBG state as the following, which closely resembles the NIST specifications.
 
@@ -136,10 +136,10 @@ The two most important fields here are \lstinline{key} and \lstinline{value}. Th
 
 The distinction between a “working state” and a “state handle” is \stdtitle{NIST SP 800-90A} presents each of the function as first doing error checking then calling an inner algorithm. The error checking part is common to all types of DRBG, not just the HMAC-based one. The inner algorithm is specific to each type of DRBG, and the algorithm only needs the information stored in the working state (and the working state type does not need to be the same for each type of DRBG). See \stdtitle{NIST SP 800-90A \S 8.3} for more details.
 
-Note that \lstinline{Z} is Coq’s representation of arbitrary-precision integers, and is used here to represent a byte. That is, the value of the integer must be between $0$ and $255$, inclusive. I could have represented each byte as a tuple of a \lstinline{Z} and a proof that the value of that \lstinline{Z} is in the byte range, keeping that fact separate allowed me to write a functional specification that closely resembles \stdtitle{NIST SP 800-90A}, and the fact that if the input state contains bytes, then the output will also contain bytes can easily be provided as separate lemmas about the individual functions.
+Note that \lstinline{Z} is Coq’s representation of arbitrary-precision integers, and is used here to represent a byte. That is, the value of the integer must be between $0$ and $255$, inclusive. While I could have represented each byte as a tuple of a \lstinline{Z} and a proof that the value of that \lstinline{Z} is in the byte range, keeping that fact separate allowed me to write a functional specification that closely resembles \stdtitle{NIST SP 800-90A}. The fact that if the input state contains bytes, then the output will also contain bytes can easily be provided as separate lemmas about the individual functions.
 
 \subsection{The Update Function}
-Before showing any of the public function, I must first define a helper function, the \lstinline{update} function. See \stdtitle{NIST SP 800-90A \S 10.1.2.2} for the corresponding NIST specification. The \lstinline{update} function takes a \lstinline{key}, a \lstinline{value}, and an optional nonce and returns a new \lstinline{key} and a new \lstinline{value}. This function will be called at least once in each of the public functions, and the goal is to provide backtracking resistance. What this means is that the original \lstinline{key} cannot be computed from the new \lstinline{key} (note that the \lstinline{value}(s) is public anyways; see \ref{funcgenerate}).
+Before showing any of the public function, I must first define a helper function, the \lstinline{update} function. See \stdtitle{NIST SP 800-90A \S 10.1.2.2} for the corresponding NIST specification. The \lstinline{update} function takes a \lstinline{key}, a \lstinline{value}, and an optional nonce and returns a new \lstinline{key} and a new \lstinline{value}. This function will be called at least once in each of the public functions, and the goal is to provide backtracking resistance. What this means is that the original \lstinline{key} cannot be computed from the new \lstinline{key} (note that the \lstinline{value}(s) is public anyways; see \S \ref{funcgenerate}).
 
 \begin{lstlisting}
     Definition HMAC_DRBG_update (HMAC: list Z -> list Z -> list Z) (provided_data K V: list Z): (list Z * list Z) :=
@@ -194,12 +194,10 @@ Here is the functional specification I wrote for the \lstinline{instantiate} fun
                  match security_strength with
                    | None => ENTROPY.error ENTROPY.generic_error entropy_stream
                    | Some security_strength =>
-                   match (get_entropy security_strength min_entropy_length max_entropy_length
-                         prediction_resistance_flag entropy_stream) with
+                   match get_entropy security_strength min_entropy_length max_entropy_length prediction_resistance_flag entropy_stream with
                      | ENTROPY.error e s' => ENTROPY.error ENTROPY.catastrophic_error s'
                      | ENTROPY.success entropy_input entropy_stream =>
-                       match (get_entropy (security_strength/2) (min_entropy_length/2)
-                             (max_entropy_length/2) prediction_resistance_flag entropy_stream) with
+                       match get_entropy (security_strength/2) (min_entropy_length/2) (max_entropy_length/2) prediction_resistance_flag entropy_stream with
                          | ENTROPY.error e s' => ENTROPY.error ENTROPY.catastrophic_error s'
                          | ENTROPY.success nonce entropy_stream =>
                            let initial_working_state := instantiate_algorithm entropy_input nonce
@@ -212,16 +210,14 @@ Here is the functional specification I wrote for the \lstinline{instantiate} fun
            end.
 \end{lstlisting}
 
-Note that this is just the “outer” function that does error checking on the parameters, as mentioned earlier. Again, this is purely generic; different types of DRBG can share this piece of code. The actual algorithm for computing an initial working state is left as a dependency in the first parameter. All parameters before \lstinline{entropy_stream} are implementation specific constants. For example, \lstinline{prediction_resistance_supported} is a flag denoting whether or not this particular implementation can provide prediction resistance.
+Note that this is just the “outer” function that does error checking on the parameters, as mentioned earlier. This outer function is purely generic; different types of DRBG can share this piece of code. The actual algorithm for computing an initial working state is left as a dependency in the first parameter. All parameters before \lstinline{entropy_stream} are implementation specific constants. For example, \lstinline{prediction_resistance_supported} is a flag denoting whether or not this particular implementation can provide prediction resistance.
 
 Of the actual parameters of this function (everything from and including \lstinline{entropy_stream}), \lstinline{security_strength} has already been explained. \lstinline{prediction_resistance_flag} is used to indicate whether this particular instantiation of DRBG will provide prediction resistance.\\ \lstinline{personalization_string} is expected to be unique, and can include things like the device identifier, timestamp, etc. The idea is not to provide more randomness but to ensure that this particular instantiation will be different from any other instantiations.
 
 The HMAC-based algorithm for instantiation is as follows (See \stdtitle{NIST SP 800-90A \S 10.1.2.3} for the corresponding NIST specification):
 
 \begin{lstlisting}
-    Definition HMAC_DRBG_instantiate_algorithm (HMAC: list Z -> list Z -> list Z)
-      (entropy_input nonce personalization_string: list Z) (security_strength: Z)
-      : DRBG_working_state :=
+    Definition HMAC_DRBG_instantiate_algorithm (HMAC: list Z -> list Z -> list Z) (entropy_input nonce personalization_string: list Z) (security_strength: Z): DRBG_working_state :=
       let seed_material := entropy_input ++ nonce ++ personalization_string in
       let key := initial_key in
       let value := initial_value in
@@ -236,7 +232,7 @@ The HMAC-based algorithm for instantiation is as follows (See \stdtitle{NIST SP 
 I chose to leave the actual HMAC function as a parameter, to allow different implementations to be swapped in (the NIST specification works for all approved HMAC functions).
 
 \subsection{The Reseed Function}
-There are times when the DRBG state must be reseeded with new bits of entropy. This can happen because too many bytes have been generated from the current bits of entropy, or because prediction resistance is requested. Reseeding with fresh entropy automatically provides prediction resistance, as the state at time $t + 1$ cannot be computed from the state at time $t$ alone - entropy is also needed. Note that reseeding is preferred over simply instantiating a new DRBG state because if the source of entropy fails silently (supposed the bits of entropy returned are not actually random), at least the DRBG still has some randomness left over from the old entropy.
+There are times when the DRBG state must be reseeded with new bits of entropy. This can happen because \lstinline{generate} has been called many times with the current bits of entropy, or because prediction resistance is requested. Reseeding with fresh entropy automatically provides prediction resistance, as the state at time $t + 1$ cannot be computed from the state at time $t$ alone - entropy is also needed. Note that reseeding is preferred over simply instantiating a new DRBG state because if the source of entropy fails silently (supposed the bits of entropy returned are not actually random), at least the DRBG still has some randomness left over from the old entropy.
 
 The functional specification for the “outer” reseed function follows. Again, remember that this is the part that does error checking and is common among all types of DRBG. See \stdtitle{NIST SP 800-90A \S 9.2} for the corresponding NIST specification.
 
@@ -257,8 +253,7 @@ The functional specification for the “outer” reseed function follows. Again,
         if (Zlength additional_input) >? max_additional_input_length
           then ENTROPY.error ENTROPY.generic_error entropy_stream
         else
-          match (get_entropy security_strength min_entropy_length max_entropy_length
-                prediction_resistance_flag entropy_stream) with
+          match get_entropy security_strength min_entropy_length max_entropy_length prediction_resistance_flag entropy_stream with
             | ENTROPY.error _ s => ENTROPY.error ENTROPY.catastrophic_error s
             | ENTROPY.success entropy_input entropy_stream =>
               let new_working_state := reseed_algorithm working_state entropy_input additional_input in
@@ -270,14 +265,12 @@ The functional specification for the “outer” reseed function follows. Again,
 
 As with \lstinline{instantiate}, the parameters up to but excluding \lstinline{entropy_stream} are implementation specific constants.
 
-Note that both the \lstinline{reseed} and \lstinline{generate} functions allow users to pass in an additional stream of bytes. Users do not need to provide this (and implementations can choose to omit this feature), but it is meant to provide any additional bits of entropy or to provide personalization of this specific call.
+Note that both the \lstinline{reseed} and \lstinline{generate} functions allow users to pass in an additional sequence of bytes. Users do not need to provide this (and implementations can choose to omit this feature), but it is meant to provide any additional bits of entropy or to provide personalization of this specific call.
 
 The HMAC-based reseed algorithm follows (See \stdtitle{NIST SP 800-90A \S 10.1.2.4} for the corresponding NIST specification):
 
 \begin{lstlisting}
-    Definition HMAC_DRBG_reseed_algorithm (HMAC: list Z -> list Z -> list Z)
-      (working_state: DRBG_working_state) (entropy_input additional_input: list Z)
-      : DRBG_working_state :=
+    Definition HMAC_DRBG_reseed_algorithm (HMAC: list Z -> list Z -> list Z) (working_state: DRBG_working_state) (entropy_input additional_input: list Z): DRBG_working_state :=
       match working_state with (v, key, _) =>
         let seed_material := entropy_input ++ additional_input in
         let (key, v) := HMAC_DRBG_update HMAC seed_material key v in
@@ -305,8 +298,7 @@ The outer function body for \lstinline{generate} follows. See \stdtitle{NIST SP 
       (count: nat)
       : ENTROPY.result (list Z * DRBG_working_state) :=
       let result := if should_reseed then
-                      match (reseed_function entropy_stream state_handle prediction_resistance_request
-                        additional_input) with
+                      match reseed_function entropy_stream state_handle prediction_resistance_request additional_input with
                         | ENTROPY.success x entropy_stream => ENTROPY.success (x, []) entropy_stream
                         | ENTROPY.error e entropy_stream => ENTROPY.error e entropy_stream
                       end
@@ -319,9 +311,7 @@ The outer function body for \lstinline{generate} follows. See \stdtitle{NIST SP 
               | generate_algorithm_reseed_required =>
                 match count with
                   | O => ENTROPY.error ENTROPY.generic_error entropy_stream (* impossible *)
-                  | S count' => (DRBG_generate_function_helper generate_algorithm reseed_function
-                    entropy_stream state_handle requested_number_of_bytes prediction_resistance_request
-                    additional_input true count')
+                  | S count' => DRBG_generate_function_helper generate_algorithm reseed_function entropy_stream state_handle requested_number_of_bytes prediction_resistance_request additional_input true count'
                 end
               | generate_algorithm_success x y => ENTROPY.success (x, y) entropy_stream
             end
@@ -354,19 +344,16 @@ The outer function body for \lstinline{generate} follows. See \stdtitle{NIST SP 
               if prediction_resistance_request && (negb prediction_resistance_flag)
                 then ENTROPY.error ENTROPY.generic_error entropy_stream
               else
-                match (DRBG_generate_function_helper (generate_algorithm reseed_interval)
-                reseed_function entropy_stream state_handle requested_number_of_bytes
-                prediction_resistance_request additional_input prediction_resistance_request 1%nat) with
+                match DRBG_generate_function_helper (generate_algorithm reseed_interval) reseed_function entropy_stream state_handle requested_number_of_bytes prediction_resistance_request additional_input prediction_resistance_request 1%nat with
                   | ENTROPY.error e s => ENTROPY.error e s
                   | ENTROPY.success (output, new_working_state) entropy_stream =>
-                      ENTROPY.success (output, (new_working_state, security_strength,
-                        prediction_resistance_flag)) entropy_stream
+                      ENTROPY.success (output, (new_working_state, security_strength, prediction_resistance_flag)) entropy_stream
                 end
       end.
 \end{lstlisting}
 
 
-Note that \lstinline{Fixpoint} is a recursive function where at least one parameter is structurally getting smaller. In this case, it is the last parameter, the natural number \lstinline{count}, which is initialized with \lstinline{1}, meaning that this recursive function is only allowed to go one level deep.
+Note that \lstinline{Fixpoint} is a recursive function where at least one parameter is structurally getting smaller, allowing Coq to figure out the proof of termination automatically. In this case, it is the last parameter, the natural number \lstinline{count}, which is initialized with \lstinline{1}, meaning that this recursive function is only allowed to go one level deep.
 
 As usual, the \lstinline{generate} algorithm is left as a dependency. Also left as a dependency is the \lstinline{reseed} function. The signature matches the \lstinline{reseed} function shown earlier, albeit with the dependencies and implementation constants filled in.
 
@@ -374,8 +361,7 @@ The HMAC-based \lstinline{generate} algorithm follows. See \stdtitle{NIST SP 800
 
 
 \begin{lstlisting}
-    Function HMAC_DRBG_generate_helper_Z (HMAC: list Z -> list Z -> list Z) (key v: list Z)
-      (requested_number_of_bytes: Z) {measure Z.to_nat requested_number_of_bytes}: (list Z * list Z) :=
+    Function HMAC_DRBG_generate_helper_Z (HMAC: list Z -> list Z -> list Z) (key v: list Z) (requested_number_of_bytes: Z) {measure Z.to_nat requested_number_of_bytes}: (list Z * list Z) :=
         if 0 >=? requested_number_of_bytes then (v, [])
         else
           let len := 32%nat in
@@ -385,9 +371,7 @@ The HMAC-based \lstinline{generate} algorithm follows. See \stdtitle{NIST SP 800
           let temp := v in
           (v, rest ++ temp).
 
-    Definition HMAC_DRBG_generate_algorithm (HMAC: list Z -> list Z -> list Z) (reseed_interval: Z)
-      (working_state: DRBG_working_state) (requested_number_of_bytes: Z) (additional_input: list Z)
-      : DRBG_generate_algorithm_result :=
+    Definition HMAC_DRBG_generate_algorithm (HMAC: list Z -> list Z -> list Z) (reseed_interval: Z) (working_state: DRBG_working_state) (requested_number_of_bytes: Z) (additional_input: list Z): DRBG_generate_algorithm_result :=
         match working_state with (v, key, reseed_counter) =>
           if reseed_counter >? reseed_interval then generate_algorithm_reseed_required
           else
@@ -427,14 +411,14 @@ Even though I am verifying \stdtitle{mbedTLS} implementation of DRBG, the pre-ex
 \end{lstlisting}
 
 
-Here, \lstinline{HMAC_Final} is the name of the \lstinline{final} function verified by previous efforts, and\\ \lstinline{mbedtls_md_hmac_finish} is the name mbedTLS expects. The API specification (how the function interacts with local variable and memory) for this function is almost a complete copy of the specification defined by the previous HMAC verification efforts.
+Here, \lstinline{HMAC_Final} is the name of the \lstinline{final} function verified by previous efforts, and\\ \lstinline{mbedtls_md_hmac_finish} is the name mbedTLS expects. The API specification (how the function interacts with local variable and memory) for this function is almost a complete copy of the specification defined by the previous HMAC verification efforts. The proofs that the wrapper functions satisfies the API specifications is also simple.
 
 For more details on how mbedTLS and OpenSSL APIs are bridged, see Appendix \ref{appendix_hmac}.
 
 
 \subsection{The \textit{Functional}, \textit{Abstract}, and \textit{Concrete} DRBG States}
 
-Recall that in the functional specification, I chose to represent the DRBG state as the following:
+Recall that in the functional specification (\S \ref{funcstate}), I chose to represent the DRBG state as the following:
 
 \begin{lstlisting}
     Definition DRBG_working_state :=
@@ -446,7 +430,7 @@ Recall that in the functional specification, I chose to represent the DRBG state
 
 From here onwards, I will refer to this representation as the \textit{functional} DRBG state.
 
-When writing the API specification, I chose a representation that more closely resembles what is in \stdtitle{mbedTLS}. Naturally, \stdtitle{mbedTLS} represents the DRBG state as a struct. Note that the original \stdtitle{mbedTLS} code includes a function pointer for the entropy function as well as context to pass to the entropy function. As noted earlier, for the purposes of this project, I made the modifications to remove this function pointer.
+When writing the API specification, I chose a representation that more closely resembles what is in \stdtitle{mbedTLS}. Naturally, \stdtitle{mbedTLS} represents the DRBG state as a C struct. Note that the original \stdtitle{mbedTLS} code includes a function pointer for the entropy function as well as context to pass to the entropy function. As noted earlier, for the purposes of this project, I made the modifications to remove this function pointer.
 
 \begin{lstlisting}[language=C]
     typedef struct mbedtls_hmac_drbg_context
@@ -509,7 +493,7 @@ I defined the equivalence between an abstract state and a concrete state:
 
 Notice that I require the HMAC context to be in the \lstinline{FULL} state, which means that the HMAC context has previously been initialized with some key, and it has to be reset before digesting more data, necessarily throwing away any data that may have been digested before.
 
-Lastly, I define the conversions between the abstract state and the functional state:
+Lastly, I defined the conversions between the abstract state and the functional state:
 
 \begin{lstlisting}
     Definition hmac256drbgabs_of_state_handle (a: DRBG_state_handle) entropy_len reseed_interval: hmac256drbgabs :=
@@ -620,10 +604,10 @@ The actual verifications are significantly longer than the C counterpart. Fortun
 
 \section{Difficulties}
 
-One of the goals of my project is to serve as a bleeding-edge adopter of the VST framework and the HMAC API specification. As is the nature of bleeding-edge adoption, I encountered many difficulties, such as a proof tactic failing silently and not providing sufficient error messages. These difficulties are fixed as they get reported back to the developers of VST. In this section, I highlight one particular difficulty with the HMAC API specification.
+One of the goals of my project is to serve as a bleeding-edge adopter of the VST framework and the HMAC API specification. As is the nature of bleeding-edge adoption, I encountered many difficulties, such as a proof tactic failing silently and Verifiable C's theory of pointer comparisons being too weak. These difficulties are fixed as they get reported back to the developers of VST. In this section, I highlight one particular difficulty with the HMAC API specification.
 
 
-\subsection{HMAC API Specification}
+\subsection{HMAC API Specification} \label{oldhmac}
 
 The C (\stdtitle{OpenSSL}) implementation of SHA-256 HMAC defines the HMAC context as a struct with three SHA-256 contexts. The original API specification of HMAC \cite{hmac} uses this same representation as the abstract state of HMAC.
 
@@ -632,7 +616,7 @@ The C (\stdtitle{OpenSSL}) implementation of SHA-256 HMAC defines the HMAC conte
        HMACabs: forall (ctx iSha oSha: s256abs) hmacabs.
 \end{lstlisting}
 
-This representation works in the sense that the verification of the \stdtitle{OpenSSL} functions went through. Unfortunately, for clients of this API specification, this representation is often not good enough. The biggest issue is that this representation is too low-level; it does not keep track of the key. Upon notified of this issue, the developers of the HMAC API specification were quickly able to provide a more abstract representation of the HMAC state, leading to the state machine representation shown earlier in \S \ref{hmac_interface}. The core of the verification code did not need to be changed, with some book-keeping added at the ends of translate between the new, more abstract representation to the more low-level implementation. While this issue was easily fixed, it would have been very hard to discover this issue without actually being clients of the API specification. This highlights the importance of having being the first client of the HMAC API specification.
+This representation works in the sense that the verification of the \stdtitle{OpenSSL} functions went through. Unfortunately, for clients of this API specification, this representation is often not good enough. The biggest issue is that this representation is too low-level; it does not keep track of the key. Upon being notified of this issue, the developers of the HMAC API specification were quickly able to provide a more abstract representation of the HMAC state, leading to the state machine representation shown earlier in \S \ref{hmac_interface}. The core of the verification code did not need to be changed, with some book-keeping added at the ends of translate between the new, more abstract representation to the more low-level implementation. While this issue was easily fixed, it would have been very hard to discover this issue without actually being clients of the API specification. This highlights the importance of having being the first client of the HMAC API specification.
 
 
 \section{Conclusion}
@@ -653,19 +637,19 @@ As previously mentioned in \S \ref{hmac_interface}, previous verification effort
 Note that the \stdtitle{mbedTLS} message digest interface declares the following functions:
 
 \begin{lstlisting}[language=C]
-    unsigned char mbedtls_md_get_size( const mbedtls_md_info_t *md_info );
-
     int mbedtls_md_setup( mbedtls_md_context_t *ctx, const mbedtls_md_info_t *md_info, int hmac );
 
-    int mbedtls_md_hmac_starts( mbedtls_md_context_t *ctx, const unsigned char *key, size_t keylen );
+    void mbedtls_md_free( mbedtls_md_context_t *ctx );
 
-    int mbedtls_md_hmac_reset( mbedtls_md_context_t *ctx );
+    unsigned char mbedtls_md_get_size( const mbedtls_md_info_t *md_info );
+
+    int mbedtls_md_hmac_starts( mbedtls_md_context_t *ctx, const unsigned char *key, size_t keylen );
 
     int mbedtls_md_hmac_update( mbedtls_md_context_t *ctx, const unsigned char *input, size_t ilen );
 
     int mbedtls_md_hmac_finish( mbedtls_md_context_t *ctx, unsigned char *output);
 
-    void mbedtls_md_free( mbedtls_md_context_t *ctx );
+    int mbedtls_md_hmac_reset( mbedtls_md_context_t *ctx );
 \end{lstlisting}
 
 \subsection{The HMAC Context}
@@ -680,7 +664,7 @@ In order for clients of the \stdtitle{mbedTLS} message digest interface to use \
     } mbedtls_md_context_t;
 \end{lstlisting}
 
-The \lstinline{md_info} field can mostly be ignored, as it is meant to be used to differentiate between the different types of message digest, and in this case, we are specializing the message digest to use HMAC and SHA-256. In order for clients of the message digest interface to have access to the \stdtitle{OpenSSL} HMAC context, I chose to have the \lstinline{hmac_ctx} pointer point to the \stdtitle{OpenSSL} HMAC context. This initialization happens in the \lstinline{mbedtls_md_setup} function:
+The \lstinline{md_info} field can mostly be ignored, as it is used to differentiate between the different types of message digest, and in this case, we are specializing the message digest to use HMAC and SHA-256. In order for clients of the message digest interface to have access to the \stdtitle{OpenSSL} HMAC context, I chose to have the \lstinline{hmac_ctx} pointer point to the \stdtitle{OpenSSL} HMAC context. This initialization happens in the \lstinline{mbedtls_md_setup} function:
 
 \begin{lstlisting}[language=C]
     int mbedtls_md_setup( mbedtls_md_context_t *ctx, const mbedtls_md_info_t *md_info, int hmac ) {
@@ -786,11 +770,11 @@ The API specification is as follows:
 \end{lstlisting}
 
 
-The first \lstinline{WITH} variable is \lstinline{contents}, which is mathematical representation of the sequence of bytes to be consumed by the update function (\lstinline{provided_data} in the functional specification). The next two \lstinline{WITH} values are the pointer value, \lstinline{additional}, at which \lstinline{contents} is located in memory, and the length of \lstinline{contents}, \lstinline{add_len}. In the PROP part of the specification, \lstinline{add_len} is restricted to be a valid unsigned integer, and the length of \lstinline{contents} is enforced to be \lstinline{add_len}. The mathematical integers in \lstinline{contents} are also enforced to be valid bytes. In the \lstinline{SEP} part, \lstinline{additional} is said to point to \lstinline{contents}. In the postcondition, the same SEP clause appears, showing that the update function does not change the memory pointed to by \lstinline{additional}.
+The first \lstinline{WITH} variable is \lstinline{contents}, which is mathematical representation of the sequence of bytes to be consumed by the update function (\lstinline{provided_data} in the functional specification). The next two \lstinline{WITH} values are the pointer value, \lstinline{additional}, at which \lstinline{contents} is located in memory, and the length of \lstinline{contents}, \lstinline{add_len}. In the \lstinline{PROP} part of the specification, \lstinline{add_len} is restricted to be a valid unsigned integer, and the length of \lstinline{contents} is enforced to be \lstinline{add_len}. The mathematical integers in \lstinline{contents} are also enforced to be valid bytes. In the \lstinline{SEP} part, \lstinline{additional} is said to point to \lstinline{contents}. In the postcondition, the same \lstinline{SEP} clause appears, showing that the update function does not change the memory pointed to by \lstinline{additional}.
 
 The next \lstinline{WITH} value is the pointer value, \lstinline{ctx}, pointing to the DRBG struct. The next two \lstinline{WITH} values are the abstract and concrete DRBG states, respectively. Skipping the next \lstinline{WITH} value, \lstinline{kv}, for the moment, the last \lstinline{WITH} value is the content of the struct denoting what kind of HMAC is being used, \lstinline{info_contents}. In the \lstinline{PROP} clause, the sequence \lstinline{V} part of the abstract state is enforced to be the size of the output of the HMAC function and enforced to contain valid bytes. This is an invariant that the update function and all public functions enforce, and so will be seen throughout all API specifications. In the \lstinline{SEP} clause, \lstinline{ctx} is said to point to an area in memory that contains the concrete state, and the concrete state is related to the abstract state by the equivalence definition. The info pointer from the concrete state also points to a valid address containing \lstinline{info_contents}. In the post condition, there is a new abstract state calculated by \lstinline{hmac256drbgabs_hmac_drbg_update}, which is just a wrapper around the functional specification with the HMAC256 function used. In the \lstinline{SEP} part, there exists a corresponding concrete state pointed to by \lstinline{ctx} that is equivalent to the new abstract state. This new concrete state’s info pointer also points to the same valid memory location containing \lstinline{info_contents}. This is what the definition \lstinline{hmac256drbgabs_common_mpreds} encapsulates.
 
-Lastly, the \lstinline{WITH} value \lstinline{kv} represents the pointer value to the SHA K vector, which is a global constant array in the SHA-256 implementation. For more information, see the \cite{sha}.
+Lastly, the \lstinline{WITH} value \lstinline{kv} represents the pointer value to the SHA K vector, which is a global constant array in the SHA-256 implementation. For more information, see the verification of SHA-256 \cite{sha}.
 
 \subsection{The Reseed Function}
 
@@ -829,7 +813,7 @@ The API specification for the \lstinline{reseed} function is as follows:
                return_value_relate_result (mbedtls_HMAC256_DRBG_reseed_function s initial_state_abs contents) ret_value
              )
            LOCAL (temp ret_temp ret_value)**
-**           SEP (
+           SEP (
              (hmac256drbgabs_common_mpreds (hmac256drbgabs_reseed initial_state_abs s contents) initial_state ctx info_contents);
              (data_at Tsh (tarray tuchar add_len) (map Vint (map Int.repr contents)) additional);
              (Stream (get_stream_result (mbedtls_HMAC256_DRBG_reseed_function s initial_state_abs contents)));
@@ -837,13 +821,13 @@ The API specification for the \lstinline{reseed} function is as follows:
            ).
 \end{lstlisting}
 
-Notice a new notation here: \lstinline{EX ret_value:_}. This can be read literally as “there exists a variable \lstinline{ret_value} that satisfies the postcondition”. This existential variable captures the return value of the function, and its value is enforced in the \lstinline{PROP} part of the postcondition. The return value is enforced to be 0 if the reseed succeeds, a specific value if the reseed fails because of a failure to get entropy, and any non-zero value if the reseed fails for any other reason.
+Notice a new notation here: \lstinline{EX ret_value:_}. This can be read literally as “there exists a variable \lstinline{ret_value} that satisfies the postcondition”. This existential variable captures the return value of the function, and its value is enforced in the \lstinline{PROP} part of the postcondition. The return value is enforced to be 0 if the reseed succeeds, a specific non-zero value if the reseed fails because of a failure to get entropy, and any non-zero value if the reseed fails for any other reason.
 
 Note that \lstinline{mbedtls_HMAC256_DRBG_reseed_function} is just a wrapper around the functional specification of the reseed function, with the reseed algorithm and other dependencies filled in. \lstinline{hmac256drbgabs_reseed} returns the resulting abstract state from the reseed function if the reseed succeeds, or the initial abstract state otherwise.
 
 Much like the \lstinline{update} function, the first three \lstinline{WITH} values are used for the additional data parameter. \lstinline{additional} is a pointer value that points to \lstinline{contents}, of length \lstinline{add_len}, and the function leaves this relation untouched.
 
-Again, much like the \lstinline{update} function, the next three \lstinline{WITH} values are the pointer value to the DRBG state, the abstract DRBG state, and the concrete DRBG state. The only new property is in the \lstinline{PROP} part of the precondition, requiring the \lstinline{entropy_len} component to be 32. Note that in \stdtitle{NIST SP 800-90A} and consequently in the functional specification, this is a global, fixed constant, but \stdtitle{mbedTLS} varies this value based on the type of HMAC used and fixes the value upon instantiation. With HMAC256, this is fixed to be 32.
+Again, much like the \lstinline{update} function, the next three \lstinline{WITH} values are the pointer value to the DRBG state, the abstract DRBG state, and the concrete DRBG state. The only new property is in the \lstinline{PROP} part of the precondition, requiring the \lstinline{entropy_len} component to be 32. Note that in \stdtitle{NIST SP 800-90A} and therefore in the functional specification, this is a global, fixed constant, but \stdtitle{mbedTLS} varies this value based on the type of HMAC used and fixes the value upon instantiation. With HMAC256, this is fixed to be 32.
 
 Unlike the \lstinline{update} function, the \lstinline{reseed} function needs to reason about entropy; that is the whole point of reseeding! The \lstinline{WITH} value \lstinline{s} represents the entropy stream to be used, and a new one is passed back out in the \lstinline{SEP} part of the postcondition.
 
