@@ -8,9 +8,11 @@
 \usepackage{listings}
 \usepackage{lstlangcoq}
 \usepackage{appendix}
+\usepackage{graphicx}
 
 \lstset{language=Coq,basicstyle=\ttfamily,mathescape=true,columns=fullflexible,breaklines=true,breakatwhitespace=true}
 \hypersetup{citecolor=black,linkcolor=black}
+\graphicspath{ {images/} }
 
 \newcommand{\stdtitle}[1]{\textbf{#1}}
 
@@ -56,15 +58,13 @@ There have been some other verification efforts to verify a DRBG, albeit without
 Previous efforts in the VST project to verify SHA-256 \cite{sha} and HMAC \cite{hmac} have done so using \stdtitle{OpenSSL 0.9.1c}. A natural choice for the DRBG verification would be to also use the same \stdtitle{OpenSSL} library. Unfortunately, the DRBG implementation in \stdtitle{OpenSSL} makes heavy use of function pointers to encapsulate the differences between each type of DRBG. While Verifiable C, the C program logic component of the VST framework, is capable of reasoning about function pointers, the proof automation system is not yet robust enough when dealing with function pointers and so such proofs will be more complex. \stdtitle{mbedTLS}, on the other hand, does not make use of function pointers except to deal with entropy. Therefore, I chose to use the implementation of DRBG found in \stdtitle{mbedTLS 2.1.1}.
 
 \subsection{Modifications to mbedTLS}
-I had to make a few modifications to the \stdtitile{mbedTLS} DRBG source file. Most of these transformations are obviously equivalent to the original version. For example, Verifiable C does not allow memory dereferences in function parameters or if/while/for-loop conditions.
-
-Therefore, code such as the following had to be changed:
+I had to make a few modifications to the \stdtitle{mbedTLS} DRBG source file. Most of these transformations are obviously equivalent to the original version. For example, Verifiable C does not allow memory dereferences in function parameters or if/while/for-loop conditions. Therefore, code such as the following had to be changed:
 
 \begin{lstlisting}[language=C]
     md_len = mbedtls_md_get_size( ctx->md_ctx.md_info );
 \end{lstlisting}
 
-to this:
+\noindent to this:
 
 \begin{lstlisting}[language=C]
     info = ctx->md_ctx.md_info;
@@ -505,7 +505,7 @@ Lastly, I defined the conversions between the abstract state and the functional 
       end.
 \end{lstlisting}
 
-\subsection{A Description of an API Specification}
+\subsection{A Description of an API Specification}\label{api_spec}
 
 The functional specification is a mathematical description of a function; it describes, logically, what the output should be given the input. C programs, however, are all about local variables and memory. In order to specify the behavior of a C program, there needs to be a way to describe how the local variables and memory are changed by the program. This is where the API specification comes in.
 
@@ -528,7 +528,7 @@ To write an API specification, the VST framework uses separation logic, a varian
 
 This is a custom notation defined by the VST framework. Roughly, the API specification states that for all \lstinline{variables_list}, if the precondition is satisfied, then the function pointed to by \lstinline{function_name} is allowed to run. If the function terminates, then the postcondition will be satisfied.
 
-Both the pre- and post-conditions are of the form \lstinline{PROP () LOCAL () SEP ()}. This is separation logic. As an example, take the following:
+Both the pre- and post-conditions are of the form \lstinline{PROP() LOCAL() SEP()}. This is separation logic. As an example, take the following:
 
 \begin{lstlisting}
     ...
@@ -574,9 +574,45 @@ As an example, here is the API specification of the HMAC DRBG \lstinline{update}
 
 The DRBG state is pointed to by the pointer value \lstinline{ctx}. By running this function, assuming the preconditions hold, the state is updated by replacing the \lstinline{key} and \lstinline{value} components with the new values obtained by calling \lstinline{update}, which is what the definition \\ \lstinline{hmac256drbgabs_hmac_drbg_update} does.
 
+\subsection{Proof Process}
+
+In this section, I will explain what a typical proof process looks like. I will not be showing complete proofs that the \stdtitle{mbedTLS} functions conform to the API specifications, as such proofs are long and tedious. Fortunately, the proofs are machine-checked in Coq, and so can be trusted to be correct.
+\begin{figure}[h]
+\centering
+\includegraphics[width=0.9\textwidth]{before_forward}
+\caption{The \lstinline{update} Function Proof}
+\label{figure:before_forward}
+\end{figure}
+
+Figure \ref{figure:before_forward} shows a part of the \lstinline{update} function proof. The left pane shows the actual proof, while the right pane shows the current proof goal.
+
+On the left pane, everything highlighted in blue is the part of the proof that has been accepted by the Coq compiler as correct. Everything in white has not been accepted, and so can still be modified. Completing the proof means compiling the entire file, or turning the entire file blue.
+
+In the current proof goal is the proof environment, of the same \lstinline{PROP() LOCAL() SEP()} form as seen previously in \S \ref{api_spec}. The proof environment contains propositional facts, facts about local variables, and facts about memory.
+
+The current proof goal also contains the abstract syntax tree (AST) of the C code. Represented as nodes in the AST, each statement modifies the proof environment, and each step in the proof (left pane) is an instruction to Coq on how to step through the AST. For simple statements, such as an assignment statement, the proof automation system can figure out how the proof environment will be affected by stepping through the statement. Other statements require the proof to explicitly state how the proof environment will be affected. These statements include the \lstinline{if} statement or different kinds of loops.
+
+Figure \ref{figure:before_forward} shows the case where the next statement in the AST is an assignment statement. This is the simple case, and so the proof command \lstinline{forward} can automatically figure out how the environment will be modified. Figure \ref{figure:after_forward} shows the same proof after the \lstinline{forward} command has been accepted by the Coq compiler. Notice the proof environment has changed in the \lstinline{LOCAL} part, and the AST no longer shows the assignment statement as the next statement.
+
+\begin{figure}[h]
+\centering
+\includegraphics[width=0.9\textwidth]{after_forward}
+\caption{After Compiling the \lstinline{forward} Command}
+\label{figure:after_forward}
+\end{figure}
+
+The proof environment is initialized to the function preconditions. A complete proof shows that, after the entire AST has been stepped through, the modified environment implies the function postconditions. Figure \ref{figure:qed} shows when the entire proof has been compiled. Stepping through the \lstinline{Qed} command will complete the proof.
+
+\begin{figure}[h]
+\centering
+\includegraphics[width=0.9\textwidth]{qed}
+\caption{At the End of the \lstinline{update} Proof}
+\label{figure:qed}
+\end{figure}
+
 \subsection{Verification Statistics}
 
-I verified the \stdtitle{mbedTLS} implementations of \lstinline{update}, \lstinline{reseed}, and \lstinline{generate} correct with respect to their API specifications. The actual proof is long and tedious. Fortunately, the proof is machine-checked in Coq, and so can be trusted to be correct. I will not present the proof here. Instead, I will provide some statistics.
+I verified the \stdtitle{mbedTLS} implementations of \lstinline{update}, \lstinline{reseed}, and \lstinline{generate} correct with respect to their API specifications. In this section, I will provide some statistics about the verifications.
 
 \begin{table}[h!]
   \centering
