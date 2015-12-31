@@ -5,7 +5,7 @@ Require Import entropy.
 Definition DRBG_working_state: Type := (list Z * list Z * Z)%type. (* value * key * reseed_counter *)
 Definition DRBG_state_handle: Type := (DRBG_working_state * Z * bool)%type. (* state, security_strength, prediction_resistance_flag *)
 
-Definition DRBG_instantiate_function (instantiate_algorithm: list Z -> list Z -> list Z -> Z -> DRBG_working_state) (min_entropy_length max_entropy_length: Z) (get_nonce: unit -> list Z) (highest_supported_security_strength: Z) (max_personalization_string_length: Z) (prediction_resistance_supported: bool) (entropy_stream: ENTROPY.stream) (requested_instantiation_security_strength: Z) (prediction_resistance_flag: bool) (personalization_string: list Z): ENTROPY.result DRBG_state_handle :=
+Definition DRBG_instantiate_function (instantiate_algorithm: list Z -> list Z -> list Z -> Z -> DRBG_working_state) (min_entropy_length max_entropy_length: Z) (provided_nonce: option (list Z)) (highest_supported_security_strength: Z) (max_personalization_string_length: Z) (prediction_resistance_supported: bool) (entropy_stream: ENTROPY.stream) (requested_instantiation_security_strength: Z) (prediction_resistance_flag: bool) (personalization_string: list Z): ENTROPY.result DRBG_state_handle :=
   if requested_instantiation_security_strength >? highest_supported_security_strength then ENTROPY.error ENTROPY.generic_error entropy_stream
   else match prediction_resistance_flag, prediction_resistance_supported with
          | true, false => ENTROPY.error ENTROPY.generic_error entropy_stream
@@ -23,10 +23,13 @@ Definition DRBG_instantiate_function (instantiate_algorithm: list Z -> list Z ->
                match get_entropy security_strength min_entropy_length max_entropy_length prediction_resistance_flag entropy_stream with
                  | ENTROPY.error e s' => ENTROPY.error ENTROPY.catastrophic_error s'
                  | ENTROPY.success entropy_input entropy_stream =>
-                   match get_entropy (security_strength/2) (min_entropy_length/2) (max_entropy_length/2) prediction_resistance_flag entropy_stream with
+                   let nonce_result := match provided_nonce with
+                                         | Some n => ENTROPY.success n entropy_stream
+                                         | None => get_entropy (security_strength/2) (min_entropy_length/2) (max_entropy_length/2) prediction_resistance_flag entropy_stream
+                                       end in
+                   match nonce_result with
                      | ENTROPY.error e s' => ENTROPY.error ENTROPY.catastrophic_error s'
                      | ENTROPY.success nonce entropy_stream =>
-                       
                        let initial_working_state := instantiate_algorithm entropy_input nonce personalization_string security_strength in
                        ENTROPY.success (initial_working_state, security_strength, prediction_resistance_flag) entropy_stream
                    end
