@@ -13,7 +13,7 @@ shafiles:
 
 tests: HMAC256_DRBG_tests_pr_false.vo HMAC256_DRBG_tests_pr_true.vo HMAC256_DRBG_tests_no_reseed.vo
 
-verifications: verif_hmac_drbg_update.vo verif_mocked_md.vo verif_hmac_drbg_reseed.vo
+verifications: verif_hmac_drbg_update.vo verif_mocked_md.vo verif_hmac_drbg_reseed.vo verif_hmac_drbg_generate.vo
 
 %.vo : %.v
 	$(COQC) $<
@@ -24,9 +24,9 @@ verif_mocked_md.vo: hmac_drbg.vo spec_hmac_drbg.vo
 
 verif_hmac_drbg_update.vo: spec_hmac_drbg.vo hmac_drbg.vo HMAC_DRBG_algorithms.vo
 
-verif_hmac_drbg_reseed.vo: spec_hmac_drbg.vo hmac_drbg.vo DRBG_functions.vo HMAC_DRBG_algorithms.vo spec_hmac_drbg_pure_lemmas.vo entropy.vo entropy_lemmas.vo
+verif_hmac_drbg_reseed.vo: spec_hmac_drbg.vo hmac_drbg.vo DRBG_functions.vo HMAC_DRBG_algorithms.vo spec_hmac_drbg_pure_lemmas.vo entropy.vo entropy_lemmas.vo HMAC_DRBG_common_lemmas.vo
 
-verif_hmac_drbg_generate.vo: spec_hmac_drbg.vo hmac_drbg.vo DRBG_functions.vo HMAC_DRBG_pure_lemmas.vo HMAC_DRBG_algorithms.vo spec_hmac_drbg_pure_lemmas.vo entropy.vo entropy_lemmas.vo
+verif_hmac_drbg_generate.vo: spec_hmac_drbg.vo hmac_drbg.vo DRBG_functions.vo HMAC_DRBG_pure_lemmas.vo HMAC_DRBG_algorithms.vo spec_hmac_drbg_pure_lemmas.vo entropy.vo entropy_lemmas.vo HMAC_DRBG_common_lemmas.vo
 
 hmac_drbg_compspecs.vo: hmac_drbg.vo
 
@@ -39,6 +39,8 @@ DRBG_functions.vo: entropy.vo
 HMAC_DRBG_algorithms.vo: DRBG_functions.vo
 
 HMAC_DRBG_pure_lemmas.vo: DRBG_functions.vo HMAC_DRBG_algorithms.vo
+
+HMAC_DRBG_common_lemmas.vo: hmac_drbg.vo spec_hmac_drbg.vo
 
 HMAC256_DRBG_functional_prog.vo: HMAC_DRBG_algorithms.vo DRBG_functions.vo
 
