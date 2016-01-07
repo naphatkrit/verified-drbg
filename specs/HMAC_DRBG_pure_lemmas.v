@@ -30,8 +30,9 @@ Proof.
     remember (0 >=? z mod 32 - 32) as zero_geb_z_minus_32; destruct zero_geb_z_minus_32.
     apply H.
     {
-      (* this case is bogus. z mod 32 - 32 cannot be bigger than 0 *)
-      admit (* TODO *).
+      rewrite Z.geb_leb in Heqzero_geb_z_minus_32.
+      symmetry in Heqzero_geb_z_minus_32; apply Z.leb_gt in Heqzero_geb_z_minus_32.
+      pose proof (Z_mod_lt z 32); omega.
     }
   }
   {
@@ -95,7 +96,9 @@ Proof.
     }    
     {
       (* this case is bogus. z mod 32 - 32 cannot be bigger than 0 *)
-      admit (* TODO *).
+      rewrite Z.geb_leb in Heqzero_geb_z_minus_32.
+      symmetry in Heqzero_geb_z_minus_32; apply Z.leb_gt in Heqzero_geb_z_minus_32.
+      pose proof (Z_mod_lt z 32); omega.
     }
   }
   {
@@ -135,8 +138,10 @@ Proof.
     {
       apply IHn0.
       pose proof (Zle_0_nat n0).
-      admit (* TODO *).
-      admit (* TODO *).
+      pose proof (Z_mod_lt z 32); omega.
+      symmetry; eapply Zdiv_unique.
+      rewrite Z.mul_comm. reflexivity.
+      apply Z_mod_lt; omega.
     }
     {
       apply H.
