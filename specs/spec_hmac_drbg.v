@@ -234,7 +234,8 @@ Definition hmac_drbg_update_spec :=
         ctx: val, initial_state: hmac256drbgstate,
         initial_state_abs: hmac256drbgabs,
         kv: val, info_contents: md_info_state
-    PRE [ _ctx OF (tptr t_struct_hmac256drbg_context_st), _additional OF (tptr tuchar), _add_len OF tuint ]
+     PRE [ _ctx OF (tptr t_struct_hmac256drbg_context_st),
+           _additional OF (tptr tuchar), _add_len OF tuint ]
        PROP (
          0 <= add_len <= Int.max_unsigned;
          Zlength (hmac256drbgabs_value initial_state_abs) = Z.of_nat SHA256.DigestLength;
@@ -242,12 +243,17 @@ Definition hmac_drbg_update_spec :=
          Forall isbyteZ (hmac256drbgabs_value initial_state_abs);
          Forall isbyteZ contents
        )
-       LOCAL (temp _ctx ctx; temp _additional additional; temp _add_len (Vint (Int.repr add_len)); gvar sha._K256 kv)
+       LOCAL (temp _ctx ctx;
+              temp _additional additional;
+              temp _add_len (Vint (Int.repr add_len));
+              gvar sha._K256 kv)
        SEP (
-         (data_at Tsh (tarray tuchar add_len) (map Vint (map Int.repr contents)) additional);
+         (data_at Tsh (tarray tuchar add_len)
+                  (map Vint (map Int.repr contents)) additional);
          (data_at Tsh t_struct_hmac256drbg_context_st initial_state ctx);
          (hmac256drbg_relate initial_state_abs initial_state);
-         (data_at Tsh t_struct_mbedtls_md_info info_contents (hmac256drbgstate_md_info_pointer initial_state));
+         (data_at Tsh t_struct_mbedtls_md_info
+                  info_contents (hmac256drbgstate_md_info_pointer initial_state));
          (K_vector kv)
            )
     POST [ tvoid ]
@@ -255,8 +261,11 @@ Definition hmac_drbg_update_spec :=
          )
        LOCAL ()
        SEP (
-         (hmac256drbgabs_common_mpreds (hmac256drbgabs_hmac_drbg_update initial_state_abs contents) initial_state ctx info_contents);
-         (data_at Tsh (tarray tuchar add_len) (map Vint (map Int.repr contents)) additional);
+         (hmac256drbgabs_common_mpreds
+            (hmac256drbgabs_hmac_drbg_update initial_state_abs contents)
+            initial_state ctx info_contents);
+         (data_at Tsh (tarray tuchar add_len)
+                  (map Vint (map Int.repr contents)) additional);
          (K_vector kv)
        ).
 

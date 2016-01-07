@@ -549,4 +549,4 @@ Proof.
     subst. repeat rewrite Zlength_map in H10; inversion H10 as [isptr_null H']; inversion isptr_null.
     reflexivity.
   }
-Time Qed. (* 1018 !!! *)
+Time Qed.
