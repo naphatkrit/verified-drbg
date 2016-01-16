@@ -7,8 +7,8 @@ Require Import HMAC256_DRBG_functional_prog.
 Require Import DRBG_functions.
 Require Import HMAC_DRBG_algorithms.
 Require Import entropy.
-Require Import sha.spec_hmacNK.
-Require Import sha.funspec_hmacNK.
+Require Import sha.spec_hmac.
+Require Import sha.protocol_spec_hmac.
 Require Import sha.general_lemmas.
 Require Import sha.HMAC256_functional_prog.
 

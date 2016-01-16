@@ -8,7 +8,7 @@ Require Import sha.general_lemmas.
 
 Lemma data_at_weak_valid_ptr: forall (sh : Share.t) (t : type) (v : reptype t) (p : val),
        sepalg.nonidentity sh ->
-       sizeof cenv_cs t >= 0 -> data_at sh t v p |-- weak_valid_pointer p.
+       sizeof t >= 0 -> data_at sh t v p |-- weak_valid_pointer p.
 Proof.
 Admitted.
 Lemma sepcon_weak_valid_pointer2
@@ -59,7 +59,7 @@ Lemma data_at_complete_split:
     length = lengthA + lengthB ->
     offset = lengthA ->
     AB = A ++ B ->
-    (data_at sh (tarray tuchar length) (AB) p) = (data_at sh (tarray tuchar lengthA) A p) * (data_at sh (tarray tuchar lengthB) B (offset_val (Int.repr offset) p)).
+    (data_at sh (tarray tuchar length) (AB) p) = (data_at sh (tarray tuchar lengthA) A p) * (data_at sh (tarray tuchar lengthB) B (offset_val offset p)).
 Proof.
   intros until sh.
   intros Hfield.
