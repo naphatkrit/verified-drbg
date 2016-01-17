@@ -49,14 +49,13 @@ Proof.
   forward_call (key, internal_r, d, data, data1, kv).
   {
     entailer!.
-    destruct input'; try solve [inversion TC1]; reflexivity.
+    destruct d; try solve [inversion PNd]; reflexivity.
   }
   {
     unfold spec_sha.data_block.
     entailer!.
-    (* TODO this should not be needed *)
     change
-      (@data_at spec_hmacNK.CompSpecs Tsh (tarray tuchar (@Zlength Z data1))
+      (@data_at spec_hmac.CompSpecs Tsh (tarray tuchar (@Zlength Z data1))
                 (@map int val Vint (@map Z int Int.repr data1)) d) with
     (@data_at hmac_drbg_compspecs.CompSpecs Tsh (tarray tuchar (@Zlength Z data1))
          (@map int val Vint (@map Z int Int.repr data1)) d).
@@ -98,6 +97,7 @@ Proof.
   (* return 0 *)
   unfold spec_sha.data_block.
   forward.
+  entailer!.
 Qed.
 
 Lemma body_md_reset: semax_body HmacDrbgVarSpecs HmacDrbgFunSpecs
